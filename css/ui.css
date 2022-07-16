@@ -1,0 +1,222 @@
+
+.active
+{
+    border-left: 10px solid #060 !important;
+}
+
+.brokerage
+{
+    min-width: 7em !important;
+}
+
+.buy
+{
+    color: lightgreen !important;
+}
+
+.checked
+{
+    background-color: #243;
+}
+
+.create
+{
+    background-color: #222;
+    border-left: 10px solid green !important;
+}
+
+.data
+{
+    border-right: 1px solid #333;
+    border-bottom: 1px solid #333;
+    color: silver;
+    font-size: 0.8em;
+    min-width: 4em;
+    padding: 2px 5px 2px 5px;
+}
+
+.date
+{
+    font-family: courier;
+    min-width: 8em !important;
+}
+
+.disabled
+{
+    filter: grayscale( 100% );
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.edit
+{
+    color: yellow;
+}
+
+.flex
+{
+    display: flex;
+    justify-content: space-between;
+}
+
+.icon
+{
+    border: 1px solid #333;
+    border-radius: 4px;
+    color: silver;
+    cursor: pointer;
+    font-size: 1em;
+    height: 20px;
+    line-height: 21px;
+    min-width: 21px;
+    text-align: center; 
+}
+
+.icon:hover
+{
+    background-color: #666;
+    color: yellow;
+}
+
+.link, .tool
+{
+    border-bottom: 1px solid #222;
+    border-left: 10px solid #222;
+    border-right: 1px solid #222;
+    border-radius: 0 4px 4px 0;
+    color: silver;
+    cursor: pointer;
+    font-size: 0.8em;
+    margin-top: 1px;
+    min-width: 10vw;
+    padding: 2px 0 2px 5px;
+    pointer-events: auto;
+    white-space: nowrap;
+    user-select: none;    
+}
+
+.link:hover, .tool:hover
+{
+    background-color: #222;
+    border-left: 10px solid #660;
+}
+
+.list
+{
+    margin: 0;
+}
+
+.locked
+{
+    filter: brightness( 0.5 );
+    pointer-events: none;
+}
+
+.match
+{
+    background-color: rgba( 128, 128, 128, 0.3 );
+}
+
+.pair
+{
+    background-color: green !important;
+}
+
+.pairing
+{
+    background-color: rgba( 0, 128, 0, 0.3 ); 
+}
+
+.popup
+{
+    background-color: #111;
+    border-left: 1px solid #630;
+    border-top: 1px solid #630;
+    bottom: 24px;
+    min-width: 30%;
+    overflow-y: auto;
+    position: absolute;
+    min-height: 20%;
+    max-height: 80%;
+    right: 0;  
+}
+
+.row
+{
+    border-left: 10px solid #222;
+    display: flex;
+}
+
+.row:hover
+{
+    border-left: 10px solid #ccc
+}
+
+.section
+{
+    color: violet;
+    cursor: none;
+    text-transform: uppercase;
+}
+
+.sell
+{
+    color: red;
+}
+
+.subsection
+{
+    border-top: 1px dotted #333;
+    color: orange;
+    cursor: none;
+    font-size: 0.9em;
+    text-transform: uppercase;
+}
+
+.title
+{
+    border-left: 10px solid #630;
+    color: silver;
+    font-size: 0.8em;
+    line-height: 17px;
+    max-width: 10em;   
+    padding: 2px 5px 2px 5px;  
+}
+
+.totals
+{
+    color: white;
+}
+
+.tool
+{
+   min-width: 5em; 
+}
+
+.toolbar
+{
+    border-bottom: 1px solid #630;
+    height: 21px;
+    display: flex;
+    justify-content: start;
+    width: calc( 100% - 10px );
+}
+
+.ui
+{
+    background-color: rgba( 0, 0, 0, 0.5 );
+    position: absolute;
+    right: 0;
+    min-width: 200px;
+    width: 20vw;
+    height: 100vh;
+    border-left: 1px dotted silver;
+    z-index: 900;  
+    overflow-y: auto;
+    pointer-events: none;
+}
+
+.update
+{
+    background-color: green;
+}

@@ -1,0 +1,27 @@
+button, input, option, select, textarea
+{
+    background-color: #111 !important;
+    border: 1px solid #222;
+    border-radius: 4px;
+    color: #FEC;
+    height: 19px;
+    margin: 1px;
+    outline: none;
+}
+
+input[ type=checkbox ]
+{
+    margin: 0 !important;
+    padding: 0 !important;
+    pointer-events: auto;
+    height: 21px;
+    width: 21px;
+}
+
+input[ type=submit ]
+{
+    border: 1px solid silver;
+    cursor: pointer;
+    height: 25px;
+    padding: 3px;
+}

@@ -1,0 +1,30 @@
+.hide, .hide:hover
+{
+    list-style-type: none;  
+    color: red !important;
+}
+
+.hidden
+{
+    display: none;
+}
+
+.info
+{
+    color: cyan;
+    font-size: 0.8em;
+}
+
+.layer, .root
+{
+    position: absolute;
+    top: 0;
+    left: 0;  
+    width: 100vw;
+    height 100vh;
+}
+
+.root
+{
+    overflow: visible;   
+}

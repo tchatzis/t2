@@ -1,0 +1,123 @@
+#container
+{
+    background-color: transparent;
+    height: 100%;
+    left: 10vw;
+    position: absolute;
+    top: 0;
+    width: 75vw;
+}
+
+#content
+{
+    /*background: linear-gradient( 45deg, rgba( 8, 8, 8, 1 ) 0%, rgba( 16, 16, 16, 1 ) 35%, rgba( 0, 0, 0, 1 ) 100% );*/
+    display: flex;
+    justify-content: space-around;
+    left: 0;
+    height: calc( 100% - 60px );
+    margin: 0 10px 20px 10px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    position: absolute;
+    top: 0;
+    width: 100%;
+}
+
+#footer
+{
+    background-color: black;
+    border-left: 10px solid #111;
+    border-top: 1px solid #222;
+    bottom: 0;
+    display: flex;
+    height: 32px;
+    left: 0;
+    position: absolute;
+    width: 100vw;    
+}
+
+#header
+{
+    background-color: #111;
+    border-bottom: 1px solid #222;
+    border-left: 10px solid #066;
+    display: flex;
+    height: 32px;
+    left: 0;
+    top: 0;
+    position: relative;
+    width: 100vw;       
+}
+
+#margin
+{
+    background-color: transparent;
+    border-left: 1px solid #222;
+    height: 100%;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 15vw;
+}
+
+#menu
+{
+    background-color: transparent;
+    left: 0;
+    height: 100%;
+    position: relative;
+    top: 0;
+    width: 10vw;
+}
+
+#middle
+{
+    left: calc( 10vw + 10px );
+    height: 100%;
+    overflow: hidden;
+    position: absolute;
+    top: 0;
+    width: calc( 100% - 25vw - 10px );    
+}
+
+#subcontent, #submargin, #submenu
+{
+    background-color: #111;
+    border-top: 1px solid #222;
+    bottom: 1px;
+    display: flex;
+    justify-content: space-around;
+    height: 21px;
+    left: 0;
+    position: absolute;
+    width: 100%;
+}
+
+#subcontent
+{    
+    border-bottom: 1px solid #066;
+    border-left: 1px solid #066;
+}
+
+#submargin
+{
+    border-bottom: 1px solid #660;
+    border-left: 1px solid #660;
+    justify-content: start;
+}
+
+#submenu
+{
+    border-bottom: 1px solid #606;
+    border-left: 10px solid #606;
+}
+
+#wrapper
+{
+    background-color: transparent;
+    height: calc( 100% - 66px );
+    left: 0;
+    position: relative;
+    top:0;
+    width: 100%;   
+}

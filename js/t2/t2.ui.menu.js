@@ -1,7 +1,7 @@
 const Menu = function()
 {
     let self = this;
-    let active = { link: null };
+    let active = { curr: null };
     let listeners = new Map();
     let map = new Map();
     
@@ -17,14 +17,34 @@ const Menu = function()
         this.element.id = params.id;
         this.element.style.display = params.horizontal ? "flex" : "block";
 
-        params.array.sort().forEach( link =>
+        params.array.forEach( link =>
         {
             let element = t2.common.el( "div", this.element );
                 element.classList.add( "link" );
                 element.textContent = link;
+                element.dataset.link = link;
             
             map.set( element, new Map() );
         } );
+    };
+
+    this.activate = function( name )
+    {
+        let link = self.element.querySelector( `[ data-link = "${ name }" ]` );
+
+        self.setActive( link );
+    };
+
+    this.setActive = function( link )
+    {
+        link.classList.add( "active" );
+
+        if ( active.curr && active.curr !== link )
+        {
+            active.curr.classList.remove( "active" );   
+        }
+
+        active.curr = link;  
     };
     
     function listen()
@@ -39,10 +59,14 @@ const Menu = function()
         } );
     };
 
-    function f( e, listener, active )
+    function f( e, listener )
     {
         e.preventDefault();
         e.stopPropagation();
+
+        let link = arguments[ 0 ].target;
+            
+        self.setActive( link );
 
         listener.handler( ...arguments );
     } 

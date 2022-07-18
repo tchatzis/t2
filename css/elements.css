@@ -11,7 +11,7 @@ body
     overflow: hidden;
 }
 
-canvas
+/*canvas
 {
     background-color: transparent;
     cursor: none;
@@ -19,7 +19,7 @@ canvas
     position: absolute;
     width: 100vw;
     z-index: 1;
-}
+}*/
 
 li
 {

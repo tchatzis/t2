@@ -1,7 +1,7 @@
 const Common = function()
 {
     let self = this;
-    
+
     this.clear = ( ids ) => 
     {
         ids.forEach( id => 
@@ -20,7 +20,7 @@ const Common = function()
             }
         } );
     };
-    
+
     this.el = ( tag, parent ) => 
     { 
         let el = document.createElement( tag ); 
@@ -44,6 +44,11 @@ const Common = function()
     };
     
     this.sort = ( array, key ) => array.sort( ( a, b ) => ( key ? a[ key ] > b[ key ] : a > b ) ? 1 : -1 );
+
+    this.svg = function( tag )
+    {
+        return document.createElementNS( "http://www.w3.org/2000/svg", tag );
+    };
 };
 
 export default Common;

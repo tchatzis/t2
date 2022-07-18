@@ -1,10 +1,8 @@
 const List = function( module )
 {
     let self = this;
-    let forms = [];
     let handlers = [];
     let invokes  = [];
-    //let refreshes = [];
     let el = t2.common.el;
 
     this.append = async function( f, params )
@@ -24,8 +22,8 @@ const List = function( module )
 
     this.init = function( params )
     {
-        params.parent = t2.common.getParent( params );
-        
+        //params.parent = t2.common.getParent( params );
+
         this.element = el( "div", params.parent );
         this.element.dataset.id = params.id;
         this.element.classList.add( "list" );
@@ -50,7 +48,9 @@ const List = function( module )
 
         let array = args.map ? Array.from( args.map.get( args.name ) ) : args.array;
 
-        t2.common.sort( array, args.orderBy ).forEach( ( item, index ) => 
+        let use = args.orderBy ? t2.common.sort( array, args.orderBy ) : array;
+
+        use.forEach( ( item, index ) => 
         {             
             let row = el( "div", self.element );
                 row.classList.add( "row" );

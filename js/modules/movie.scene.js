@@ -2,36 +2,44 @@ const Scene = function( sceneParams )
 {
     let self = this;
     let contents = [];
-    let scripts = [];
     let unloads = [];
 
-    this.components = new Map();
+    //this.components = new Map();
+    this.name = sceneParams.name;
 
-    // canvas, modal
-    this.addComponent = async function( componentParams )
+    // forms, html
+    this.addContent = ( contentParams ) => contents.push( contentParams );
+
+    this.addModule = async ( params ) => await importModule( params );
+
+    this.addElement = t2.ui.addElement;
+
+    /*this.addUI = async function( componentParams )
     {
         componentParams.parent = t2.common.getParent( componentParams );
 
         let module    = await import( `../t2/t2.ui.${ componentParams.component }.js` );
         let component = await new module.default();
             component.init( componentParams );
-        
-        this.components.set( componentParams.id, component );
+
+        t2.ui.components.set( componentParams.id, component );
         
         return component;
-    };
-    
-    this.addContent = ( contentParams ) => 
+    };*/
+
+    this.addUnload = ( unloadParams ) => unloads.push( unloadParams );  
+
+    this.change = async function()
     {
-        contents.push( contentParams );
+        self.reset();
+        
+        let active = arguments[ 2 ];
+        let link = active.curr;
+        let name = link.textContent;
+        let scene = t2.movie.scenes.get( name );
+        await scene.start();
     };
 
-    this.addModule = async ( params ) => await importModule( params );
-
-    this.addElement = t2.ui.addElement;
-    
-    this.addUnload = ( unloadParams ) => unloads.push( unloadParams );    
-    
     this.modules = new Map();
 
     this.parameters = {};
@@ -42,38 +50,59 @@ const Scene = function( sceneParams )
         delete this.timeout;
     };
     
-    this.removeComponent = function( array )
+    this.removeComponents = function( array )
     {
         array.forEach( id =>
         {
-            let component = self.components.get( id );
+            let component = t2.ui.components.get( id );
                 component.element.remove();
         } );
     };
-    
-    this.start = async function( movie )
+
+    this.removeElement = function( element )
     {
-        console.log( "scene:", this.parameters.name );
+        element.remove();
+    };
+
+    this.reset = function()
+    {
+        //console.trace( Array.from( t2.ui.elements.keys() ) )
+        t2.common.clear( Array.from( t2.ui.elements.keys() ) );
+    };
+
+    this.start = async function()
+    {
+        console.log( `%c scene: ${ self.parameters.name } ${ self.parameters.duration }`, "background: green;" );
         
-        if ( this.pre )
-            await this.pre();
+        // excute the script
+        if ( self.parameters.script )
+            await self.parameters.script.call( self );
+
+        if ( self.pre )
+            await self.pre();
 
         await load();
-        
-        if ( this.post )
-            await this.post();
 
-        this.timeout = setTimeout( 
-            function()
-            {
-                if ( self.parameters.next )
+        if ( self.post )
+            await self.post();
+
+        // TODO: devise a better hook
+        let menu = t2.ui?.components.get( "movies" );
+
+        if ( menu )
+            menu.activate( self.parameters.name );
+
+        if ( self.parameters.duration < Infinity )
+            self.timeout = setTimeout( 
+                function()
                 {
-                    console.warn( "next", self.parameters.next );
-                    self.unload();
-                    movie.next( self.parameters.next );
-                }
-            }, 
-            self.parameters.duration );
+                    if ( self.parameters.next )
+                    {
+                        self.unload();
+                        t2.movie.next( self.parameters.next );
+                    }
+                }, 
+                self.parameters.duration );
     };
 
     this.timer = function()
@@ -85,8 +114,9 @@ const Scene = function( sceneParams )
     {
         unloads.forEach( unloadParams => 
         {
-            let object = ( unloadParams.namespace == "this" ) ? this : this.scripts.get( unloadParams.namespace );
+            let object = ( unloadParams.namespace == "this" ) ? self : self.modules.get( unloadParams.namespace );
             let f = object[ unloadParams.execute ];
+
             if ( f )
                 f( unloadParams.arguments );
         } );
@@ -96,15 +126,17 @@ const Scene = function( sceneParams )
     
     async function load() 
     {
-        await contents.forEach( async ( params ) => importModule( params ) );
+        Promise.all( contents.map( async ( params ) => await importModule( params ) ) );
     }
 
     // load the module to self[ namespace ] and invoke it
     async function importModule( params )
     {
         let module   = await import( `./${ params.path }.js` );
-        let instance = await new module[ params.default ]();
-        let result   = await instance[ params.invoke ]( params );
+        let instance = await new module[ params.default ]( params.arguments );
+
+        // invoke the function
+        await instance[ params.invoke ]( params );
 
         self.modules.set( params.namespace, instance );
         

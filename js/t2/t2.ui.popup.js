@@ -3,18 +3,6 @@ const Popup = function( module )
     let self = this;
     let el = t2.common.el;
     let tools = [];
-    
-    
-    this.addComponent = async function( componentParams )
-    {
-        let module    = await import( `../t2/t2.ui.${ componentParams.component }.js` );
-        let component = await new module.default();
-            component.init( componentParams );
-        
-        this.components.set( componentParams.component, component );
-
-        return component;
-    };
 
     this.addLink = function( link )
     {
@@ -28,8 +16,6 @@ const Popup = function( module )
         self.clear();
         self.element.classList.add( "hidden" );
     };
-    
-    this.components = new Map();
 
     this.init = function( params )
     {

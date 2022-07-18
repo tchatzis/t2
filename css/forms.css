@@ -18,6 +18,12 @@ input[ type=checkbox ]
     width: 21px;
 }
 
+input[ type=number ]
+{
+    max-width: 50px;
+    color: lime;
+}
+
 input[ type=submit ]
 {
     border: 1px solid silver;

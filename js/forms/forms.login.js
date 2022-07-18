@@ -2,6 +2,8 @@ const Login = function()
 {
     this.init = function( params )
     {
+        //console.warn( "login init" );
+        
         let parent = t2.common.getParent( params );
         
         let login = t2.common.el( "div", parent );
@@ -10,7 +12,7 @@ const Login = function()
     
     this.success = function()
     {
-        console.log( "login success" );
+        //console.warn( "login success" );
     };
 };
 

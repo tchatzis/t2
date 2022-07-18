@@ -111,7 +111,7 @@ const Handlers = function( module )
         let popup = this;
             popup.clear();
         
-        let list = popup.components.get( "list" );
+        let list = t2.ui.components.get( "list" );
         let map = list.args.map;
         let params = { map: map, mode: "edit", name: action, parent: popup.element };
 
@@ -121,7 +121,7 @@ const Handlers = function( module )
     this.empty = function( name )
     {
         let popup = this;
-        let list = popup.components.get( "list" );
+        let list = t2.ui.components.get( "list" );
         let map = list.args?.map;
 
         if ( map ) 
@@ -139,13 +139,10 @@ const Handlers = function( module )
         // popup : list
         
         let popup = this;
-        
-        console.log(params)
-        
+
         if ( params.array?.length || params.map?.size )
         {
-            let list = await popup.addComponent( { id: "Pairs", component: "list", parent: popup.element } );
-                list.init( { id: params.name, parent: params.parent } );
+            let list = await t2.ui.addComponent( { id: "Pairs", component: "list", parent: popup.element } );
                 list.invoke( module.forms[ params.mode ] );
                 list.populate( { map: params.map, mode: params.mode, name: params.name, orderBy: "price" } );   
         }
@@ -274,11 +271,14 @@ const Handlers = function( module )
             } );
             
             // display clone in popup
+            // TODO: implement this
+            console.error( module );
+            //let popup = await scene.addComponent( { id: "popup", component: "popup", parent: t2.ui.elements.get( "middle" ), module: svg } );
             let popup = new t2.Popup( module );
                 popup.addLink( { text: "Set", f: () => self.set.call( popup ) } );
                 popup.init( { name: "Pairs", parent: t2.ui.getElement( "middle" ) } );
 
-            let list = await popup.addComponent( { id: "Pairs", component: "list", parent: popup.element } );
+            let list = await t2.ui.addComponent( { id: "Pairs", component: "list", parent: popup.element } );
                 list.invoke( module.forms.read );
                 list.populate( { array: Array.from( items.values() ), mode: "read", orderBy: "price" } );
         }
@@ -328,8 +328,7 @@ const Handlers = function( module )
         let list = async ( action ) =>
         {                        
             let array = module.symbols.get( symbol )[ action ];
-            let list = new t2.List( module );
-                list.init( { id: action, parent: t2.ui.elements.get( "content" ) } );
+            let list = await t2.ui.addComponent( { id: action, component: "list", parent: t2.ui.elements.get( "content" ), module: module } );
                 list.listener( { type: "mouseover", handler: self.match } );
                 list.listener( { type: "mouseout", handler: self.nomatches } );
                 list.listener( { type: "click", handler: self.pair } );

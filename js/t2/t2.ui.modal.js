@@ -1,4 +1,4 @@
-const Modal = function()
+const Modal = function( module )
 {
     let self = this;
     

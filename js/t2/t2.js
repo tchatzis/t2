@@ -1,5 +1,6 @@
 import Common from "./t2.common.js";
 import Controls from "../modules/controls.js";
+import Icons from "./t2.icons.js";
 import IndexedDB from "../modules/indexeddb.js";
 import List from "./t2.ui.list.js";
 import Movie from "../modules/movie.js";
@@ -15,6 +16,7 @@ const T2 = function()
         this.common = new Common();
         this.controls = new Controls();
         this.db = new IndexedDB();  
+        this.icons = new Icons();
         this.movie = new Movie();
         this.ui = new UI();
         

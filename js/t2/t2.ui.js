@@ -1,6 +1,17 @@
 const UI = function()
 {
     let self = this;
+
+    this.addComponent = async function( componentParams )
+    {
+        let module    = await import( `../t2/t2.ui.${ componentParams.component }.js` );
+        let component = await new module.default( componentParams.module );
+            component.init( componentParams );
+        
+        this.components.set( componentParams.component, component );
+
+        return component;
+    };
     
     this.addElement = function( elParams )
     {
@@ -11,7 +22,11 @@ const UI = function()
             element.setAttribute( "data-ignore", elParams.ignore );
 
         self.elements.set( elParams.id, element );
+
+        return element;
     };
+
+    this.components = new Map();
     
     this.elements = new Map();
     
@@ -21,8 +36,6 @@ const UI = function()
     {
         elArray.forEach( elParams => this.addElement( elParams ) );
     };
-
-    
 };
 
 export default UI;

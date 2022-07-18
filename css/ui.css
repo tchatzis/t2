@@ -61,21 +61,25 @@
 
 .icon
 {
-    border: 1px solid #333;
-    border-radius: 4px;
+    align-items: center;
+    border-left: 1px solid #333;
+    border-right: 1px solid #333;
     color: silver;
     cursor: pointer;
+    display: flex;
     font-size: 1em;
     height: 20px;
+    justify-content: center;
     line-height: 21px;
+    padding-left: 4px;
+    padding-right: 4px;
     min-width: 21px;
     text-align: center; 
 }
 
 .icon:hover
 {
-    background-color: #666;
-    color: yellow;
+    background-color: #600;
 }
 
 .link, .tool
@@ -88,7 +92,7 @@
     cursor: pointer;
     font-size: 0.8em;
     margin-top: 1px;
-    min-width: 10vw;
+    min-width: 4vw;
     padding: 2px 0 2px 5px;
     pointer-events: auto;
     white-space: nowrap;

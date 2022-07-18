@@ -8,14 +8,14 @@ const Movie = function()
     {
         let scene = new Scene( sceneParams );
 
-        this.scenes.set( scene.parameters.name, scene );
+        self.scenes.set( scene.parameters.name, scene );
 
-        return this.scenes.get( scene.parameters.name );
+        return scene;
     };
-    
+
     this.editScene = function( name, config )
     {
-        let scene = this.scenes.get( name );
+        let scene = self.scenes.get( name );
 
         for( let key in config )
             scene[ key ] = config[ key ];
@@ -23,10 +23,10 @@ const Movie = function()
 
     this.next = function( name )
     {
-        this.scene = this.scenes.get( name );
+        let scene = self.scenes.get( name );
         
-        if ( this.scene )
-            this.scene.start( this );  
+        if ( scene )
+            scene.start( self );  
         else
             console.error( name, "is not defined" );
     };

@@ -6,8 +6,8 @@ const Canvas = function()
     {
         this.element = t2.common.el( "canvas", params.parent );
         this.element.id = params.id;
-        this.element.width = params.parent.clientWidth;
-        this.element.height = params.parent.clientHeight;
+        this.element.setAttribute( "width", params.parent.clientWidth );
+        this.element.setAttribute( "height", params.parent.clientHeight );
         
         this.ctx = this.element.getContext( "2d" );  
     };

@@ -1,12 +1,7 @@
-import Data from "./trades.data.js";
-
 const Forms =  function( module )
 {
     let el = t2.common.el;
-    let fields = [ "symbol", "action", "qty", "price", "value", "date", "brokerage" ];
-    
-    //TODO: need to force the order of the item keys
-    
+
     this.create = function( params )
     {
         let list = this;
@@ -14,7 +9,7 @@ const Forms =  function( module )
 
         let form = el( "form", params.parent );
             form.id = id;
-            form.addEventListener( "submit", ( e ) => module.handlers.create( e, params ) );
+            form.addEventListener( "submit", ( e ) => module.handlers.create.call( list, e, params ) );
 
         for ( let key in params.item )
             format( key );
@@ -54,6 +49,13 @@ const Forms =  function( module )
                 case "action":
                     display = true;
                     css = params.name.toLowerCase();
+                    size = 3;
+                    type = "text";
+                    break;
+
+                case "notes":
+                    display = true;
+                    css = key.toLowerCase();
                     size = 3;
                     type = "text";
                     break;
@@ -116,11 +118,13 @@ const Forms =  function( module )
             let display = false;
             let content = params.item[ key ];
             let css;
+            let size;
+            let type;
 
             switch( key )
             {
                 case "brokerage":
-                    display = true;
+                    display = false;
                     css = key;
                     break;
 
@@ -131,6 +135,13 @@ const Forms =  function( module )
                 case "action":
                     display = true;
                     css = params.name.toLowerCase();
+                    break;
+
+                case "notes":
+                    display = true;
+                    css = params.name.toLowerCase();
+                    size = 3;
+                    type = "text";
                     break;
 
                 case "qty":
@@ -171,12 +182,12 @@ const Forms =  function( module )
     {
         let list = this;
         let id = params.name + params.item.id;
-        
+
         params.parent.innerHTML = null;
-        
+
         let form = el( "form", params.parent );
             form.id = id;
-            form.addEventListener( "submit", ( e ) => module.handlers.update( e, params ) );
+            form.addEventListener( "submit", ( e ) => module.handlers.update.call( list, e, params ) );
 
         for ( let key in params.item )
             format( key );
@@ -216,6 +227,13 @@ const Forms =  function( module )
                 case "action":
                     display = true;
                     css = params.name.toLowerCase();
+                    size = 3;
+                    type = "text";
+                    break;
+
+                case "notes":
+                    display = true;
+                    css = key.toLowerCase();
                     size = 3;
                     type = "text";
                     break;

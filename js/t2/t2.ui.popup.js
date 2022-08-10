@@ -1,80 +1,84 @@
-const Popup = function( module )
+const Popup = function()
 {
     let self = this;
     let el = t2.common.el;
-    let tools = [];
+    let links = [];
+    let clear = [];
+    let args = arguments[ 0 ];
 
     this.addLink = function( link )
     {
-        tools.push( link );
+        links.push( link );
     };
-    
-    this.clear = () => t2.common.clear( [ "popup", "toolbar" ] );
+
+    this.clear = () => Array.from( self.element.children ).forEach( child => child.remove() );
 
     this.close = function()
     {
-        self.clear();
-        self.element.classList.add( "hidden" );
+        self.hide();
+        self.clear(); 
+    };
+
+    this.hide = function()
+    {
+        self.element.style.display = "none";
     };
 
     this.init = function( params )
     {
-        if ( !module.popup )
-        {
-            // new element
-            self.parent = params.parent;
-            self.element = el( "div", self.parent );
-            self.element.setAttribute( "data-ignore", "clear" );
-            self.element.classList.add( "popup" );
+        self.element = t2.ui.elements.get( "popup" );
 
-            module.popup = self;
-            t2.ui.elements.set( "popup", self.element );
-        }
-        else
-        {
-            // recycled element
-            self.element = module.popup.element;
-            self.element.classList.remove( "hidden" );
-            self.clear();
-        }
+        if ( params.parent )
+            params.parent.appendChild( self.element );
         
-        self.tools( params );
-    };
-    
-    this.tools = function( params )
-    {
+        self.close();
+        self.show();
+
         let flex = el( "div", self.element );
             flex.classList.add( "flex" );
+            flex.setAttribute( "data-ignore", "clear" ); 
 
-        let toolbar = el( "div", flex );
-            toolbar.id = "toolbar";
-            toolbar.classList.add( "toolbar" );
-            self.toolbar = toolbar;
+        self.links( flex );
+        self.update();
 
-        //let title = el( "div", toolbar );
-        //    title.classList.add( "title" );
-        //    title.textContent = params.name;
+        let title = el( "div", self.toolbar );
+            title.classList.add( "title" );
+            title.textContent = params.title;
 
-        let close = el( "div", flex );
-            close.classList.add( "icon" );
-            close.textContent = "X";
-            close.addEventListener( "click", () => self.close.call( module ) );   
-
-        links.call( module );
-        
-        tools = [];
+        return self;
     };
 
-    function links()
+    this.links = function( parent )
     {
-        tools.forEach( params => 
+        self.toolbar = el( "div", parent );
+        self.toolbar.id = "toolbar";
+        self.toolbar.classList.add( "toolbar" );
+
+        let close = el( "div", parent );
+            close.classList.add( "icon" );
+            close.textContent = "X";
+            close.addEventListener( "click", () => self.close() );   
+
+        links = [];
+    };
+
+    this.refresh = () => t2.common.clear( [ "popup" ] );
+
+    this.show = function()
+    {
+        self.element.style.display = "block";
+    };
+
+    this.update = function()
+    {
+        links.forEach( params => 
         {
             let link = el( "div", self.toolbar );
                 link.classList.add( "tool" );
                 link.textContent = params.text;
                 link.addEventListener( "click", () => params.f.call( self ) ); 
         } );
-    }
+    };
 };
 
 export default Popup;

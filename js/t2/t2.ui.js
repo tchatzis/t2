@@ -35,6 +35,8 @@ const UI = function()
     this.init = function( elArray )
     {
         elArray.forEach( elParams => this.addElement( elParams ) );
+
+        this.addElement( { id: "popup", ignore: "clear", parent: self.elements.get( "wrapper" ) } );
     };
 };
 

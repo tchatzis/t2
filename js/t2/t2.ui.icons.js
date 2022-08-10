@@ -26,22 +26,20 @@ const Menu = function()
 
         params.array.forEach( link =>
         {
-            let element = t2.common.el( "div", this.element );
-                element.classList.add( "link" );
-                element.textContent = link;
-                element.dataset.link = link;
+            link.classList.add( "icon" );
+            this.element.appendChild( link );
             
-            map.set( element, new Map() );
+            map.set( link, new Map() );
         } );
     };
 
     this.setActive = function( link )
     {
-        link.classList.add( "active" );
+        link.classList.add( "picked" );
 
         if ( active.curr && active.curr !== link )
         {
-            active.curr.classList.remove( "active" );   
+            active.curr.classList.remove( "picked" );   
         }
 
         active.curr = link;  

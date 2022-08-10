@@ -51,18 +51,14 @@ const Controls = function()
         function check( params )
         {
             let array = map.get( params.name );
+            let index = array.findIndex( item => params.item.id == item.id );
 
-            if ( params.parent.classList.contains( "checked" ) )
-            {
+            // add item if not in array already
+            if ( index == -1 )
                 array.push( params.item );
-            }
-            else
-            {
-                let index = array.findIndex( item => params.item.id == item.id );
-                
-                if ( index > -1 )
-                    array.splice( index, 1 );
-            }
+            // if item is found in array and the checkbox is not checked then remove from array
+            else if ( ( index > -1 ) && !params.parent.classList.contains( "checked" ) )
+                array.splice( index, 1 );
 
             map.set( params.name, array );
         }

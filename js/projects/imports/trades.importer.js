@@ -1,8 +1,9 @@
-import trades from "./trades.raw.js";
-
 const Importer = function()
 {
+    let self = this;
     const actions = [ "BUY", "SELL" ];
+    let args = arguments[ 0 ];
+    let trades;
     
     const Data = 
     {     
@@ -13,8 +14,9 @@ const Importer = function()
 
             this.symbol = a[ 0 ];
             this.action = a[ 2 ];
+            this.notes = "";
             this.sign = actions.indexOf( this.action ) * 2 - 1;
-            this.date = a[ 3 ];
+            this.date = a[ 3 ].toLocaleDateString();
             this.qty = Number( a[ 4 + offset ] );
             this.price = Number( a[ 5 + offset ] );
             this.value = Math.round( this.qty * this.price * 100 ) / 100; 
@@ -26,14 +28,36 @@ const Importer = function()
         TDAmeritrade: function( line )
         {
             let a = line.split( " " );
+            let offset = 0;
+            let notes;
+            let types = [ "COVER", "SHORT" ];
+            let options = [ "BUY", "SELL", "BUY TO COVER", "SELL SHORT" ];
+                options.forEach( action =>
+                {
+                    let a = action.split( " " );
+                    notes = types.find( ( type, index ) => ( line.includes( type ) && line.includes( actions[ index ] ) ) );
+                    let hasAction = line.includes( action );
 
-            this.action = a[ 0 ];
+                    if ( hasAction && notes )
+                    {
+                        offset = a.length - 1;
+                        this.action = a[ 0 ];
+                        this.notes = notes;
+                    }
+                    else if ( hasAction )
+                    {
+                        offset = a.length - 1;
+                        this.action = a[ 0 ];
+                        this.notes = "";
+                    }
+                } );
+
             this.sign = actions.indexOf( this.action ) * 2 - 1;
-            this.qty = Number( a[ 1 ] );
-            this.symbol = a[ 2 ];
-            this.price = Number( a[ 4 ] );
-            this.time = a[ 5 ];
-            this.date = a[ 6 ];
+            this.qty = Number( a[ 1 + offset ] );
+            this.symbol = a[ 2 + offset ];
+            this.price = Number( a[ 4 + offset ] );
+            this.time = a[ 5 + offset ];
+            this.date = a[ 6 + offset ].toLocaleDateString();
             this.value = Math.round( this.qty * this.price * 100 ) / 100;
             this.brokerage = "TDAmeritrade";
 
@@ -47,6 +71,8 @@ const Importer = function()
     {
         Robinhood: function( brokerage )
         {
+            self.init();
+            
             let array = trades.split( "\n" );
             let scrubbed = [];
             let lines = 3;
@@ -80,12 +106,14 @@ const Importer = function()
                 }
             } );
             
-            console.error( "records", array.length, !( array.length % lines ), scrubbed.length );  
-            return scrubbed.map( line => { return { data: new Data[ brokerage ]( line ) } } );
+            //console.error( "records", array.length, !( array.length % lines ), scrubbed.length );  
+            return scrubbed.map( line => new Data[ brokerage ]( line ) );
         },
         
         TDAmeritrade: function( brokerage )
         {
+            self.init();
+            
             let array = trades.split( "Filled" );
             let scrubbed = [];
             
@@ -106,11 +134,42 @@ const Importer = function()
                     scrubbed.push( line );
             } );
 
-            return scrubbed.map( line => { return { data: new Data[ brokerage ]( line ) } } );            
+            return scrubbed.map( line => new Data[ brokerage ]( line ) );            
         }
+    };
+
+    this.init = function()
+    {
+        trades = args.input.textContent;
     };
     
     this.scrub = ( brokerage ) => scrubbers[ brokerage ]( brokerage );
+
+    this.save = function( table, array, bool )
+    {
+        let index = 0;
+        let length = array.length;
+
+        async function transaction( record )
+        {
+            let data = { ... record };
+            delete data.index;
+            delete data.list;
+            delete data.row;
+
+            if ( bool )
+                await t2.db.tx.create( table, data );
+            else
+                console.log( data );
+
+            index++;
+
+            if ( index < length )
+                transaction( array[ index ] );
+        }
+
+        transaction( array[ index ] );
+    };
 };
 
 export default Importer;

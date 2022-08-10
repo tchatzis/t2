@@ -19,12 +19,25 @@ const Handlers = function( module )
     this.checked = async function( args )
     {
         // checkbox checked handler
-        
-        let popup = self.popup( args ); 
+
         let checkbox = this;   
-        let params = { map: checkbox.map, mode: module.mode, name: args.name, parent: popup.element };
-        
-        self.list.call( popup, params );
+
+        let popup = await t2.ui.addComponent( { title: args.name, component: "popup", parent: t2.ui.elements.get( "middle" ) } );
+        let list = await t2.ui.addComponent( { id: args.name, component: "list", parent: popup.element } );
+            popup.addLink( { text: "Edit",   f: () => self.edit.call( popup, checkbox ) } );
+            popup.addLink( { text: "Delete", f: () => self.delete.call( popup, checkbox ) } );
+            popup.update();
+
+        let array = checkbox.map.get( args.name );
+
+        if ( !array.length )
+        {
+            popup.close()
+            return;
+        }
+
+        list.invoke( module.forms[ module.mode ] );
+        list.populate( { array: array, orderBy: "price" } );
     };
     
     this.clicked = async function()
@@ -44,12 +57,14 @@ const Handlers = function( module )
 
         module.totals.subtotals = [];
         
+        //t2.common.remove( [ "popup" ] );
+        
         self.reset();
         self.matches = [];
         self.selected( symbol );
     };
 
-    this.color = ( item ) => `hsla( ${ item.index / ( item.count + 1 ) * 360 }, 100%, 30%, 0.3 )`;
+    this.color = ( n ) => `hsla( ${ n * 360 }, 100%, 30%, 0.3 )`;
     
     this.create = async function( e, params )
     {
@@ -63,8 +78,8 @@ const Handlers = function( module )
         let date = string[ 0 ];
         let time = string[ 1 ];
         let data = {};
-        data.date = date;
-        data.time = time;
+            data.date = date;
+            data.time = time;
 
         Object.keys( params.item ).forEach( key => data[ key ] = formData.get( key ) );
 
@@ -76,81 +91,66 @@ const Handlers = function( module )
         module.reload( params.item.symbol );
     };
     
-    this.delete = async function( action )
+    this.delete = async function( checkbox )
     {
         // popup : delete link handler
-        
-        let popup = this;
-        let list = popup.components.get( "list" );
-        let map = list.args.map;
 
         let proceed = confirm( "Are you sure you want to delete?" );
 
-        if ( proceed )
-        {
-            let symbol;
+        if ( !proceed )
+            return;
 
-            let promises = map.get( action ).map( async ( item ) => 
-            {
-                await t2.db.tx.delete( module.table, item.id );
-  
-                symbol = item.symbol;
-            } ); 
+        let array = checkbox.map.get( checkbox.name );
+        let action;
+        let symbol;
+
+        let promises = array.map( async ( item, index ) => 
+        {
+            await t2.db.tx.delete( module.table, item.id );
             
-            await Promise.all( promises ); 
-            
-            popup.close();
-            module.reload( symbol );
-        }
+            // remove item from array
+            array.splice( index, 1 );
+
+            // remove deleted row
+            item.row.remove();
+
+            action = item.action;
+            symbol = item.symbol;
+        } ); 
+
+        await Promise.all( promises );
+        
+        // update the map
+        checkbox.map.set( action, [] );
+
+        let popup = this;
+            popup.close();  
+        
+        module.reload( symbol );
     };
     
-    this.edit = function( action )
+    this.edit = async function( checkbox )
     {
         // popup : edit link handler
+
+        module.mode = "edit";
         
         let popup = this;
-            popup.clear();
-        
-        let list = t2.ui.components.get( "list" );
-        let map = list.args.map;
-        let params = { map: map, mode: "edit", name: action, parent: popup.element };
+            popup.refresh();
 
-        self.list.call( popup, params );
-    };
-    
-    this.empty = function( name )
-    {
-        let popup = this;
-        let list = t2.ui.components.get( "list" );
-        let map = list.args?.map;
+        let array = checkbox.map.get( checkbox.name );
 
-        if ( map ) 
+        if ( array.length )
         {
-            map.set( name, [] );  
-            list.args.array = [];
-            list.args.map = map;
-        }
-
-        list.populate( list.args );
-    };
-
-    this.list = async function( params )
-    {
-        // popup : list
-        
-        let popup = this;
-
-        if ( params.array?.length || params.map?.size )
-        {
-            let list = await t2.ui.addComponent( { id: "Pairs", component: "list", parent: popup.element } );
-                list.invoke( module.forms[ params.mode ] );
-                list.populate( { map: params.map, mode: params.mode, name: params.name, orderBy: "price" } );   
+            let list = await t2.ui.addComponent( { id: "popup", component: "list", parent: popup.element } );
+                list.map = checkbox.map;
+                list.invoke( module.forms[ module.mode ] );
+                list.populate( { array: array, orderBy: "price" } );
         }
         else
             popup.close();
     };
 
-    
     this.match = function( item )
     {
         // match and highlight equal qty and price range
@@ -198,7 +198,7 @@ const Handlers = function( module )
         module.actions.forEach( action =>
         {
             let items = module.symbols.get( item.symbol )[ action ];
-                items.forEach( item => item.row.classList.remove( "match" ) );
+                items.forEach( item => item.row?.classList.remove( "match" ) );
         } );
     };
 
@@ -210,7 +210,7 @@ const Handlers = function( module )
         {
             return Array.from( map.values() ).reduce( ( prev, curr ) => prev + curr, 0 );
         }
-        
+
         let action = self.pairs.get( item.action );
         let rows = self.pairs.get( "ROWS" );
         let items = self.pairs.get( "ITEMS" );
@@ -265,45 +265,47 @@ const Handlers = function( module )
         // set the classes
         if ( buy == sell )
         {
-            array.forEach( row => 
-            {
-                row.classList.add( "pair" );
-            } );
-            
-            // display clone in popup
-            // TODO: implement this
-            console.error( module );
-            //let popup = await scene.addComponent( { id: "popup", component: "popup", parent: t2.ui.elements.get( "middle" ), module: svg } );
-            let popup = new t2.Popup( module );
-                popup.addLink( { text: "Set", f: () => self.set.call( popup ) } );
-                popup.init( { name: "Pairs", parent: t2.ui.getElement( "middle" ) } );
+            array.forEach( row => row.classList.add( "pair" ) );
 
-            let list = await t2.ui.addComponent( { id: "Pairs", component: "list", parent: popup.element } );
+            let popup = await t2.ui.addComponent( { title: "Related Transactions", component: "popup", parent: t2.ui.elements.get( "middle" ) } );
+                popup.addLink( { text: "Set", f: ( e ) => self.set.call( popup ) } );
+                popup.addLink( { text: "Unset", f: ( e ) => self.unset.call( popup ) } );
+                popup.update();
+
+            let list = await t2.ui.addComponent( { id: "related", component: "list", parent: popup.element } );
                 list.invoke( module.forms.read );
-                list.populate( { array: Array.from( items.values() ), mode: "read", orderBy: "price" } );
+                list.populate( { array: Array.from( items.values() ), orderBy: "price" } );
         }
         else
         {
-            array.forEach( row => 
-            {
-                row.classList.add( "pairing" );
-            } );
-            
-            if ( module.popup )
-                module.popup.close();
+            array.forEach( row => row.classList.add( "pairing" ) );
         }
     };
-    
-    this.popup = function( params )
+
+    function postTransaction( params )
     {
-        let popup = new t2.Popup( module );
-            popup.addLink( { text: "Edit",   f: () => self.edit.call( popup, params.name ) } );
-            popup.addLink( { text: "Empty",  f: () => self.empty.call( popup, params.name ) } );
-            popup.addLink( { text: "Delete", f: () => self.delete.call( popup, params.name ) } );
-            popup.init( { name: params.name, parent: t2.ui.getElement( "middle" ) } );        
-        
-        return popup;
-    };
+        let list = this;
+        let array = list.array;
+        let item = params.item;
+        let index = array.findIndex( data => data == item );
+
+        // remove item from array
+        array.splice( index, 1 );
+
+        // update the map
+        list.map.set( item.action, array );
+
+        // hide the popup if empty
+        if ( !array.length )
+        {
+            let popup = t2.ui.components.get( "popup" );
+                popup.close();
+        }
+
+        // remove updated row
+        params.parent.remove();
+        module.reload( item.symbol );
+    }
     
     this.reset = function()
     {
@@ -325,19 +327,31 @@ const Handlers = function( module )
         module.mode = "read";
         module.totals.reset();
 
+        let parent = t2.ui.elements.get( "content" );
+
         let list = async ( action ) =>
         {                        
             let array = module.symbols.get( symbol )[ action ];
-            let list = await t2.ui.addComponent( { id: action, component: "list", parent: t2.ui.elements.get( "content" ), module: module } );
-                list.listener( { type: "mouseover", handler: self.match } );
-                list.listener( { type: "mouseout", handler: self.nomatches } );
-                list.listener( { type: "click", handler: self.pair } );
+            let list = await t2.ui.addComponent( { id: action, component: "list", parent: parent, module: module } );
+                list.addListener( { type: "mouseover", handler: self.match } );
+                list.addListener( { type: "mouseout", handler: self.nomatches } );
+                list.addListener( { type: "click", handler: self.pair } );
                 list.invoke( module.forms[ module.mode ] );
                 list.invoke( self.checkbox );
                 list.invoke( self.values );
-                list.append( module.forms.create, 
-                    { item: { symbol: symbol, action: action, qty: null, price: null, brokerage: "TDAmeritrade" }, name: action } );
-                list.populate( { array: array, mode: module.mode, orderBy: "price" } );
+                list.append( module.forms.create, { item: { symbol: symbol, action: action, notes: "", qty: null, price: null, brokerage: "TDAmeritrade" }, name: action } );
+                list.populate( { array: array, orderBy: "price" } );
+
+            /*let schema = new t2.Schema( { action: "BUY" } );
+            let columns = schema.init( { handler: ( e ) => e.preventDefault(), name: "trades", parent: content } );
+                columns.setCell( { mode: module.mode, display: 4, name: "symbol",    css: null,               input: { type: "text", value: "TEST" } } );
+                columns.setCell( { mode: module.mode, display: 3, name: "action",    css: { data: "action" }, input: { type: "text", value: "BUY" } } );
+                columns.setCell( { mode: module.mode, display: 3, name: "notes",     css: { column: "" },     input: { type: "text", value: "" } } );
+                columns.setCell( { mode: module.mode, display: 3, name: "qty",       css: { class: "info" },  input: { type: "number", value: "", min: 0, step: 1 } } );
+                columns.setCell( { mode: module.mode, display: 4, name: "price",     css: null,               input: { type: "number", value: "", step: 0.001 } } );
+                columns.setCell( { mode: module.mode, display: 8, name: "brokerage", css: null,               input: { type: "text", value: "TDAmeritrade" } } );
+                columns.setCell( { mode: module.mode, display: 3,                    css: null,               input: { type: "submit", value: "add" } } );
+                console.log( columns )*/
             
             module.totals.content( action );
             module.totals.subcontent( action );
@@ -358,7 +372,31 @@ const Handlers = function( module )
 
         let source = self.pairs.get( "SOURCE" );
         let array = Array.from( source.values() );
-        let color = self.color( array[ array.length - 1 ] );
+        let item = array[ array.length - 1 ];
+        let index = Number( item.row.dataset.index );
+        let count = Number( item.row.dataset.count );
+        let n = Math.abs( ( index / count ) - ( index % 2 ) );
+        let color = self.color( n );
+        let popup = this;
+            popup.close();
+ 
+        array.forEach( item => 
+        {
+            item.row.classList.remove( "match" );
+            item.row.classList.remove( "pair" );
+            item.row.style.backgroundColor = color;
+        } );
+        
+        self.reset();
+    };
+
+    this.unset = function()
+    {
+        // unset the pairs
+
+        let source = self.pairs.get( "SOURCE" );
+        let array = Array.from( source.values() );
+        let color = "transparent";
         let popup = this;
             popup.close();
  
@@ -374,8 +412,8 @@ const Handlers = function( module )
     
     this.update = async function( e, params )
     {
-        // popup: edit form submit handler
-        
+        // list: edit form submit handler
+
         e.preventDefault();
 
         let formData = new FormData( e.target );
@@ -384,15 +422,14 @@ const Handlers = function( module )
         let date = string[ 0 ];
         let time = string[ 1 ];
         let data = {};
-        data.date = date;
-        data.time = time;
+            data.date = date;
+            data.time = time;
 
         Object.keys( params.item ).forEach( key => data[ key ] = formData.get( key ) );
 
         await t2.db.tx.update( module.table, params.item.id, new Data( data ) );
 
-        params.parent.remove();
-        module.reload( params.item.symbol );
+        postTransaction.call( this, params );
     };
     
     this.values = ( params ) => module.totals.values( params.name, params.item );

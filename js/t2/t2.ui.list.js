@@ -5,6 +5,11 @@ const List = function( module )
     let invokes  = [];
     let el = t2.common.el;
 
+    this.addListener = function( event )
+    {
+        handlers.push( event );
+    };
+
     this.append = async function( f, params )
     {
         let row = el( "div", self.element );
@@ -35,54 +40,52 @@ const List = function( module )
     {
         invokes.push( f );
     };
-    
-    this.listener = function( event )
-    {
-        handlers.push( event );
-    };
 
     this.populate = function( args )
     {
-        this.args = args;
         this.clear();
 
-        let array = args.map ? Array.from( args.map.get( args.name ) ) : args.array;
+        //let array = args.map ? Array.from( args.map.get( args.name ) ) : args.array;
+        let use = args.orderBy ? t2.common.sort( args.array, args.orderBy ) : args.array;
+            use.forEach( ( item, index ) => 
+            {             
+                let row = el( "div", self.element );
+                    row.classList.add( "row" );
+                    row.setAttribute( "data-id", item.id );
+                    row.setAttribute( "data-index", index );
+                    row.setAttribute( "data-count", use.length );
+                if ( item.disabled )
+                    row.classList.add( "disabled" );
+                
+                handle.call( row, item );
 
-        let use = args.orderBy ? t2.common.sort( array, args.orderBy ) : array;
+                item.index = index;
+                item.list = self;
+                item.row = row;
 
-        use.forEach( ( item, index ) => 
-        {             
-            let row = el( "div", self.element );
-                row.classList.add( "row" );
-                row.setAttribute( "data-id", item.id );
-            if ( item.disabled )
-                row.classList.add( "disabled" );
-            
-            handle.call( row, item );
+                let cell = el( "div", row );
+                    cell.classList.add( "data" );
+                    cell.textContent = index + 1;
+                
+                invoke( { item: item, name: this.id, parent: row } );
+            } );
 
-            item.index = index;
-            item.list = self;
-            item.row = row;
-
-            let cell = el( "div", row );
-                cell.classList.add( "data" );
-                cell.textContent = index + 1;
-            
-            invoke( { item: item, name: this.id, parent: row } );
-        } );
+        this.array = use;
     };
 
     function handle( item )
     {
+        // row event handlers
         handlers.forEach( event =>
         {
-            this.addEventListener( event.type, ( e ) => event.handler( item ) );
+            this.addEventListener( event.type, () => event.handler( item ) );
         } );
     }
     
     function invoke( params )
     {
-        invokes.forEach( f => f( params ) );
+        // pass list scope to invoked functions
+        invokes.forEach( f => f.call( self, params ) );
     }
 };
 

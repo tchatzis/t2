@@ -9,6 +9,11 @@
     min-width: 7em !important;
 }
 
+.BUY, .SELL
+{
+    width: 4em;
+}
+
 .buy
 {
     color: lightgreen !important;
@@ -27,8 +32,8 @@
 
 .data
 {
-    border-right: 1px solid #333;
-    border-bottom: 1px solid #333;
+    border-right: 1px solid #222;
+    border-bottom: 1px solid #222;
     color: silver;
     font-size: 0.8em;
     min-width: 4em;
@@ -79,7 +84,36 @@
 
 .icon:hover
 {
-    background-color: #600;
+    background-color: #222;
+}
+
+.input, .output
+{
+    border: 1px solid #222;
+    border-radius: 4px;
+    color: gray;
+    /*display: pre;*/
+    font-family: courier;
+    font-size: 0.8em;
+    height: calc( 100% - 50px );
+    margin: 10px;
+    padding: 10px;
+    width: calc( 50% - 40px );
+}
+
+.hform
+{
+    border: 1px solid orange;
+    border-radius: 10px;
+    display: inline-flex;
+    margin: 10px;
+    padding: 10px;
+}
+
+.highlight
+{
+    background-color: #033;
+    transition: background-color 1000ms linear;
 }
 
 .link, .tool
@@ -87,7 +121,6 @@
     border-bottom: 1px solid #222;
     border-left: 10px solid #222;
     border-right: 1px solid #222;
-    border-radius: 0 4px 4px 0;
     color: silver;
     cursor: pointer;
     font-size: 0.8em;
@@ -121,6 +154,39 @@
     background-color: rgba( 128, 128, 128, 0.3 );
 }
 
+.noclick
+{
+    pointer-events: none;
+}
+
+.nomatch
+{
+    background-color: #300;
+    transition: background-color 1000ms linear;
+}
+
+.notes
+{
+    border: 1px dashed yellow;
+}
+
+.number
+{
+    color: cyan;
+}
+
+.outline
+{
+    border-bottom: 1px solid black;
+    border-top: 1px solid transparent;
+}
+
+.outline:hover
+{
+    border-bottom: 1px solid #ccc;
+    border-top: 1px solid #ccc;
+}
+
 .pair
 {
     background-color: green !important;
@@ -131,18 +197,14 @@
     background-color: rgba( 0, 128, 0, 0.3 ); 
 }
 
-.popup
+.picked
 {
-    background-color: #111;
-    border-left: 1px solid #630;
-    border-top: 1px solid #630;
-    bottom: 24px;
-    min-width: 30%;
-    overflow-y: auto;
-    position: absolute;
-    min-height: 20%;
-    max-height: 80%;
-    right: 0;  
+    background-color: #060;
+}
+
+.picked:hover
+{
+    background-color: #060;
 }
 
 .row
@@ -165,7 +227,7 @@
 
 .sell
 {
-    color: red;
+    color: red !important;
 }
 
 .subsection
@@ -189,7 +251,9 @@
 
 .totals
 {
-    color: white;
+    color: white !important;
+    font-family: sans-serif;
+    font-size: 0.7em;
 }
 
 .tool
@@ -223,4 +287,11 @@
 .update
 {
     background-color: green;
+}
+
+.value
+{
+    color: #999;
+    min-width: 5em;
+    text-align: right;
 }

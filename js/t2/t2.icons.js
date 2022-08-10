@@ -98,11 +98,11 @@ const Icons = function()
             return svg;
         };
 
-
     this.init = function( params )
     {
         let svg = icons[ params.type ]( params );
-        let div = t2.common.el( "div", params.parent );
+            svg.style.pointerEvents = "none";
+        let div = document.createElement( "div" );
             div.classList.add( "icon" );
             div.dataset.type = params.type;
             div.dataset.style = params.style;
@@ -110,7 +110,6 @@ const Icons = function()
         
         return div;
     };
-
 };
 
 export default Icons;

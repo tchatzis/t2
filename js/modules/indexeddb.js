@@ -15,7 +15,7 @@ const IndexedDB = function()
         
         data.id = promise.result;
 
-        return { id: promise.result, data: data };
+        return { id: promise.result, data: data, table: table };
     };
     
     this.tx.delete = async function( table, id )
@@ -29,7 +29,7 @@ const IndexedDB = function()
             request.onerror = ( e ) => console.log( e.target.error );
         let complete = await scope.promise( transaction, "complete" );
 
-        return { id: id, data: promise.result };
+        return { id: id, data: promise.result, table: table };
     };
         
     this.tx.filter = async function( table, filters )
@@ -87,20 +87,8 @@ const IndexedDB = function()
         
         await promise;
 
-        return { id: id, data: data };
+        return { id: id, data: data, table: table };
     };
-    
-    /*this.tx.query = async function( table, query )
-    {
-        let data = [];
-        let transaction = scope.db.transaction( [ table ], "readonly" );
-        let store = transaction.objectStore( table );
-        let request = store.getAll( query );
-            request.onerror = ( e ) => console.log( e.target.error );
-        let promise = await scope.promise( request, "success" );
-        
-        return { id: 0, data: promise.result };
-    };*/
     
     this.tx.read = async function( table, id )
     {
@@ -111,7 +99,7 @@ const IndexedDB = function()
         let promise = await scope.promise( request, "success" );
         let data = promise.result;
 
-        return { id: id, data: promise.result };
+        return { id: id, data: promise.result, table: table };
     };
     
     this.tx.retrieve = async function( table )
@@ -143,46 +131,99 @@ const IndexedDB = function()
         
         await promise;
 
-        return { id: id, data: data };
+        return { id: id, data: data, table: table };
+    };
+
+    this.tx.overwrite = async function( table, id, data )
+    {
+        id = Number( id );
+        
+        let record = {};
+        let transaction = scope.db.transaction( [ table ], "readwrite" );
+        let store = transaction.objectStore( table );
+            store.openCursor().onsuccess = ( e ) =>
+            {
+                const cursor = e.target.result;
+                const value = cursor.value;
+
+                if ( value.id == id )
+                {
+                    data.id = id;
+
+                    const request = cursor.update( data );
+                        request.onsuccess = () => {};  
+                }
+                else
+                    cursor.continue();
+            };
+
+        return { id: id, data: record, table: table };        
     };
  
     this.tx.update = async function( table, id, data )
     {
+        id = Number( id );
+        
         let transaction = scope.db.transaction( [ table ], "readwrite" );
         let store = transaction.objectStore( table );
-        let request = store.put( data, id );
-            request.onerror = ( e ) => console.log( e.target.error );
-        let promise = await scope.promise( request, "success" );
+            store.openCursor().onsuccess = ( e ) =>
+            {
+                const cursor = e.target.result;
+                const value = cursor.value;
 
-        return { id: id, data: promise.result };        
+                if ( value.id == id )
+                {
+                    for ( let d in data )
+                    {
+                        if ( data.hasOwnProperty( d ) )
+                            value[ d ] = data[ d ];
+                    }
+
+                    const request = cursor.update( value );
+                        request.onsuccess = () => {};  
+                }
+                else
+                    cursor.continue();
+            };
+
+        return { id: id, data: data, table: table };        
     };
 
-    this.init = function()
+    this.init = function( params )
     {
         this.supported = "indexedDB" in window;
         
         if ( !this.supported )
             return false;
+
+        open( params, {} );
     };
-    
-    this.open = async function( name, version, table )
+
+    async function open( params )
     {
-        this.name = name;
-        this.version = version;
-        
-        let request = window.indexedDB.open( name, version );
-            request.onerror = ( e ) => console.error( e );
-        
-        if ( table )
-        {
-            let upgrade = await this.promise( request, "upgradeneeded" );//request.onupgradeneeded = ( e ) => scope.upgrade( e, table );
-        }
+        await scope.open( params );
+        t2.db.version = params.version;
+        console.log( "Open IndexedDB:", params );
+    }
+    
+    this.open = async function( params )
+    {    
+        //let params = { name: data.name, version: Number( data.version ) };
+        let request = window.indexedDB.open( ...Object.values( params ) );
+            request.onerror = ( e ) => 
+            {
+                //console.log( e.target.error.message )
+                params.version++;
+                open( params );
+            };
 
         let promise = await this.promise( request, "success" );
-        
-        this.db = promise.result;
-        
-        return this.db;
+
+        scope.db = promise.result;
+        scope.name = scope.db.name;
+        scope.version = scope.db.version;
+
+        return scope.db;
     };
     
     this.promise = function( emitter, type )
@@ -191,8 +232,8 @@ const IndexedDB = function()
         {
             const handle = ( e ) =>
             {
-                emitter.removeEventListener( type, handle );
                 resolve( e.target );
+                emitter.removeEventListener( type, handle );
             };
 
             emitter.addEventListener( type, handle );
@@ -200,21 +241,23 @@ const IndexedDB = function()
     };
     
     this.table = {};
-    this.table.add  = async ( table ) => this.open( this.name, this.version++, table );
-    /*this.table.get = async ( table ) => 
+
+    this.table.add = async function ( data )
     {
-        return scope.db.objectStore( table, { autoIncrement: true } );
-        
-    };*/
-    
-    this.upgrade = function( e, table )
+        scope.name = data.name;
+        scope.version = Number( data.version );
+
+        let request = window.indexedDB.open( data.name, data.version );
+        let upgrade = await scope.promise( request, "upgradeneeded" );
+        let db = upgrade.result;
+
+        if( !db.objectStoreNames.contains( data.table ) )
+            db.createObjectStore( data.table, { autoIncrement: true, keyPath: "id" } );
+    };
+
+    this.table.get = async function( table )
     {
-        console.log( "Upgrading...");
-        
-        let db = e.target.result;
-        
-        if( !db.objectStoreNames.contains( table ) )
-            db.createObjectStore( table, { autoIncrement: true } ); 
+        return await scope.db.objectStore( table, { autoIncrement: true } );
     };
 };
 

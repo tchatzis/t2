@@ -80,6 +80,22 @@
     width: calc( 100% - 25vw - 10px );    
 }
 
+#popup
+{
+    background-color: #111;
+    border-bottom: 1px solid #630;
+    border-left: 1px solid #222;
+    border-top: 1px solid #630;
+    bottom: 1px;
+    display: none;
+    min-width: 30%;
+    overflow-y: auto;
+    position: absolute;
+    min-height: 20%;
+    max-height: 80%;
+    right: 0;  
+}
+
 #subcontent, #submargin, #submenu
 {
     background-color: #111;
@@ -104,6 +120,7 @@
     border-bottom: 1px solid #660;
     border-left: 1px solid #660;
     justify-content: start;
+    overflow-y: auto;
 }
 
 #submenu

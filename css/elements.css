@@ -26,6 +26,35 @@ li
     margin-left: 0;
 }
 
+table
+{
+    border: none;
+    border-collapse: collapse;
+    border-spacing: 0;
+    height: 0;
+}
+
+tbody, tfoot, thead
+{
+    display: block;
+}
+
+tbody
+{
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+th
+{
+    border-bottom: 1px solid #222;
+    color: #666;
+    font-family: courier;
+    font-size: 0.8em;
+    font-weight: normal;
+    text-transform: capitalize;
+}
+
 ul
 { 
     list-style-type: disc;

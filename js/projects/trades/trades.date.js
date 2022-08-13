@@ -5,7 +5,7 @@ const Transactions = function( module )
 {
     let self = this;
     let map = new Map();
-
+    
     this.init = async function()
     {
         if ( !module.symbol )
@@ -15,7 +15,7 @@ const Transactions = function( module )
         module.actions.forEach( action => map.set( action, [] ) );
 
         // filter by symbol
-        this.array = module.data.all.filter( record => record.symbol == module.symbol );
+        this.array = module.data.all.filter( record => ( record.symbol == module.symbol && record.date == module.date ) );
 
         // split actions
         this.array.forEach( record => map.get( record.action ).push( record ) );
@@ -36,10 +36,10 @@ const Transactions = function( module )
 
     async function display( action )
     {
-        let container = await t2.ui.addComponent( { id: action, title: `${ action } ${ module.symbol }`, component: "container", parent: t2.ui.elements.get( "content" ), module: module } );
+        let container = await t2.ui.addComponent( { id: "date", title: `${ action } ${ module.symbol }`, component: "container", parent: t2.ui.elements.get( "content" ), module: module } );
         
         let table = await t2.ui.addComponent( { id: "table", component: "table", parent: container.element, module: module } );
-            table.handlers = { row: ( e, record ) => module.handlers.row( e, record ), update: ( e, record ) => module.handlers.update( e, record ) };    
+            table.handlers = { row: ( e ) => e.target.parentNode.classList.toggle( "pairing" ), update: module.handlers.update };    
             table.addColumn( { 
                 input: { name: "id", type: "hidden" }, 
                 cell: { css: {}, display: 0, modes: [ "edit" ] },
@@ -47,12 +47,7 @@ const Transactions = function( module )
             table.addColumn( { 
                 input: { name: "date", type: "text" }, 
                 cell: { css: { column: "" }, display: 6, modes: [ "read", "edit" ] },
-                format: [ "date" ],
-                handler: async ( cell, record ) => 
-                {
-                    module.view = cell.dataset.column;
-                    module.setDate( record.date );
-                } } );
+                format: [ "date" ] } );
             table.addColumn( { 
                 input: { name: "time", type: "text" }, 
                 cell: { css: { column: "" }, display: 6, modes: [ "edit" ] },
@@ -67,12 +62,7 @@ const Transactions = function( module )
                 format: [ "uppercase" ] } );
             table.addColumn( { 
                 input: { name: "notes", type: "text" }, 
-                cell: { css: { value: "action" }, display: 4, modes: [ "read", "edit" ] },
-                handler: async ( cell, record ) => 
-                {
-                    module.view = "short";
-                    module.refresh( record );
-                } } );
+                cell: { css: { value: "action" }, display: 4, modes: [ "read", "edit" ] } } );
             table.addColumn( { 
                 input: { name: "qty", type: "number", step: 1 }, 
                 cell: { css: { class: "info" }, display: 3, modes: [ "read", "edit" ] } } );

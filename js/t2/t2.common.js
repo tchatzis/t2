@@ -43,6 +43,15 @@ const Common = function()
         } );
     };
 
+    this.dates = function( array )
+    {
+        let dates = array.map( date => new Date( date ) ); 
+            dates.sort( ( a, b ) => ( a > b ) ? 1 : -1 );
+            dates = dates.map( date => t2.formats.date( date ) );
+
+        return dates;
+    };
+
     this.el = ( tag, parent ) => 
     { 
         let el = document.createElement( tag ); 
@@ -79,6 +88,15 @@ const Common = function()
     this.svg = function( tag )
     {
         return document.createElementNS( "http://www.w3.org/2000/svg", tag );
+    };
+
+    this.times = function( array )
+    {
+        let dates = array.map( date => new Date( date ) ); 
+            dates.sort( ( a, b ) => ( a > b ) ? 1 : -1 );
+        let times = dates.map( date => t2.formats.time( date ) );
+
+        return times;
     };
 };
 

@@ -1,136 +1,40 @@
-const Totals = function( module )
+async function totals( total )
 {
-    let el = t2.common.el;
+    let formats = new Map();    
+        formats.set( "open", { f: "dollar" } );
+        formats.set( "gain", { f: "dollar" } );
+        formats.set( "dividend", { f: "dollar" } );
+        formats.set( "closed", { f: "dollar" } );  
+        formats.set( "price", { f: "dollar" } );
+        formats.set( "qty", { f: "number" } );
+        formats.set( "buy", { f: "number" } );
+        formats.set( "div", { f: "number" } );
+        formats.set( "sell", { f: "number" } );
 
-    this.clear = () => t2.common.clear( [ "margin" ] );
-    
-    this.columns = new Map();
-    
-    // content: BUY and SELL lists
-    this.content = function( action )
+    let condition = total.open ? 1 - ( total.gain > 0 ) : 1 - ( total.closed > 0 );
+    let color = [ "green", "red" ][ condition ];
+
+    let row = t2.common.el( "div", t2.ui.elements.get( "margin" ) );
+
+    Array.from( formats.keys() ).forEach( key =>
     {
-        this.columns.set( action, this.aggregate[ action ] );
-    };
-    
-    this.init = function()
-    {
-        this.reset();
-        this.element = el( "div", t2.ui.elements.get( "margin" ) );
-        this.element.classList.add( "list" ); 
-    };
- 
-    this.margin = function()
-    {
-        this.reset();
+        if ( total[ key ] )
+        {
+            let line = t2.common.el( "div", row );
+                line.classList.add( "row" );
+                line.style.borderLeftColor = color;
+            
+            let params = formats.get( key );
+            let name = t2.common.el( "div", line );
+                name.classList.add( "data" );
+                name.textContent = key;
 
-        t2.common.sort( this.subtotals, "index" ).forEach( obj => 
-        {             
-            let row = el( "div", t2.ui.elements.get( "margin" ) );
-                row.classList.add( "row" );
-                row.style.borderColor = obj.item.color;
-
-            let cell = el( "div", row );
-                cell.classList.add( "data" );
-                cell.textContent = obj.subtotal.toFixed( 2 ); 
-        } );
-
-        let row = el( "div", t2.ui.elements.get( "margin" ) );
-            row.classList.add( "row" );
-
-        let cell = el( "div", row );
-            cell.classList.add( "data" );
-            cell.classList.add( "info" );
-            cell.textContent = this.total().toFixed( 2 );  
-    };
-       
-    this.reset = function()
-    {
-        this.clear();
-        this.aggregate = { BUY: { qty: 0, value: 0 }, SELL: { qty: 0, value: 0 } };
-    };
-    
-    this.subcontent = function( action )
-    {
-        let parent = t2.ui.elements.get( "subcontent" );
-        let map = this.columns.get( action );
-            map.avg = ( map.value && map.qty ) ? ( map.value / map.qty ).toFixed( 2 ) : null;
-            map.avg = map.avg ? Math.abs( map.avg ) : null;
-        
-        let row = el( "div", parent );
-            row.classList.add( "row" );
-        
-        let cell = el( "div", row );
-            cell.classList.add( "data" );
-            cell.textContent = "Totals";
-        
-        let array = [ action, [ "qty", 0 ], [ "avg", 2 ], [ "value", 2 ] ];
-            array.forEach( column =>
-            {
-                let cell = el( "div", row );
-                    cell.classList.add( "data" );
-                    cell.classList.add( "totals" );
-                    cell.textContent = Array.isArray( column ) ? Number( map[ column[ 0 ] ] ).toFixed( column[ 1 ] ) : column;
-            } );
-    };
-    
-    this.submargin = function()
-    {
-        let qty = this.columns.get( "BUY" ).qty - this.columns.get( "SELL" ).qty;
-        let value = this.columns.get( "SELL" ).value + this.columns.get( "BUY" ).value;
-        let avg = qty ? value / qty : value / this.columns.get( "SELL" ).qty;
-        let condition = 1 - ( value > 0 );
-        let css = module.actions[ condition ].toLowerCase();
-        let color = [ "green", "red" ][ condition ];
-
-        let row = el( "div", t2.ui.elements.get( "submargin" ) );
-            row.classList.add( "row" );
-            row.style.borderLeftColor = color;
-
-        let qtyEl = el( "div", row );
-            qtyEl.classList.add( "data" );
-            qtyEl.classList.add( "totals" );
-            qtyEl.textContent = qty.toFixed( 0 );            
-
-        let avgEl = el( "div", row );
-            avgEl.classList.add( "data" );
-            avgEl.classList.add( "totals" );
-            avgEl.textContent = avg.toFixed( 2 );            
-
-        let valEl = el( "div", row );
-            valEl.textContent = value.toFixed( 2 );
-            valEl.classList.add( "data" );
-            valEl.classList.add( "totals" );
-            valEl.classList.add( css );        
-    };
-
-    this.subtotal = function( item, other )
-    {
-        let map = new Map();
-        let array = Array.from( arguments );
-            array.forEach( data => map.set( data.action, data ) );
-        let sell = map.get( "SELL" );
-        let buy  = map.get( "BUY" );
-        let subtotal = sell.value + buy.value;
-
-        this.subtotals.push( { index: item.index, item: item, subtotal: subtotal } );       
-    };
-
-    this.subtotals = [];
-
-    this.total = function() 
-    {
-        let total = 0;
-
-        this.subtotals.forEach( obj => total += obj.subtotal );
-
-        return total;
-    };
-
-    this.values = function( action, item )
-    {
-        this.aggregate[ action ].qty += item.qty;
-        this.aggregate[ action ].value += item.value;
-    };
+            let div = t2.common.el( "div", line );
+                div.classList.add( "data" );
+                div.classList.add( "value" );
+                div.textContent = t2.formats[ params.f ]( total[ key ] );
+        }
+    } );
 };
 
-export default Totals;
+export default totals;

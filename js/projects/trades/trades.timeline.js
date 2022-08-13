@@ -1,6 +1,11 @@
+import { aggregate, reset, total } from "./trades.aggregate.js";
+import totals from "./trades.totals.js";
+
 const Timeline = function( module )
 {
-    this.init = function()
+    let self = this;
+
+    this.init = async function()
     {
         if ( !module.symbol )
             return;
@@ -8,15 +13,16 @@ const Timeline = function( module )
         let map = new Map();
 
         // filter by symbol and no dividends
-        let unsorted = module.data.all.filter( record => ( record.symbol == module.symbol && record.price > 0 ) );
-        let sorted = unsorted.sort( ( a, b ) => a.date > b.date ? 1 : -1 );
-            sorted.forEach( record =>
-            {
-                if ( !map.has( record.date ) )
-                    map.set( record.date, [] );
+        this.array = module.data.all.filter( record => ( record.symbol == module.symbol && record.action !== "DIV" ) );
+        this.array.forEach( record =>
+        {
+            let date = t2.formats.date( record.date );
+            
+            if ( !map.has( date ) )
+                map.set( date, [] );
 
-                map.get( record.date ).push( record );
-            } );
+            map.get( date ).push( record );
+        } );
 
         // begin chart
         let x = 0;
@@ -24,7 +30,7 @@ const Timeline = function( module )
         let chart = {};
         let points = {};
         let values = {};
-        let total = 0;
+
 
         // set up canvas and context
         let parent = t2.ui.elements.get( "content" );
@@ -45,9 +51,11 @@ const Timeline = function( module )
 
         // domain
         let dates = [];
-        let events = Array.from( map.keys() );
+        let events = t2.common.dates( Array.from( map.keys() ) );
             events.forEach( date =>
             {
+                date = t2.formats.date( date );
+                
                 points[ date ] = [];
                 values[ date ] = 0;
                 dates.push( { date: new Date( date ) } );
@@ -58,22 +66,18 @@ const Timeline = function( module )
                         let point = {};
                             point.date = new Date( record.date ).getTime();
                             point.price = record.price;
-                            point.qty = record.qty * record.sign;
+                            point.qty = record.qty;
 
-                        values[ record.date ] += record.value;
+                        values[ date ] += record.value;
 
                         points[ date ].push( point );
                     } );
-
-                total += values[ date ];
             } );
-
-        console.log( values, total );
 
         chart[ x ] = scale( "date", dates );
 
         // range
-        chart[ y ] = scale( "price", unsorted );
+        chart[ y ] = scale( "price", this.array );
 
         function xAxis()
         {
@@ -203,6 +207,9 @@ const Timeline = function( module )
         xAxis();
         yAxis();
         dot( points, "date", "price" );
+        reset();
+        aggregate( module.symbol, this.array );
+        totals( total );
     };
 
     function scale( key, array )

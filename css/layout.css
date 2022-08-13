@@ -11,7 +11,7 @@
 #content
 {
     /*background: linear-gradient( 45deg, rgba( 8, 8, 8, 1 ) 0%, rgba( 16, 16, 16, 1 ) 35%, rgba( 0, 0, 0, 1 ) 100% );*/
-    display: flex;
+    /*display: flex;*/
     justify-content: space-around;
     left: 0;
     height: calc( 100% - 60px );

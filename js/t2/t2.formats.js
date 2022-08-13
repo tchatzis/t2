@@ -14,7 +14,7 @@ const formats =
         const regex = new RegExp( /(?:[01]\d|2[0123]):(?:[012345]\d):(?:[012345]\d)/, 'gm' );
 
         if ( regex.test( value ) )
-            return value;
+            return value.split( " " )[ 0 ];
 
         else
         {

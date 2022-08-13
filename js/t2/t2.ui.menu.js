@@ -18,25 +18,29 @@ const Menu = function()
         listen();
     };
 
+    this.disable = function( array )
+    {
+        array.forEach( name =>
+        {
+            let link = self.element.querySelector( `[ data-link = "${ name }" ]` );
+                link.classList.add( "disabled" );
+        } );
+    };
+
     this.init = function( params )
     {
         this.element = t2.common.el( "div", params.parent );
         this.element.id = params.id;
         this.element.style.display = params.horizontal ? "flex" : "block";
 
-        params.array.forEach( link =>
-        {
-            let element = t2.common.el( "div", this.element );
-                element.classList.add( "link" );
-                element.textContent = link;
-                element.dataset.link = link;
-            
-            map.set( element, new Map() );
-        } );
+        this.update( params.array );
     };
 
     this.setActive = function( link )
     {
+        if ( !link )
+            return;
+        
         link.classList.add( "active" );
 
         if ( active.curr && active.curr !== link )
@@ -45,6 +49,23 @@ const Menu = function()
         }
 
         active.curr = link;  
+    };
+
+    this.update = function( array )
+    {
+        self.element.innerHTML = null;
+        
+        array.forEach( link =>
+        {
+            let element = t2.common.el( "div", self.element );
+                element.classList.add( "link" );
+                element.textContent = link;
+                element.dataset.link = link.toLowerCase();
+            
+            map.set( element, new Map() );
+        } );
+
+        listen();
     };
     
     function listen()
@@ -66,7 +87,7 @@ const Menu = function()
 
         let link = arguments[ 0 ].target;
             
-        self.setActive( link );
+        self.activate( link.textContent.toLowerCase() );
 
         listener.handler( ...arguments );
     } 

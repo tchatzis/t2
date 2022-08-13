@@ -1,17 +1,24 @@
+import { aggregate, reset, total } from "./trades.aggregate.js";
+import totals from "./trades.totals.js";
+
 const Day = function( module )
 {
     let self = this;
 
     this.init = async function()
     {
+        reset();
+
+        module.data.symbol.forEach( symbol => 
+        {
+            let records = module.data.all.filter( record => record.symbol == symbol );
+
+            aggregate( symbol, records );
+        } );
+
+        totals( total );
+
         await transactions();
-    };
-
-    this.setDate = function( date )
-    {
-        this.date = date;
-
-        module.refresh();
     };
 
     // day trades
@@ -34,11 +41,10 @@ const Day = function( module )
             } );
         
         // display
-        let div = t2.common.el( "div", t2.ui.elements.get( "content" ) );
-            div.classList.add( "hform" );
+        let container = await t2.ui.addComponent( { id: "day", title: date, component: "container", parent: t2.ui.elements.get( "content" ), module: module } );
 
-        let table = await t2.ui.addComponent( { id: "transactions", component: "table", parent: div, module: module } );
-            table.handler = module.handlers.update;
+        let table = await t2.ui.addComponent( { id: "transactions", component: "table", parent: container.element, module: module } );
+            table.handlers = { update: ( e, record ) => module.handlers.update( e, record ) }; 
             table.addColumn( { 
                 input: { name: "id", type: "hidden" }, 
                 cell: { css: {}, display: 0, modes: [ "edit" ] },
@@ -54,7 +60,13 @@ const Day = function( module )
             table.addColumn( { 
                 input: { name: "symbol", type: "text" }, 
                 cell: { css: {}, display: 4, modes: [ "read", "edit" ] },
-                format: [ "uppercase" ] } );
+                format: [ "uppercase" ],
+                handler: async ( cell, record ) => 
+                {
+                    module.setSymbol( cell.textContent );
+                    module.view = "transactions"
+                    await module.refresh( record );
+                } } );
             table.addColumn( { 
                 input: { name: "action", type: "text" }, 
                 cell: { css: { value: null }, display: 3, modes: [ "read", "edit" ] },
@@ -63,12 +75,18 @@ const Day = function( module )
                 input: { name: "notes", type: "text" }, 
                 cell: { css: { value: "action" }, display: 4, modes: [ "read", "edit" ] } } );
             table.addColumn( { 
-                input: { name: "qty", type: "number", step: 1, min: 0 }, 
+                input: { name: "qty", type: "number", step: 1 }, 
                 cell: { css: { class: "info" }, display: 3, modes: [ "read", "edit" ] } } );
             table.addColumn( { 
                 input: { name: "price", type: "number", step: 0.001 }, 
                 cell: { css: { class: "value" }, display: 4, modes: [ "read", "edit" ] },
-                format: [ "precision" ] } );
+                format: [ "precision" ],
+                formula: ( args ) => 
+                {
+                    args.totals[ args.column ] = 0; 
+
+                    return args.value;
+                } } );
             table.addColumn( { 
                 input: { name: "value", type: "number", readonly: "" }, 
                 cell: { css: { class: "value" }, display: 6, modes: [ "read" ] },

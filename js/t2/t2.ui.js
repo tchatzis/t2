@@ -8,7 +8,7 @@ const UI = function()
         let component = await new module.default( componentParams.module );
             component.init( componentParams );
         
-        this.components.set( componentParams.component, component );
+        this.components.set( componentParams.id, component );
 
         return component;
     };

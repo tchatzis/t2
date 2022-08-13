@@ -1,20 +1,13 @@
 const IDBExport = function( module )
 {
-    let self = this;
-
-    this.init = function()
+    this.init = async function()
     {
-        let content = t2.ui.elements.get( "content" );
+        let container = await t2.ui.addComponent( { id: "export", title: "Export Data", component: "container", parent: t2.ui.elements.get( "content" ), module: module } );
      
-        let div = t2.common.el( "div", content );
-            div.classList.add( "hform" );
-        let title = t2.common.el( "div", div );
-            title.classList.add( "title" );
-            title.textContent = "Database"; 
-        let form = t2.common.el( "form", div );
+        let form = t2.common.el( "form", container.element );
             form.id = "export";
             form.addEventListener( "submit", ( e ) => data( e ) );
-        let submit = t2.common.el( "input", div );
+        let submit = t2.common.el( "input", container.element );
             submit.value = "Export";
             submit.type = "submit";
             submit.setAttribute( "Form", form.id ); 

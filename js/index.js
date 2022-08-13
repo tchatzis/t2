@@ -16,6 +16,7 @@ async function init( namespace )
     let script      = new module.default();
     let scripts     = await script.init();
     let scenes      = {};
+    let scene       = "trades";
 
     // story board
     //scenes.login       = t2.movie.addScene( { duration: 2000, name: "login", next: "database", script: scripts.login } );
@@ -27,7 +28,7 @@ async function init( namespace )
     scenes.end           = t2.movie.addScene( { duration: Infinity, name: "end", next: null, script: null } );
     
 
-    await scenes.trades.start();
+    await scenes[ scene ].start();
 
     // footer navigation
     let names = Array.from( t2.movie.scenes.keys() );
@@ -35,6 +36,8 @@ async function init( namespace )
     let menu = await t2.ui.addComponent( { id: "scenes", component: "menu", parent: t2.ui.elements.get( "footer" ), array: names, horizontal: true } );
         menu.addListener( { type: "click", handler: scenes.end.change } );
         menu.element.dataset.ignore = "clear";
+        menu.activate( scene );
+        menu.disable( [ "end" ] );
 };
 
 window.onload = () => init( "t2" );

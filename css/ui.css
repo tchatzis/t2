@@ -24,6 +24,17 @@
     background-color: #243;
 }
 
+.container
+{
+    border: 1px solid #333;
+    border-radius: 10px;
+    display: inline-block;
+    overflow-y: auto;
+    margin: 10px;
+    max-height: 80vh;
+    padding: 10px;
+}
+
 .create
 {
     background-color: #222;
@@ -50,10 +61,10 @@
 {
     filter: grayscale( 100% );
     opacity: 0.5;
-    pointer-events: none;
+    pointer-events: none !important;
 }
 
-.edit
+.div, .edit
 {
     color: yellow;
 }
@@ -62,6 +73,16 @@
 {
     display: flex;
     justify-content: space-between;
+}
+
+.handler
+{
+    cursor: pointer;
+}
+
+.handler:hover
+{
+    background-color: #660;
 }
 
 .icon
@@ -99,15 +120,6 @@
     margin: 10px;
     padding: 10px;
     width: calc( 50% - 40px );
-}
-
-.hform
-{
-    border: 1px solid orange;
-    border-radius: 10px;
-    display: inline-flex;
-    margin: 10px;
-    padding: 10px;
 }
 
 .highlight
@@ -239,13 +251,23 @@
     text-transform: uppercase;
 }
 
-.title
+/*.title
 {
     border-left: 10px solid #630;
     color: silver;
     font-size: 0.8em;
     line-height: 17px;
     max-width: 10em;   
+    padding: 2px 5px 2px 5px;  
+}*/
+
+.title
+{
+    border-bottom: 1px dotted #222;
+    color: #999;
+    font-family: "Comic Sans MS";
+    font-size: 1.2em;
+    font-weight: normal;  
     padding: 2px 5px 2px 5px;  
 }
 

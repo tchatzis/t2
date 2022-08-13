@@ -9,9 +9,6 @@ const Transactions = function( module )
     let match = new Map();
     let tbody;
 
-    //let qty = 0;
-   let average = 0;
-
     const round = ( n ) => Math.round( n * 100 ) / 100;
     
     this.init = async function()
@@ -19,7 +16,7 @@ const Transactions = function( module )
         if ( !module.symbol )
             return;
 
-        let records = module.data.all.filter( record => record.symbol ==  module.symbol );
+        let records = module.data.all.filter( record => record.symbol == module.symbol && [ "COVER", "SHORT" ].find( notes => record.notes == notes ) );
         this.array = records.sort( ( a, b ) => a.price > b.price ? -1 : 1 );
         
         await actions( this.array );
@@ -27,7 +24,6 @@ const Transactions = function( module )
         
         await process(); 
         await results();
-        
 
         reset();
         aggregate( module.symbol, this.array );
@@ -38,7 +34,7 @@ const Transactions = function( module )
 
     async function lists()
     {
-        let container = await t2.ui.addComponent( { id: "match", title: `Match ${ module.symbol } Transactions`, component: "container", parent: t2.ui.elements.get( "content" ), module: module } );
+        let container = await t2.ui.addComponent( { id: "short", title: `Match ${ module.symbol } Short Transactions`, component: "container", parent: t2.ui.elements.get( "content" ), module: module } );
 
         let table = t2.common.el( "table", container.element );
         tbody = t2.common.el( "tbody", table );
@@ -320,7 +316,11 @@ const Transactions = function( module )
     async function transactions( cell, array, action, precision )
     {
         let table = await t2.ui.addComponent( { id: action, component: "table", parent: cell, module: module } );
-            table.handlers = { row: ( e, record ) => select.call( e, record ), update: module.handlers.update };    
+            table.handlers = { row: ( e, record ) => select.call( e, record ) };  
+            table.addColumn( { 
+                input: { name: "date", type: "text" }, 
+                cell: { css: { class: "date" }, display: 6, modes: [ "read" ] },
+                format: [ "date" ] } );  
             table.addColumn( { 
                 input: { name: "action", type: "text" }, 
                 cell: { css: { value: null }, display: 3, modes: [ "read" ] },
@@ -335,10 +335,6 @@ const Transactions = function( module )
             table.addColumn( { 
                 input: { name: "price", type: "number", step: 0.001 }, 
                 cell: { css: { class: "value" }, display: 4, modes: [ "read" ] },
-                format: [ "precision" ] } );
-            table.addColumn( { 
-                input: { name: "value", type: "number", readonly: "" }, 
-                cell: { css: { class: "value" }, display: 6, modes: [ "read" ] },
                 format: [ "precision" ] } );
             table.setColumns( module.mode, true );
             table.populate( { array: array } ); 

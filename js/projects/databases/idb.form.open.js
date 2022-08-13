@@ -1,6 +1,5 @@
-const IDBOpen = function()
+const IDBOpen = function( module )
 {
-    let args = arguments[ 0 ];
     let listeners = [];
 
     this.addListener = function( listener )
@@ -8,32 +7,29 @@ const IDBOpen = function()
         listeners.push( listener );
     };
     
-    this.init = function()
+    this.init = async function()
     {
-        let div = t2.common.el( "div", t2.ui.elements.get( "content" ) );
-            div.classList.add( "hform" );
-        let title = t2.common.el( "div", div );
-            title.classList.add( "title" );
-            title.textContent = "DB Status"; 
-        let form = t2.common.el( "form", div );
+        let container = await t2.ui.addComponent( { id: "export", title: "DB Status", component: "container", parent: t2.ui.elements.get( "content" ), module: module } );
+
+        let form = t2.common.el( "form", container.element );
             form.id = "open";
             form.addEventListener( "submit", openDB );
-        let name = t2.common.el( "input", div );
+        let name = t2.common.el( "input", container.element );
             name.name = "name";
             name.placeholder = "db name";
             name.value = t2.db.name;
             name.setAttribute( "Form", form.id );
-        let version = t2.common.el( "input", div );
+        let version = t2.common.el( "input", container.element );
             version.name = "version";
             version.type = "number";
             version.value = t2.db.version;
             version.placeholder = "version name";
             version.setAttribute( "Form", form.id );
-        let submit = t2.common.el( "input", div );
+        let submit = t2.common.el( "input", container.element );
             submit.value = "Open";
             submit.type = "submit";
             submit.setAttribute( "Form", form.id ); 
-        let close = t2.common.el( "input", div );
+        let close = t2.common.el( "input", container.element );
             close.value = "Close";
             close.type = "submit";
             close.addEventListener( "click", closeDB );

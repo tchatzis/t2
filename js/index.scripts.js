@@ -1,4 +1,4 @@
-const Scripts = function()
+const Scripts = function( module )
 {
     this.init = async () => 
     {
@@ -34,30 +34,14 @@ const Scripts = function()
 
                     let menu = await t2.ui.addComponent( { id: "tables", component: "menu", parent: t2.ui.elements.get( "menu" ), array: tables, horizontal: false } );
                         menu.addListener( { type: "click", handler: async ( e ) => 
-                            { 
-                                let div = t2.common.el( "div", t2.ui.elements.get( "content" ) );
-                                    div.classList.add( "hform" );
-
-                                let table = e.target.textContent;
-
-                                let data = await t2.db.tx.retrieve( table );
-                                let list = await t2.ui.addComponent( { id: "data", component: "list", parent: div } );
-                                    list.invoke( ( params ) =>
-                                    {
-                                        params.parent.classList.add( "outline" );
-                                        
-                                        for ( let key in params.item )
-                                        {
-                                            let value = params.item[ key ];
-                                            let cell = t2.common.el( "div", params.parent );
-                                                cell.title = key;
-                                                cell.classList.add( "data" );
-                                                cell.textContent = ( typeof value == "object" ) ? `{ ${ key } }`: value;
-                                        }
-                                    } ); 
-                                    list.populate( { array: data.data } );
-                            } 
-                        } ); 
+                        { 
+                            let table = e.target.textContent;
+                            let container = await t2.ui.addComponent( { id: "dump", title: `${ table } Dump`, component: "container", parent: t2.ui.elements.get( "content" ), module: module } );
+                            let data = await t2.db.tx.retrieve( table );
+                            let list = await t2.ui.addComponent( { id: "data", component: "table", parent: container.element } );
+                                list.allColumns( data.data );
+                        } 
+                    } ); 
                 } 
 
                 scene.pre = async () =>

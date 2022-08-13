@@ -1,12 +1,15 @@
+import { aggregate, reset, total } from "./trades.aggregate.js";
+import totals from "./trades.totals.js";
+
 const Summary = function( module )
 {
     let self = this;
-    let total = { open: 0, closed: 0 };
     
     this.init = async function()
     {
         await summary();
         await dividends();
+        totals( total );
     };
 
     // summary
@@ -14,32 +17,23 @@ const Summary = function( module )
     {
         let array = [];
 
+        reset();
+
         module.data.symbol.forEach( symbol => 
         {
-            let collection = module.data.all.filter( record => record.symbol == symbol );
-            let aggregate = {};
-                aggregate.id = symbol;
-                aggregate.symbol = symbol;
-                aggregate.trades = collection.length;
-                aggregate.low = 0;
-                aggregate.high = 0;
-                aggregate.buy = collection.map( record => ( record.action == "BUY" ) ? record.qty : 0 ).reduce( ( a, b ) => a + b, 0 );
-                aggregate.sell = collection.map( record => ( record.action == "SELL" ) ? record.qty : 0 ).reduce( ( a, b ) => a + b, 0 );
-                aggregate.position = aggregate.buy - aggregate.sell;
-                aggregate.gain = collection.map( record => record.qty * record.price * record.sign ).reduce( ( a, b ) => a + b, 0 );
-                aggregate.price = aggregate.gain / aggregate.buy;
+            let records = module.data.all.filter( record => record.symbol == symbol );
 
-            total.open   += aggregate.position ? aggregate.gain : 0;
-            total.closed += aggregate.position ? 0 : aggregate.gain;
-
-            array.push( aggregate );
+            array.push( aggregate( symbol, records ) );
         } );
 
-        // display
-        let div = t2.common.el( "div", t2.ui.elements.get( "content" ) );
-            div.classList.add( "hform" );
+        await display( array );
+    }
 
-        let table = await t2.ui.addComponent( { id: "aggregates", component: "table", parent: div, module: module } );
+    async function display( array )
+    {
+        let container = await t2.ui.addComponent( { id: "summary", title: "Summary", component: "container", parent: t2.ui.elements.get( "content" ), module: module } );
+
+        let table = await t2.ui.addComponent( { id: "aggregates", component: "table", parent: container.element, module: module } );
             table.addColumn( { 
                 input: { name: "symbol", type: "text" }, 
                 cell: { css: {}, display: 4, modes: [ "read" ] },
@@ -51,26 +45,41 @@ const Summary = function( module )
                 input: { name: "buy", type: "number", step: 1, min: 0 }, 
                 cell: { css: {}, display: 3, modes: [ "read" ] } } );
             table.addColumn( { 
+                input: { name: "div", type: "number", step: 1, min: 0 }, 
+                cell: { css: {}, display: 3, modes: [ "read" ] } } );
+            table.addColumn( { 
                 input: { name: "sell", type: "number", step: 1, min: 0 }, 
                 cell: { css: {}, display: 3, modes: [ "read" ] } } );
             table.addColumn( { 
-                input: { name: "position", type: "number", step: 1, min: 0 }, 
+                input: { name: "qty", type: "number", step: 1, min: 0 }, 
                 cell: { css: { class: "info" }, display: 3, modes: [ "read" ] } } );
             table.addColumn( { 
                 input: { name: "price", type: "number", step: 0.001 }, 
-                cell: { css: { predicate: { conditions: [ { name: "position", operator: "==", value: 0 }, { name: "gain", operator: "<", value: 0 } ], options: [ "sell", "value" ] } }, display: 4, modes: [ "read" ] },
-                format: [ "precision" ] } );
+                cell: { css: { class: "value" }, display: 4, modes: [ "read" ] },
+                format: [ "precision" ],
+                formula: ( args ) =>
+                {
+                    args.totals[ args.column ] = 0;
+
+                    return args.record.qty ? args.record.gain / args.record.qty : args.value;
+                } } );
             table.addColumn( { 
                 input: { name: "gain", type: "number", readonly: "" }, 
-                cell: { css: { class: "value" }, display: 6, modes: [ "read" ] },
+                cell: { css: { predicate: { conditions: [ { name: "qty", operator: "==", value: 0 }, { name: "gain", operator: "<=", value: 0 } ], options: [ "sell", "value" ] } }, display: 6, modes: [ "read" ] },
                 format: [ "dollar" ],
                 formula: ( args ) => 
                 { 
-                    if ( !args.record.position ) 
+                    if ( !args.record.qty ) 
                     {
                         args.totals[ args.column ] += args.value;
                     }
+
+                    return args.value;
                 } } );
+            table.addColumn( { 
+                input: { name: "dividend", type: "number", readonly: "" }, 
+                cell: { css: { class: "value" }, display: 4, modes: [ "read" ] },
+                format: [ "dollar" ] } );
             table.setColumns( module.mode );
             table.populate( { array: array, orderBy: "symbol" } );
             table.setTotals();
@@ -79,14 +88,17 @@ const Summary = function( module )
     // dividends
     async function dividends()
     {
-        let array = module.data.all.filter( record => ( record.notes == "DIV") );
+        let array = module.data.all.filter( record => ( record.action == "DIV") );
 
-        let div = t2.common.el( "div", t2.ui.elements.get( "content" ) );
-            div.classList.add( "hform" );
+        let container = await t2.ui.addComponent( { id: "dividends", title: "Dividends", component: "container", parent: t2.ui.elements.get( "content" ), module: module } );
 
-        let table = await t2.ui.addComponent( { id: "dividends", component: "table", parent: div, module: module } );
+        let table = await t2.ui.addComponent( { id: "dividends", component: "table", parent: container.element, module: module } );
             table.addColumn( { 
-                input: { name: "notes", type: "text" }, 
+                input: { name: "date", type: "text" }, 
+                cell: { css: { column: "" }, display: 6, modes: [ "read" ] },
+                format: [ "date" ] } );
+            table.addColumn( { 
+                input: { name: "action", type: "text" }, 
                 cell: { css: { value: "action" }, display: 4, modes: [ "read" ] } } );
             table.addColumn( { 
                 input: { name: "symbol", type: "text" }, 
@@ -97,12 +109,22 @@ const Summary = function( module )
                 cell: { css: { class: "info" }, display: 3, modes: [ "read" ] } } );
             table.addColumn( { 
                 input: { name: "price", type: "number", step: 0.001 }, 
-                cell: { css: { predicate: { conditions: [ { name: "position", operator: "==", value: 0 }, { name: "gain", operator: "<", value: 0 } ], options: [ "sell", "value" ] } }, display: 4, modes: [ "read" ] },
-                format: [ "precision" ] } );
+                cell: { css: { class: "buy" }, display: 4, modes: [ "read" ] },
+                format: [ "precision" ],
+                formula: ( args ) => args.value * -1 } );
             table.addColumn( { 
                 input: { name: "value", type: "number", readonly: "" }, 
-                cell: { css: { class: "value" }, display: 6, modes: [ "read" ] },
-                format: [ "precision" ] } );
+                cell: { css: { class: "buy" }, display: 6, modes: [ "read" ] },
+                format: [ "precision" ], 
+                formula: ( args ) => 
+                {
+                    args.totals.price = 0;
+                    args.value *= -1;
+
+                    args.totals[ args.column ] += args.value;
+
+                    return args.value;
+                } } );   
             table.setColumns( module.mode );
             table.populate( { array: array, orderBy: "symbol" } );
             table.setTotals();

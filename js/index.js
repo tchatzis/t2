@@ -27,6 +27,7 @@ async function init( namespace )
     //scenes[ "2D" ]     = t2.movie.addScene( { duration: Infinity, name: "2D", next: "end", script: scripts[ "2D" ] } );
     scenes.end           = t2.movie.addScene( { duration: Infinity, name: "end", next: null, script: null } );
     
+    let breadcrumbs = await t2.ui.addComponent( { id: "breadcrumbs", component: "info", parent: t2.ui.elements.get( "footer" ), css: "breadcrumbs" } );
 
     await scenes[ scene ].start();
 
@@ -36,6 +37,7 @@ async function init( namespace )
     let menu = await t2.ui.addComponent( { id: "scenes", component: "menu", parent: t2.ui.elements.get( "footer" ), array: names, horizontal: true } );
         menu.addListener( { type: "click", handler: scenes.end.change } );
         menu.element.dataset.ignore = "clear";
+        menu.setBreadcrumbs( breadcrumbs );
         menu.activate( scene );
         menu.disable( [ "end" ] );
 };

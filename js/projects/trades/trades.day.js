@@ -18,30 +18,23 @@ const Day = function( module )
 
         totals( total );
 
-        await transactions();
+        // initialize
+        let last = module.data.datetime.at( -1 );
+        let date = t2.formats.isoDate( self.date || last );  
+
+        module.date = date;
+
+        let array = module.data.all.filter( record => ( t2.formats.isoDate( record.datetime ) == date ) );
+
+        await transactions( array );
+
+        t2.ui.breadcrumbs[ 2 ] = module.date;
     };
 
     // day trades
-    async function transactions()
+    async function transactions( array )
     {
-        // initialize
-        let last = module.data.date.at( -1 );
-        let date = self.date || last;
-        let array = [];
-
-        // process
-        let records = module.data.all.filter( record => t2.formats.date( record.date ) == date );
-            records.forEach( record => 
-            {
-                // add time to be able to orderBy datetime
-                record.time = t2.formats.time( record.time );
-                record.date = t2.common.addTime( record.date, record.time );
-
-                array.push( record );
-            } );
-        
-        // display
-        let container = await t2.ui.addComponent( { id: "day", title: date, component: "container", parent: t2.ui.elements.get( "content" ), module: module } );
+        let container = await t2.ui.addComponent( { id: "day", title: module.date, component: "container", parent: t2.ui.elements.get( "content" ), module: module } );
 
         let table = await t2.ui.addComponent( { id: "transactions", component: "table", parent: container.element, module: module } );
             table.handlers = { update: ( e, record ) => module.handlers.update( e, record ) }; 
@@ -50,13 +43,9 @@ const Day = function( module )
                 cell: { css: {}, display: 0, modes: [ "edit" ] },
                 format: [] } );
             table.addColumn( { 
-                input: { name: "date", type: "text" }, 
-                cell: { css: {}, display: 5, modes: [ "edit" ] },
-                format: [ "date" ] } );
-            table.addColumn( { 
-                input: { name: "time", type: "text" }, 
-                cell: { css: {}, display: 5, modes: [ "read", "edit" ] },
-                format: [ "time" ] } );
+                input: { name: "datetime", type: "datetime" }, 
+                cell: { css: { class: "date" }, display: 12, modes: [ "read", "edit" ] },
+                format: [ "date&time" ] } );
             table.addColumn( { 
                 input: { name: "symbol", type: "text" }, 
                 cell: { css: {}, display: 4, modes: [ "read", "edit" ] },
@@ -64,7 +53,7 @@ const Day = function( module )
                 handler: async ( cell, record ) => 
                 {
                     module.setSymbol( cell.textContent );
-                    module.view = "transactions"
+                    module.view = "edit"
                     await module.refresh( record );
                 } } );
             table.addColumn( { 
@@ -76,7 +65,8 @@ const Day = function( module )
                 cell: { css: { value: "action" }, display: 4, modes: [ "read", "edit" ] } } );
             table.addColumn( { 
                 input: { name: "qty", type: "number", step: 1 }, 
-                cell: { css: { class: "info" }, display: 3, modes: [ "read", "edit" ] } } );
+                cell: { css: { class: "info" }, display: 3, modes: [ "read", "edit" ] },
+                format: [ "precision" ] } );
             table.addColumn( { 
                 input: { name: "price", type: "number", step: 0.001 }, 
                 cell: { css: { class: "value" }, display: 4, modes: [ "read", "edit" ] },

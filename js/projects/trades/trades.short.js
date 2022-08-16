@@ -16,6 +16,8 @@ const Transactions = function( module )
         if ( !module.symbol )
             return;
 
+        t2.ui.breadcrumbs[ 2 ] = module.symbol;
+
         let records = module.data.all.filter( record => record.symbol == module.symbol && [ "COVER", "SHORT" ].find( notes => record.notes == notes ) );
         this.array = records.sort( ( a, b ) => a.price > b.price ? -1 : 1 );
         
@@ -288,11 +290,11 @@ const Transactions = function( module )
             // filter out marks in each range
             let prices = sorted.filter( mark => ( ( ( mark < high ) && ( mark >= p ) ) ) );
 
-            tables( cells, prices, precision );
+            tables( cells, prices );
         }
     };
 
-    function tables( cells, prices, precision )
+    function tables( cells, prices )
     {
         prices.forEach( mark =>
         {    
@@ -308,19 +310,19 @@ const Transactions = function( module )
                 let array = records.filter( record => actions[ action ].find( action => record.action == action ) );
 
                 if ( array.length )
-                    transactions( cells[ action ], array, action, precision );     
+                    transactions( cells[ action ], array, action );     
             } ); 
         } );
     }
 
-    async function transactions( cell, array, action, precision )
+    async function transactions( cell, array, action )
     {
         let table = await t2.ui.addComponent( { id: action, component: "table", parent: cell, module: module } );
             table.handlers = { row: ( e, record ) => select.call( e, record ) };  
             table.addColumn( { 
-                input: { name: "date", type: "text" }, 
+                input: { name: "datetime", type: "datetime" }, 
                 cell: { css: { class: "date" }, display: 6, modes: [ "read" ] },
-                format: [ "date" ] } );  
+                format: [ "isoDate" ] } );  
             table.addColumn( { 
                 input: { name: "action", type: "text" }, 
                 cell: { css: { value: null }, display: 3, modes: [ "read" ] },

@@ -8,6 +8,7 @@ const Transactions = function( module )
     let marks = new Map();
     let match = new Map();
     let tbody;
+    let subtotals = [];
 
     //let qty = 0;
    let average = 0;
@@ -19,6 +20,8 @@ const Transactions = function( module )
         if ( !module.symbol )
             return;
 
+        t2.ui.breadcrumbs[ 2 ] = module.symbol;
+
         let records = module.data.all.filter( record => record.symbol ==  module.symbol );
         this.array = records.sort( ( a, b ) => a.price > b.price ? -1 : 1 );
         
@@ -26,13 +29,12 @@ const Transactions = function( module )
         await lists();
         
         await process(); 
-        await results();
-        
 
         reset();
         aggregate( module.symbol, this.array );
         totals( total );
 
+        await results();
         await annotate();
     };
 
@@ -44,14 +46,31 @@ const Transactions = function( module )
         tbody = t2.common.el( "tbody", table );
     }
 
+    // matched transactions
     async function results()
     {
         let container = await t2.ui.addComponent( { title: "Matches", component: "container", parent: t2.ui.elements.get( "content" ), module: module } );
-
         self.container = container.element;
+        
+        // margin subtotals
+        let table = await t2.ui.addComponent( { title: "Subtotals", component: "table", parent: t2.ui.elements.get( "margin" ), module: module } );
+            table.addColumn( { 
+                input: { name: "qty", type: "number", step: 1, min: 0 }, 
+                cell: { css: { class: "info" }, display: 3, modes: [ "read" ] } } );
+            table.addColumn( { 
+                input: { name: "price", type: "number", step: 0.001 }, 
+                cell: { css: { class: "value" }, display: 4, modes: [ "read" ] },
+                format: [ "precision" ] } );
+            table.addColumn( { 
+                input: { name: "value", type: "number", readonly: "" }, 
+                cell: { css: { class: "value" }, display: 6, modes: [ "read" ] },
+                format: [ "precision" ] } );
+            table.setColumns( module.mode, true );
+
+        self.subtotals = table;
     }
 
-    async function actions( )
+    async function actions()
     {
         let promises = [];
 
@@ -97,10 +116,7 @@ const Transactions = function( module )
     // match functions
     async function display( id, array )
     {
-        // TODO: add remove handler
-        
-        let table = await t2.ui.addComponent( { id: id, component: "table", parent: self.container, module: module } );
-            //table.handler = module.handlers.update;    
+        let table = await t2.ui.addComponent( { id: id, component: "table", parent: self.container, module: module } );  
             table.addColumn( { 
                 input: { name: "id", type: "hidden" }, 
                 cell: { css: {}, display: 0, modes: [ "read" ] },
@@ -214,9 +230,11 @@ const Transactions = function( module )
 
                 // TODO: flag the records as matched - save ids
                 let records = m.map( o => o.record );
-                await display( "x", records );
+                let total = await display( "matches", records );
+                subtotals.push( total );
 
-                //console.log( Array.from( matched.keys() ) );
+                self.subtotals.populate( { array: subtotals } );
+                self.subtotals.setTotals();
 
                 match.delete( "active" );
 

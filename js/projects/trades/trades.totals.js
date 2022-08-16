@@ -6,9 +6,9 @@ async function totals( total )
         formats.set( "dividend", { f: "dollar" } );
         formats.set( "closed", { f: "dollar" } );  
         formats.set( "price", { f: "dollar" } );
-        formats.set( "qty", { f: "number" } );
+        formats.set( "qty", { f: "precision" } );
         formats.set( "buy", { f: "number" } );
-        formats.set( "div", { f: "number" } );
+        formats.set( "div", { f: "precision" } );
         formats.set( "sell", { f: "number" } );
 
     let condition = total.open ? 1 - ( total.gain > 0 ) : 1 - ( total.closed > 0 );

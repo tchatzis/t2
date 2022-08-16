@@ -39,7 +39,13 @@ const Form = function( module )
 
         for ( let attr in attributes )
             if ( attributes.hasOwnProperty( attr ) )
-                input.setAttribute( attr, attributes[ attr ] );
+            {
+                if ( typeof attributes[ attr ] == "function" )
+                    attributes[ attr ]( input );
+                else
+                    input.setAttribute( attr, attributes[ attr ] );
+
+            }
     };
 };
 

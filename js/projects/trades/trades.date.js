@@ -11,11 +11,24 @@ const Transactions = function( module )
         if ( !module.symbol )
             return;
 
+        t2.ui.breadcrumbs[ 2 ] = module.symbol;
+        t2.ui.breadcrumbs[ 3 ] = module.date;
+
         // initialize actions map
         module.actions.forEach( action => map.set( action, [] ) );
 
-        // filter by symbol
-        this.array = module.data.all.filter( record => ( record.symbol == module.symbol && record.date == module.date ) );
+        if ( module.from && module.to )
+        {
+            // filter date range
+            let from = new Date( module.from );
+            let to = new Date( module.to );
+                to.setDate( to.getDate() + 2 );
+
+            this.array = module.data.all.filter( record => ( record.symbol == module.symbol && ( new Date( record.datetime ) > from && new Date( record.datetime ) < to ) ) );
+        }
+        else
+            // filter by symbol and specific date
+            this.array = module.data.all.filter( record => ( record.symbol == module.symbol && t2.formats.isoDate( record.datetime ) == module.date ) );
 
         // split actions
         this.array.forEach( record => map.get( record.action ).push( record ) );
@@ -45,13 +58,9 @@ const Transactions = function( module )
                 cell: { css: {}, display: 0, modes: [ "edit" ] },
                 format: [] } );
             table.addColumn( { 
-                input: { name: "date", type: "text" }, 
-                cell: { css: { column: "" }, display: 6, modes: [ "read", "edit" ] },
-                format: [ "date" ] } );
-            table.addColumn( { 
-                input: { name: "time", type: "text" }, 
-                cell: { css: { column: "" }, display: 6, modes: [ "edit" ] },
-                format: [ "time" ] } );
+                input: { name: "datetime", type: "datetime-local" }, 
+                cell: { css: { class: "date" }, display: 12, modes: [ "read", "edit" ] },
+                format: [ "date&time" ] } );
             table.addColumn( { 
                 input: { name: "symbol", type: "text" }, 
                 cell: { css: {}, display: 4, modes: [ "edit" ] },
@@ -90,8 +99,8 @@ const Transactions = function( module )
                 cell: { css: {}, display: 4, modes: [ "edit" ] },
                 format: [] } );
             table.setColumns( module.mode );
-            table.populate( { array: map.get( action ), orderBy: "price" } );  
-            table.setTotals();  
+            table.populate( { array: map.get( action ), orderBy: "price" } ); 
+            table.setTotals();   
             table.totals.action = action;
             
         return table.totals;

@@ -3,7 +3,9 @@ import Data from "./trades.data.js";
 const Trades = function()
 {
     const self = this;
-    let menu;
+    let breadcrumbs;
+    let symbols;
+    let views;
     
     this.actions = [ "BUY", "SELL", "DIV" ];
 
@@ -28,9 +30,9 @@ const Trades = function()
         activate( arguments );
 
         let element = arguments[ 0 ].target;
-        let view = element.getAttribute( "data-link" ).toUpperCase();
+        let view = element.getAttribute( "data-link" ).toLowerCase();
 
-        await this.setView( view.toLowerCase() );
+        await this.setView( view );
         await this.setForm();
     };
 
@@ -74,6 +76,16 @@ const Trades = function()
             form.elements.price.value = null;
         },
 
+        edit: async ( e, record ) =>
+        {
+            if ( e.target.parentNode.tagName == "TR" )
+            {
+                self.setSymbol( record.symbol );
+                await self.setView( "edit" );
+                self.highlight( record );
+            }
+        },
+
         row: ( e, record ) =>
         {
             if ( e.target.parentNode.tagName == "TR" )
@@ -113,7 +125,9 @@ const Trades = function()
         this.view = "day";
         this.views = [ "Day", "Summary" ];
 
-        await this.refresh();
+        await this.queries();
+
+        fix();
     };
 
     this.queries = async () =>
@@ -127,31 +141,18 @@ const Trades = function()
             all: records.data    
         };
 
-        fix();
-
-        [ { key: "date", format: "date", sort: "asc" }, { key: "symbol", format: "uppercase", sort: "asc" } ].forEach( property => 
+        [ { key: "datetime", format: "datetime", sort: "asc" }, { key: "symbol", format: "uppercase", sort: "asc" } ].forEach( property => 
         {
             let map = new Map();
-            
-            this.data.all.map( record => map.set( record[ property.key ], null ) );
+
+            if ( this.symbol )
+                this.data.all.filter( record => record.symbol == this.symbol ).map( record => map.set( record[ property.key ], record ) );
+            else
+                this.data.all.map( record => map.set( record[ property.key ], record ) );
 
             let array = Array.from( map.keys() );
                 array = array.map( item => t2.formats[ property.format ]( item ) );
-
-            switch ( property.key )
-            {
-                case "date":
-                    this.data[ property.key ] = t2.common.dates( array );
-                break;
-
-                case "time":
-                    this.data[ property.key ] = t2.common.times( array );
-                break;
-
-                default:
-                    this.data[ property.key ] = array.sort( this.sort[ property.sort ] );
-                break;;
-            }
+            this.data[ property.key ] = array.sort( this.sort[ property.sort ] );
         } ); 
     };
 
@@ -161,23 +162,58 @@ const Trades = function()
         await this.setView( this.view );
         await this.setForm();
 
+        if ( !record )
+            return;
+
         this.highlight( record );
+        this.symbol = record.symbol;
     };
 
-    this.setDate = function( date )
+    this.setDate = async function( record )
     {
-        this.date = date;
+        this.date = t2.formats.isoDate( record.datetime );
 
-        this.refresh();
+        delete this.from;
+        delete this.to;
+
+        t2.ui.breadcrumbs[ 3 ] = t2.formats.isoDate( this.date );
+        breadcrumbs.setContent( t2.ui.breadcrumbs.join( "/" ) );
+
+        await this.refresh( record );
+    };
+
+    this.setDates = async function( e )
+    {
+        e.preventDefault();
+
+        let form = e.target; 
+        let formdata = new FormData( form );
+
+        Array.from( formdata.entries() ).forEach( field => self[ field[ 0 ] ] = field[ 1 ] );
+
+        await self.setView( "date" );
+        await self.setForm();
     };
 
     // add trade form
     this.setForm = async function()
     {
-        //let popup = await t2.ui.addComponent( { title: "Add Trade", component: "popup", parent: t2.ui.elements.get( "middle" ) } );
-
         let form = await t2.ui.addComponent( { id: "form", component: "form", parent: t2.ui.elements.get( "subcontent" ), module: this, horizontal: true } );
             form.form.addEventListener( "submit", this.handlers.create );
+            /*form.addField( { 
+                input: { name: "datetime", type: "datetime", value: ( input ) => 
+                {
+                    function set()
+                    {
+                        let datetime = new Date();
+
+                        input.value = datetime.toISOString();
+                    }
+
+                    setInterval( set, 1000 );
+                } }, 
+                cell: { css: {}, display: 10.5 },
+                format: [ "uppercase" ] } );*/
             form.addField( { 
                 input: { name: "symbol", tag: "select", value: this.symbol }, 
                 cell: { css: {}, display: 4 },
@@ -186,7 +222,7 @@ const Trades = function()
             form.addField( { 
                 input: { name: "qty", type: "number", value: "", min: 0, step: 0.0001, required: "" }, 
                 cell: { css: {}, display: 4 },
-                format: [ "time" ] } );
+                format: [] } );
             form.addField( { 
                 input: { name: "price", type: "number", value: "", min: 0, step: 0.0001, required: "" }, 
                 cell: { css: {}, display: 5 },
@@ -204,24 +240,46 @@ const Trades = function()
                 cell: { css: {}, display: 3 },
                 format: [] } );
             form.addField( { 
+                input: { type: "submit", value: "DIV" }, 
+                cell: { css: {}, display: 3 },
+                format: [] } );
+            form.addField( { 
                 input: { name: "brokerage", type: "hidden", value: "TDAmeritrade" }, 
                 cell: { css: {}, display: 0 },
                 format: [] } );    
+
+        if ( !this.symbol )
+            return;
+
+        let max = this.to || t2.formats.isoDate( Date.now() );
+        let min = this.from || t2.formats.isoDate( this.data.datetime[ 0 ] );
+
+        let dates = await t2.ui.addComponent( { id: "dates", component: "form", parent: t2.ui.elements.get( "subcontent" ), module: this, horizontal: true } );
+            dates.form.addEventListener( "submit", this.setDates );
+            dates.addField( { 
+                input: { name: "from", type: "date", value: min, min: min, max: max, required: "" }, 
+                cell: { css: {}, display: 8 },
+                format: [ "date" ] } );
+            dates.addField( { 
+                input: { name: "to", type: "date", value: max, min: min, max: max, required: "" }, 
+                cell: { css: {}, display: 8 },
+                format: [ "date" ] } );
+            dates.addField( { 
+                input: { type: "submit", value: "FILTER" }, 
+                cell: { css: {}, display: 4 },
+                format: [] } );       
     };
 
     this.setSymbol = function( symbol )
     {
         this.symbol = symbol;
-        this.views = [ "Day", "Summary", "Transactions", "Match", "Timeline" ];
-
-        menu = t2.ui.components.get( "views" );
-        menu.update( this.views );
+        this.views = [ "Day", "Summary", "Edit", "Date", "Short", "Match", "Timeline" ];
+    
+        views.update( this.views );
     };
 
     this.setView = async function( view )
     {
-        // TODO: activate the menu link
-
         this.clear();
         
         this.view = view;
@@ -232,14 +290,23 @@ const Trades = function()
 
         await this.module.init();
 
-        if ( menu )
-            menu.activate( this.view );
+        t2.ui.breadcrumbs[ 1 ] = this.view;;
+        breadcrumbs.setContent( t2.ui.breadcrumbs.join( "/" ) );  
+        
+        views.activate( this.view );
     };
 
     this.sort =
     {
         asc: ( a, b ) => ( a > b ) ? 1 : -1,
         desc: ( a, b ) => ( a < b ) ? 1 : -1
+    };
+
+    this.update = function()
+    {
+        breadcrumbs = t2.ui.components.get( "breadcrumbs" );
+        symbols = t2.ui.components.get( "symbols" );
+        views = t2.ui.components.get( "views" );
     };
 
     function fix()
@@ -285,6 +352,38 @@ const Trades = function()
                 await t2.db.tx.update( self.table, record.id, record );
             } );
         */
+
+        /*let data = self.data.all;//.filter( record => record.symbol !== "TEST" );
+            data.forEach( async ( record ) => 
+            {   
+                //let datetime = t2.common.addTime( record.date, record.time );
+                
+                //record.datetime = t2.formats.datetime( datetime );
+                //record.date = t2.formats.isoDate( record.date );
+
+                //await t2.db.tx.update( self.table, record.id, record );
+                //console.log( record.id, record.datetime );
+            } );*/
+
+        /*let data = self.data.all;//.filter( record => record.id == 1199 );
+            data.forEach( async ( _record ) => 
+            {   
+                let record =
+                {
+                    action: _record.action,
+                    brokerage: _record.brokerage,
+                    datetime: _record.datetime,
+                    id: _record.id,
+                    notes: _record.notes,
+                    price: _record.price,
+                    qty: _record.qty,
+                    sign: _record.sign,
+                    symbol: _record.symbol,
+                    value: _record.value
+                };
+
+                await t2.db.tx.overwrite( self.table, record.id, record );     
+            } );*/
     }
 };
 

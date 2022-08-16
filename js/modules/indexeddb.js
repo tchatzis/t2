@@ -192,7 +192,7 @@ const IndexedDB = function()
     this.init = function( params )
     {
         this.supported = "indexedDB" in window;
-        
+
         if ( !this.supported )
             return false;
 
@@ -202,6 +202,7 @@ const IndexedDB = function()
     async function open( params )
     {
         await scope.open( params );
+        params.persists = await navigator.storage.persist();
         t2.db.version = params.version;
         console.log( "Open IndexedDB:", params );
     }

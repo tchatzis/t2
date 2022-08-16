@@ -7,6 +7,8 @@ const Summary = function( module )
     
     this.init = async function()
     {
+        t2.ui.breadcrumbs.splice( 2 );
+        
         await summary();
         await dividends();
         totals( total );
@@ -34,6 +36,7 @@ const Summary = function( module )
         let container = await t2.ui.addComponent( { id: "summary", title: "Summary", component: "container", parent: t2.ui.elements.get( "content" ), module: module } );
 
         let table = await t2.ui.addComponent( { id: "aggregates", component: "table", parent: container.element, module: module } );
+            table.handlers = { row: ( e, record ) => module.handlers.edit( e, record ) };    
             table.addColumn( { 
                 input: { name: "symbol", type: "text" }, 
                 cell: { css: {}, display: 4, modes: [ "read" ] },
@@ -52,7 +55,8 @@ const Summary = function( module )
                 cell: { css: {}, display: 3, modes: [ "read" ] } } );
             table.addColumn( { 
                 input: { name: "qty", type: "number", step: 1, min: 0 }, 
-                cell: { css: { class: "info" }, display: 3, modes: [ "read" ] } } );
+                cell: { css: { class: "value" }, display: 3, modes: [ "read" ] },
+                format: [ "precision" ] } );
             table.addColumn( { 
                 input: { name: "price", type: "number", step: 0.001 }, 
                 cell: { css: { class: "value" }, display: 4, modes: [ "read" ] },
@@ -93,10 +97,11 @@ const Summary = function( module )
         let container = await t2.ui.addComponent( { id: "dividends", title: "Dividends", component: "container", parent: t2.ui.elements.get( "content" ), module: module } );
 
         let table = await t2.ui.addComponent( { id: "dividends", component: "table", parent: container.element, module: module } );
+            table.handlers = { row: ( e, record ) => module.handlers.edit( e, record ) };
             table.addColumn( { 
-                input: { name: "date", type: "text" }, 
-                cell: { css: { column: "" }, display: 6, modes: [ "read" ] },
-                format: [ "date" ] } );
+                input: { name: "datetime", type: "text" }, 
+                cell: { css: { class: "date" }, display: 6, modes: [ "read" ] },
+                format: [ "isoDate" ] } );
             table.addColumn( { 
                 input: { name: "action", type: "text" }, 
                 cell: { css: { value: "action" }, display: 4, modes: [ "read" ] } } );

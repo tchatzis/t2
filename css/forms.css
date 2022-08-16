@@ -7,6 +7,7 @@ button, input, option, select, textarea
     font-family: monospace;
     margin-right: 2px;
     outline: none;
+    user-select: auto;
 }
 
 input
@@ -22,6 +23,15 @@ input[ type=checkbox ]
     pointer-events: auto;
     height: 21px;
     width: 21px;
+}
+
+input[ type=datetime-local ]
+{
+    margin: 0 !important;
+    padding: 0 !important;
+    pointer-events: auto;
+    height: 21px;
+    width: 16em !important;
 }
 
 input[ type=number ]

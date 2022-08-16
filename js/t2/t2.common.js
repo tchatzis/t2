@@ -10,15 +10,12 @@ const Common = function()
             components = components.map( c => Number( c ) );
 
         let hour = components[ 0 ];
-            hour = String( hour ).padStart( 2, "0" );
         date.setHours( hour );
 
         let minute = components[ 1 ];
-            minute = String( minute ).padStart( 2, "0" );
         date.setMinutes( minute );
 
-        let second = components[ 2 ];
-            second = String( second ).padStart( 2, "0" );    
+        let second = components[ 2 ];  
         date.setSeconds( second );
 
         return date;

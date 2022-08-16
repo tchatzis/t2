@@ -1,7 +1,21 @@
 const formats = 
 {
     date:       ( value ) => new Date( value ).toLocaleDateString(),
+    datetime:   ( value ) => 
+    {
+        let date = new Date( value );
+        let offset = date.getTimezoneOffset();
+        let d = new Date( date );
+            d.setHours( d.getHours() - offset / 60 );
+            d = d.toISOString();
+            d = d.split( "." )[ 0 ];
+
+        return d.replace( "Z", "" );
+    },
+    "date&time":( value ) => `${ formats.isoDate( value ) } ${ formats.isoTime( value ) }`,
     dollar:     ( value ) => value.toFixed( 2 ),
+    isoDate:    ( value ) => formats.datetime( value ).split( "T" )[ 0 ],
+    isoTime:    ( value ) => formats.datetime( value ).split( "T" )[ 1 ],
     number:     ( value ) => Number( value ),
     precision:  ( value ) => value.toFixed( 4 ),
     time:       ( value ) => 

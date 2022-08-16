@@ -35,22 +35,25 @@ const Table = function( module )
         columns.set( input.name, params );
     };
 
-    this.allColumns = function( array )
+    this.allColumns = function( params )
     {
-        let keys = Object.keys( array );
+        if ( !params.array.length )
+            return;
+        
+        let keys = Object.keys( params.array[ 0 ] );
             keys.forEach( key =>
             {
-                let params = 
+                let config = 
                 {
                     input: { name: key, type: "text" }, 
                     cell: { css: { class: "data" }, display: 6, modes: [ "read" ] }
                 };
 
-                this.addColumn( params );
+                this.addColumn( config );
             } );
 
         this.setColumns( "read" );
-        this.populate( { array: array } );
+        this.populate( params );
     };
 
     this.setColumns = function( mode, hidden )
@@ -92,7 +95,7 @@ const Table = function( module )
             if ( params.input.type == "number" )
             {
                 let value = this.totals[ column ];
-                
+
                 params.format?.forEach( f => value = formats[ f ]( value ) );
 
                 let cell = this.footer.children[ index + 1 ];
@@ -105,6 +108,8 @@ const Table = function( module )
 
     this.populate = function( args )
     {
+        this.reset();
+        
         let use = args.orderBy ? t2.common.sort( args.array, args.orderBy ) : args.array;
 
             if ( !use.length )
@@ -119,12 +124,14 @@ const Table = function( module )
                 let mode = args.mode || "read";
 
                 let row = el( "tr", self.element );
-                    row.classList.add( "tr" );
                     row.setAttribute( "data-id", record.id );
                     row.setAttribute( "data-index", index );
                     row.setAttribute( "data-count", use.length );
                 if ( self.handlers?.row && mode == "read" )
+                {
                     row.addEventListener( "click", ( e ) => self.handlers.row( e, record ) );
+                    row.classList.add( "tr" );
+                }
 
                 if ( record.disabled )
                     row.classList.add( "disabled" );
@@ -133,6 +140,12 @@ const Table = function( module )
             } );
 
         this.array = use;
+    };
+
+    this.reset = function()
+    {
+        this.columns.forEach( column => this.totals[ column ] = 0 );
+        this.element.innerHTML = null;
     };
 
     function css( cell, column, record )

@@ -4,14 +4,11 @@
     border-left: 10px solid #060 !important;
 }
 
-.brokerage
+.breadcrumbs
 {
-    min-width: 7em !important;
-}
-
-.BUY, .SELL
-{
-    width: 4em;
+    color: #666;
+    font-family: monospace;
+    padding: 4px 1em 4px 1em;
 }
 
 .buy
@@ -290,6 +287,12 @@
     display: flex;
     justify-content: start;
     width: calc( 100% - 10px );
+}
+
+.tr:hover
+{
+    background-color: #333;
+    cursor: pointer;
 }
 
 .ui

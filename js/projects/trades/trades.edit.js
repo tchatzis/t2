@@ -11,6 +11,8 @@ const Transactions = function( module )
         if ( !module.symbol )
             return;
 
+        t2.ui.breadcrumbs[ 2 ] = module.symbol;
+
         // initialize actions map
         module.actions.forEach( action => map.set( action, [] ) );
 
@@ -45,18 +47,14 @@ const Transactions = function( module )
                 cell: { css: {}, display: 0, modes: [ "edit" ] },
                 format: [] } );
             table.addColumn( { 
-                input: { name: "date", type: "text" }, 
-                cell: { css: { column: "" }, display: 6, modes: [ "read", "edit" ] },
-                format: [ "date" ],
+                input: { name: "datetime", type: "datetime" }, 
+                cell: { css: { class: "date" }, display: 12, modes: [ "read", "edit" ] },
+                format: [ "date&time" ],
                 handler: async ( cell, record ) => 
                 {
-                    module.view = cell.dataset.column;
-                    module.setDate( record.date );
+                    module.view = "date";
+                    await module.setDate( record );
                 } } );
-            table.addColumn( { 
-                input: { name: "time", type: "text" }, 
-                cell: { css: { column: "" }, display: 6, modes: [ "edit" ] },
-                format: [ "time" ] } );
             table.addColumn( { 
                 input: { name: "symbol", type: "text" }, 
                 cell: { css: {}, display: 4, modes: [ "edit" ] },
@@ -74,10 +72,10 @@ const Transactions = function( module )
                     module.refresh( record );
                 } } );
             table.addColumn( { 
-                input: { name: "qty", type: "number", step: 1 }, 
+                input: { name: "qty", type: "number", step: 0.0001 }, 
                 cell: { css: { class: "info" }, display: 3, modes: [ "read", "edit" ] } } );
             table.addColumn( { 
-                input: { name: "price", type: "number", step: 0.001 }, 
+                input: { name: "price", type: "number", step: 0.0001 }, 
                 cell: { css: { class: "value" }, display: 4, modes: [ "read", "edit" ] },
                 format: [ "precision" ] } );
             table.addColumn( { 

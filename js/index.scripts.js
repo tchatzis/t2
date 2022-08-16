@@ -39,7 +39,8 @@ const Scripts = function( module )
                             let container = await t2.ui.addComponent( { id: "dump", title: `${ table } Dump`, component: "container", parent: t2.ui.elements.get( "content" ), module: module } );
                             let data = await t2.db.tx.retrieve( table );
                             let list = await t2.ui.addComponent( { id: "data", component: "table", parent: container.element } );
-                                list.allColumns( data.data );
+                                //list.allColumns( { array: data.data } );
+                                console.log( data );
                         } 
                     } ); 
                 } 
@@ -286,11 +287,18 @@ const Scripts = function( module )
 
                     // menu links
                     let module = await scene.addModule( { default: "default", invoke: "init", path: "../projects/trades/trades", namespace: "trades" } );
-                    let menu = await t2.ui.addComponent( { id: "symbols", component: "menu", parent: t2.ui.elements.get( "menu" ), array: module.data.symbol, horizontal: false } );
-                        menu.addListener( { type: "click", handler: function() { module.clicked( ...arguments ) } } );  
 
-                    let view = await t2.ui.addComponent( { id: "views", component: "menu", parent: t2.ui.elements.get( "header" ), array: module.views, horizontal: true } );
-                        view.addListener( { type: "click", handler: function() { module.change( ...arguments ) } } );   
+                    let symbols = await t2.ui.addComponent( { id: "symbols", component: "menu", parent: t2.ui.elements.get( "menu" ), array: module.data.symbol, breadcrumb: 2, horizontal: false } );
+                        symbols.addListener( { type: "click", handler: function() { module.clicked( ...arguments ) } } ); 
+                        symbols.setBreadcrumbs( t2.ui.components.get( "breadcrumbs" ) );
+                    
+                    let views = await t2.ui.addComponent( { id: "views", component: "menu", parent: t2.ui.elements.get( "header" ), array: module.views, breadcrumb: 1, horizontal: true } );
+                        views.addListener( { type: "click", handler: function() { module.change( ...arguments ) } } );  
+                        views.setBreadcrumbs( t2.ui.components.get( "breadcrumbs" ) );
+                        //views.activate( module.view );
+                        
+                    module.update();
+                    module.refresh();
                 };
 
                 scene.post = async () =>

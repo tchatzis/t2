@@ -7,7 +7,7 @@ const Menu = function()
 
     this.activate = function( name )
     {
-        let link = self.element.querySelector( `[ data-link = "${ name }" ]` );
+        let link = self.element.querySelector( `[ data-link = "${ name.toLowerCase() }" ]` );
 
         self.setActive( link );
     };   
@@ -32,6 +32,7 @@ const Menu = function()
         this.element = t2.common.el( "div", params.parent );
         this.element.id = params.id;
         this.element.style.display = params.horizontal ? "flex" : "block";
+        this.breadcrumb = params.breadcrumb || 0;
 
         this.update( params.array );
     };
@@ -43,12 +44,20 @@ const Menu = function()
         
         link.classList.add( "active" );
 
+        t2.ui.breadcrumbs.splice( this.breadcrumb );
+        t2.ui.breadcrumbs[ this.breadcrumb ] = link.textContent;
+
         if ( active.curr && active.curr !== link )
         {
-            active.curr.classList.remove( "active" );   
+            active.curr.classList.remove( "active" );      
         }
 
         active.curr = link;  
+    };
+
+    this.setBreadcrumbs = function( component )
+    {
+        this.breadcrumbs = component;
     };
 
     this.update = function( array )

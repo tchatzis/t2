@@ -26,6 +26,8 @@ const UI = function()
         return element;
     };
 
+    this.breadcrumbs = [];
+
     this.components = new Map();
     
     this.elements = new Map();

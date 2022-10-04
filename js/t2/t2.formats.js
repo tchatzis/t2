@@ -18,6 +18,8 @@ const formats =
     isoTime:    ( value ) => formats.datetime( value ).split( "T" )[ 1 ],
     number:     ( value ) => Number( value ),
     precision:  ( value ) => value.toFixed( 4 ),
+    negate:     ( value ) => -value,
+    null:       ( value ) => null,
     time:       ( value ) => 
     {
         let time = new Date().toLocaleTimeString();
@@ -54,7 +56,8 @@ const formats =
             return formatted.join( ":" );
         }
     },
-    uppercase:  ( value ) => value.toUpperCase()
+    uppercase:  ( value ) => value.toUpperCase(),
+    zero:       ( value ) => 0
 };
 
 export default formats;

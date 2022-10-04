@@ -1,5 +1,6 @@
 import { aggregate, reset, total } from "./trades.aggregate.js";
 import totals from "./trades.totals.js";
+import Data from "./trades.data.js";
 
 const Summary = function( module )
 {
@@ -7,15 +8,27 @@ const Summary = function( module )
     
     this.init = async function()
     {
-        t2.ui.breadcrumbs.splice( 2 );
-        
-        await summary();
-        await dividends();
+        let array = preamble();
+
+        await summary( array );
+        await dividends( );
+
         totals( total );
+
+        let footer = t2.ui.elements.get( "footer" );
+        let breadcrumbs = await footer.children.get( "breadcrumbs" );
+
+        let menu = await t2.ui.root( t2.ui.getElement( "menu" ).element );
+
+        let symbols = await menu.addComponent( { id: "symbols", type: "menu", array: module.data.symbol, format: "block" } );
+            symbols.addListener( { type: "click", handler: function() 
+            { 
+                module.clicked( ...arguments );
+                breadcrumbs.set.path( 1, arguments[ 2 ].curr.textContent )
+            } } ); 
     };
 
-    // summary
-    async function summary()
+    function preamble()
     {
         let array = [];
 
@@ -28,15 +41,22 @@ const Summary = function( module )
             array.push( aggregate( symbol, records ) );
         } );
 
-        await display( array );
+        return array;
     }
 
-    async function display( array )
+    // summary
+    async function summary( array )
     {
-        let container = await t2.ui.addComponent( { id: "summary", title: "Summary", component: "container", parent: t2.ui.elements.get( "content" ), module: module } );
+        let content = t2.ui.elements.get( "content" );
+        let container = await content.addContainer( { id: "day", type: "box", format: "inline-block" } );
+        let title = await container.addComponent( { id: "title", type: "title", format: "text" } );
+            title.set( "Summary" );
 
-        let table = await t2.ui.addComponent( { id: "aggregates", component: "table", parent: container.element, module: module } );
-            table.handlers = { row: ( e, record ) => module.handlers.edit( e, record ) };    
+        let qty = { predicate: { conditions: [ { name: "qty", operator: ">", value: 0 } ], options: [ "buy", "sell" ] } };        
+        let gain = { predicate: { conditions: [ { name: "qty", operator: "==", value: 0 }, { name: "gain", operator: "<=", value: 0 } ], options: [ "sell", "value" ] } };
+        let dividend = { predicate: { conditions: [ { name: "dividend", operator: "<", value: 0 } ], options: [ "buy", "value" ] } }; 
+
+        let table = await container.addComponent( { id: "aggregates", type: "table" } );  
             table.addColumn( { 
                 input: { name: "symbol", type: "text" }, 
                 cell: { css: {}, display: 4, modes: [ "read" ] },
@@ -49,13 +69,14 @@ const Summary = function( module )
                 cell: { css: {}, display: 3, modes: [ "read" ] } } );
             table.addColumn( { 
                 input: { name: "div", type: "number", step: 1, min: 0 }, 
-                cell: { css: {}, display: 3, modes: [ "read" ] } } );
+                cell: { css: {}, display: 3, modes: [ "read" ] },
+                format: [ "precision" ] } );
             table.addColumn( { 
                 input: { name: "sell", type: "number", step: 1, min: 0 }, 
                 cell: { css: {}, display: 3, modes: [ "read" ] } } );
             table.addColumn( { 
                 input: { name: "qty", type: "number", step: 1, min: 0 }, 
-                cell: { css: { class: "value" }, display: 3, modes: [ "read" ] },
+                cell: { css: qty, display: 3, modes: [ "read" ] },
                 format: [ "precision" ] } );
             table.addColumn( { 
                 input: { name: "price", type: "number", step: 0.001 }, 
@@ -69,7 +90,7 @@ const Summary = function( module )
                 } } );
             table.addColumn( { 
                 input: { name: "gain", type: "number", readonly: "" }, 
-                cell: { css: { predicate: { conditions: [ { name: "qty", operator: "==", value: 0 }, { name: "gain", operator: "<=", value: 0 } ], options: [ "sell", "value" ] } }, display: 6, modes: [ "read" ] },
+                cell: { css: gain, display: 6, modes: [ "read" ] },
                 format: [ "dollar" ],
                 formula: ( args ) => 
                 { 
@@ -82,11 +103,12 @@ const Summary = function( module )
                 } } );
             table.addColumn( { 
                 input: { name: "dividend", type: "number", readonly: "" }, 
-                cell: { css: { class: "value" }, display: 4, modes: [ "read" ] },
-                format: [ "dollar" ] } );
+                cell: { css: dividend, display: 4, modes: [ "read" ] },
+                format: [ "negate", "dollar" ] } );
             table.setColumns( module.mode );
             table.populate( { array: array, orderBy: "symbol" } );
             table.setTotals();
+            table.highlight( module.symbol );
     }
 
     // dividends
@@ -94,32 +116,51 @@ const Summary = function( module )
     {
         let array = module.data.all.filter( record => ( record.action == "DIV") );
 
-        let container = await t2.ui.addComponent( { id: "dividends", title: "Dividends", component: "container", parent: t2.ui.elements.get( "content" ), module: module } );
+        let content = t2.ui.elements.get( "content" );
+        let container = await content.addContainer( { id: "day", type: "box", format: "inline-block" } );
+        let title = await container.addComponent( { id: "title", type: "title", format: "text" } );
+            title.set( "Dividends" );
 
-        let table = await t2.ui.addComponent( { id: "dividends", component: "table", parent: container.element, module: module } );
-            table.handlers = { row: ( e, record ) => module.handlers.edit( e, record ) };
+        let table = await container.addComponent( { id: "dividends", type: "table" } );
+            table.addRowListener( { type: "contextmenu", handler: table.edit } );
+            table.addSubmitListener( { type: "submit", handler: async function ( data )
+            { 
+                let form = this;
+
+                let record = await t2.db.tx.update( module.table, Number( data.id ), new Data( data ) );
+
+                form.parent.remove();
+
+                table.normal( record.id );
+            } } );
             table.addColumn( { 
-                input: { name: "datetime", type: "text" }, 
-                cell: { css: { class: "date" }, display: 6, modes: [ "read" ] },
+                input: { name: "id", type: "hidden" }, 
+                cell: { css: {}, display: 0, modes: [ "edit" ] },
                 format: [ "isoDate" ] } );
             table.addColumn( { 
-                input: { name: "action", type: "text" }, 
-                cell: { css: { value: "action" }, display: 4, modes: [ "read" ] } } );
+                input: { name: "datetime", type: "text" }, 
+                cell: { css: { class: "date" }, display: 12, modes: [ "read", "edit" ] },
+                format: [ "date&time" ] } );
             table.addColumn( { 
-                input: { name: "symbol", type: "text" }, 
-                cell: { css: {}, display: 4, modes: [ "read" ] },
-                format: [ "uppercase" ] } );
+                input: { name: "action", type: "text", readonly: true }, 
+                cell: { css: { value: "action" }, display: 4, modes: [ "read", "edit" ] } } );
             table.addColumn( { 
-                input: { name: "qty", type: "number", step: 1, min: 0 }, 
-                cell: { css: { class: "info" }, display: 3, modes: [ "read" ] } } );
+                input: { name: "symbol", type: "select" }, 
+                cell: { css: {}, display: 4, modes: [ "read", "edit" ] },
+                format: [ "uppercase" ],
+                options: module.data.symbol } );
+            table.addColumn( { 
+                input: { name: "qty", type: "number", step: 0.0001, min: 0 }, 
+                cell: { css: { class: "info" }, display: 4, modes: [ "read", "edit" ] },
+                format: [ "precision" ] } );
             table.addColumn( { 
                 input: { name: "price", type: "number", step: 0.001 }, 
-                cell: { css: { class: "buy" }, display: 4, modes: [ "read" ] },
+                cell: { css: { class: "buy" }, display: 4, modes: [ "read", "edit" ] },
                 format: [ "precision" ],
                 formula: ( args ) => args.value * -1 } );
             table.addColumn( { 
                 input: { name: "value", type: "number", readonly: "" }, 
-                cell: { css: { class: "buy" }, display: 6, modes: [ "read" ] },
+                cell: { css: { class: "value" }, display: 6, modes: [ "read" ] },
                 format: [ "precision" ], 
                 formula: ( args ) => 
                 {
@@ -130,6 +171,15 @@ const Summary = function( module )
 
                     return args.value;
                 } } );   
+            table.addColumn( { 
+                input: { name: "brokerage", type: "select" }, 
+                cell: { css: {}, display: 8, modes: [ "read", "edit" ] },
+                format: [],
+                options: [ "TDAmeritrade", "JPMorganChase", "Robinhood" ] } );
+            table.addColumn( { 
+                input: { type: "submit", value: "UPDATE" }, 
+                cell: { css: {}, display: 4, modes: [ "edit" ] },
+                format: [] } );
             table.setColumns( module.mode );
             table.populate( { array: array, orderBy: "symbol" } );
             table.setTotals();

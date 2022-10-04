@@ -1,4 +1,4 @@
-const Menu = function()
+const Component = function()
 {
     let self = this;
     let active = { curr: null };
@@ -29,11 +29,9 @@ const Menu = function()
 
     this.init = async function( params )
     {
-        //this.breadcrumbs = await footer.components.get( "breadcrumbs" );
-        //this.breadcrumb = params.breadcrumb || 0;
-        this.element = t2.common.el( "div", params.parent );
+        this.element = t2.common.el( "div", this.parent.element );
         this.element.id = params.id;
-        this.element.style.display = params.horizontal ? "flex" : "block";
+        this.element.style.display = params.format;
 
         this.update( params.array );
     };
@@ -44,12 +42,6 @@ const Menu = function()
             return;
         
         link.classList.add( "active" );
-
-        console.log( t2.ui.breadcrumbs, self.breadcrumbs );
-
-        //t2.ui.breadcrumbs.splice( this.breadcrumb );
-        //t2.ui.breadcrumbs[ this.breadcrumb ] = link.textContent;
-        //self.breadcrumbs.setContent( t2.ui.breadcrumbs.join( "/" ) ); 
 
         if ( active.curr && active.curr !== link )
         {
@@ -101,4 +93,4 @@ const Menu = function()
     } 
 };
 
-export default Menu;
+export default Component;

@@ -1,26 +1,24 @@
 import formats from "./t2.formats.js";
 
-const Table = function( module )
+const Table = function()
 {
     let self = this;
     let el = t2.common.el;
     let columns = new Map();
     let allowed = new Map();
+    let listeners = { row: [], column: [], submit: [] };
 
     this.totals = {};
 
     this.init = function( params )
     {
-        let table = el( "table", params.parent );
+        let table = el( "table", this.parent.element );
             table.setAttribute( "cellpadding", 0 );
             table.setAttribute( "cellspacing", 0 );
 
-        this.parent = params.parent;
         this.header = el( "thead", table );
         this.element = el( "tbody", table );
         this.footer = el( "tfoot", table );
-
-        this.id = params.id;
     };
 
     this.addColumn = function( params )
@@ -33,6 +31,16 @@ const Table = function( module )
             this.totals[ input.name ] = 0;
 
         columns.set( input.name, params );
+    };
+
+    this.addRowListener = function( listener )
+    {
+        listeners.row.push( listener );
+    };
+
+    this.addSubmitListener = function( listener )
+    {
+        listeners.submit.push( listener );
     };
 
     this.allColumns = function( params )
@@ -54,6 +62,58 @@ const Table = function( module )
 
         this.setColumns( "read" );
         this.populate( params );
+    };
+
+    this.edit = async function()
+    {
+        let e = arguments[ 0 ];
+            e.preventDefault();
+
+        let data = arguments[ 1 ];
+
+        let columns = arguments[ 2 ];
+
+        self.highlight( data.id );
+
+        let content = t2.ui.elements.get( "content" );
+        let container = await content.addContainer( { id: "edit", type: "box", format: "inline-block" } );
+        let title = await container.addComponent( { id: "title", type: "title", format: "text" } );
+            title.set( `Edit \u00BB ${ data.id }` );  
+
+        let form = await container.addComponent( { id: data.id, type: "form", format: "block" } );
+            form.addListener( { type: "submit", handler: function ( data )
+            {
+                listeners.submit.forEach( listener => listener.handler.call( form, data ) );
+            } } );
+
+        Array.from( columns.entries() ).forEach( column =>
+        {
+            let name = column[ 0 ];
+            let config = column[ 1 ];
+
+            if ( config.cell.modes.find( mode => mode == "edit" ) )
+            {
+                let input = Object.assign( { label: name, name: name, type: config.input.type, value: data[ name ] || config.input.value || "" }, config.input );
+
+                form.addField( { 
+                    input: input, 
+                    cell: config.cell,
+                    format: config.format, 
+                    options: config.options } );
+                }
+        } );
+    };
+
+    this.highlight = function( id )
+    {
+        let row = document.querySelector( `[ data-id = "${ id }" ]` );
+            row?.classList.add( "highlight" );
+    };
+
+    this.normal = function( id )
+    {
+        let row = document.querySelector( `[ data-id = "${ id }" ]` );
+            row?.classList.remove( "highlight" );
     };
 
     this.setColumns = function( mode, hidden )
@@ -114,36 +174,30 @@ const Table = function( module )
 
             if ( !use.length )
             {
-                let el = this.element;
-
-                while ( el.tagName !== "TABLE" )
-                {
-                    el = el.parentNode;
-                }
-
-                el.parentNode.classList.add( "hidden" );
+                this.parent.hide();
 
                 return;
             }
             
             use.forEach( ( record, index ) => 
             {             
-                let mode = args.mode || "read";
+                //let mode = args.mode || "read";
 
                 let row = el( "tr", self.element );
                     row.setAttribute( "data-id", record.id );
                     row.setAttribute( "data-index", index );
                     row.setAttribute( "data-count", use.length );
-                if ( self.handlers?.row && mode == "read" )
+
+                listeners.row.forEach( listener =>
                 {
-                    row.addEventListener( "click", ( e ) => self.handlers.row( e, record ) );
+                    row.addEventListener( listener.type, ( e ) => listener.handler( e, record, columns ) );
                     row.classList.add( "tr" );
-                }
+                } );
 
                 if ( record.disabled )
                     row.classList.add( "disabled" );
 
-                display( mode, row, record, index );
+                display( row, record, index );
             } );
 
         this.array = use;
@@ -188,20 +242,31 @@ const Table = function( module )
         return css;
     }
 
-    function display( mode, row, record, index )
+    function display( row, record, index )
     {
         row.innerHTML = null;
 
-        let modes = [ "read", "edit" ];
+        //let modes = [ "read", "edit" ];
 
-        let form = el( "form", row );
+        /*let form = el( "form", row );
             form.setAttribute( "id", record.id );
-            form.addEventListener( "submit", ( e ) => self.handlers.update( e, record ) );
+            form.addEventListener( "submit", ( e ) => 
+            { 
+                e.preventDefault(); 
+
+                let form = e.target; 
+                let formdata = new FormData( form );
+                let data = {};   
+                let array = Array.from( formdata.entries() );
+                    array.forEach( input => data[ input[ 0 ] ] = input[ 1 ] );
+                
+                self.handlers.update( e, data ); 
+            } );*/
 
         let th = el( "th", row );
             th.style.width = "2em";
             th.textContent = index + 1;
-        if ( Array.from( allowed.keys() ).find( mode => mode == "edit" ) )
+        /*if ( Array.from( allowed.keys() ).find( mode => mode == "edit" ) )
         {
             th.style.cursor = "pointer";
             th.addEventListener( "click", ( e ) =>
@@ -216,21 +281,21 @@ const Table = function( module )
                 self.setColumns( mode );
                 display( mode, row, record, index );
             } );
-        }
+        }*/
         
         self.columns.forEach( ( column, index ) => 
         {
             let config = columns.get( column );
             let attributes = config.input;
             let cell = config.cell;
-            let handler = config.handler;
+            //let handler = config.handler;
             let format = config.format || [];
             if ( attributes.type == "number" )
                 format.unshift( "number" );
             let value = record[ column ];
             let th = self.header.children[ index + 1 ];
             let tf = self.footer.children[ index + 1 ];
-            let display = show( column, mode );
+            let display = show( column );
 
             // columns values and totals
             switch ( attributes.type )
@@ -257,14 +322,15 @@ const Table = function( module )
                 td.style.width = cell.display + "em";
                 td.classList.add( css( cell, column, record ) );
                 td.style.display = display;
-            if ( handler && mode == "read" && value )
+                td.textContent = value;
+            /*if ( handler && mode == "read" && value )
             {
                 td.addEventListener( "click", ( e ) => { e.preventDefault(); e.stopPropagation(); handler( e.target, record ) } );
                 td.classList.add( "handler" );
                 td.setAttribute( "data-column", column );
-            }
+            }*/
 
-            // switch disply mode
+            /* switch disply mode
             if ( cell.modes.find( e => e == mode ) )
             {
                 switch ( mode )
@@ -291,7 +357,7 @@ const Table = function( module )
                         td.textContent = value;
                     break;
                 }
-            }
+            }*/
 
             // set header / footer column widths
             th.style.width = td.offsetWidth + "px";
@@ -299,13 +365,13 @@ const Table = function( module )
         } );
     }
 
-    function show( column, mode )
+    function show( column )
     {
         let display = "none"; 
         let params = columns.get( column );
         let conditions = [];
             conditions.push( params.input.type !== "hidden" );
-            conditions.push( params.cell.modes.find( e => e == mode ) );
+            conditions.push( params.cell.modes.find( mode => mode == "read" ) );
             conditions.push( params.cell.display );
 
         if ( conditions.every( bool => bool ) )

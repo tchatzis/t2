@@ -272,7 +272,7 @@ const Chart = function( module )
 
             self.ctx.beginPath();
             self.ctx.strokeStyle = [ "rgba( 255, 0, 0, 1 )", "rgba( 0, 255, 0, 1 )" ][ 1 - index ];
-            self.ctx.arc( pixels[ 0 ], pixels[ 1 ], 4, 0, Math.PI * 2 );
+            self.ctx.arc( pixels[ x ], pixels[ y ], 4, 0, Math.PI * 2 );
             self.ctx.stroke();
         } );
     };
@@ -336,8 +336,9 @@ const Chart = function( module )
             } );
 
             let current = [ pixels[ x ], pixels[ y ] ];
+            let index = module.actions.indexOf( record.action );
 
-            self.ctx.lineTo( last[ x ], current[ y ] );
+            self.ctx.lineTo( current[ x ], last[ y ] );
             self.ctx.lineTo( ...current );
             
             last = current;

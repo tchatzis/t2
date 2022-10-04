@@ -13,7 +13,7 @@ const Timeline = function( module )
         t2.ui.breadcrumbs[ 2 ] = module.symbol;
 
         // filter by symbol and no dividends
-        this.array = module.data.all.filter( record => ( record.symbol == module.symbol && record.action !== "DIV" ) );
+        this.array = module.data.all.filter( record => ( record.symbol == module.symbol ) );
         // sort by date asc
         this.array.sort( ( a, b ) => a.date < b.date ? 1 : -1 );
 

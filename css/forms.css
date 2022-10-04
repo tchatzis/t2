@@ -1,11 +1,11 @@
 button, input, option, select, textarea
 {
-    background-color: #111 !important;
+    background-color: #000 !important;
     border: 1px solid #222;
     border-radius: 4px;
-    color: white;
+    color: #FFC;
     font-family: monospace;
-    margin-right: 2px;
+    margin: 0 1em 0 0;
     outline: none;
     user-select: auto;
 }
@@ -18,19 +18,18 @@ input
 
 input[ type=checkbox ]
 {
-    margin: 0 !important;
+    /*margin: 0 !important;*/
     padding: 0 !important;
     pointer-events: auto;
     height: 21px;
-    width: 21px;
+    width: 21px !important;
 }
 
 input[ type=datetime-local ]
 {
-    margin: 0 !important;
     padding: 0 !important;
     pointer-events: auto;
-    height: 21px;
+    height: 21px !important;
     width: 16em !important;
 }
 
@@ -45,6 +44,7 @@ input[ type=submit ]
     border: 1px solid #999;
     cursor: pointer;
     height: 21px;
+    margin: 0;
     padding: 3px;
 }
 

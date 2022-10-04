@@ -1,11 +1,12 @@
-const Shapes = function()
+const Shapes = function( args )
 {
+    let scene = args.scene;
+    let overlay = scene.modules.get( "overlay" );
+    
     this.init = async function()
     {
         let subcontent = t2.ui.elements.get( "subcontent" );
             subcontent.style.justifyContent = "start";
-
-        let submenu = t2.ui.elements.get( "submenu" );
 
         let a = t2.icons.init( { type: "rect", height: 16, width: 16, style: "fill: gray;" } );
         let b = t2.icons.init( { type: "rect", height: 16, width: 16, style: "stroke: gray;" } );
@@ -20,7 +21,7 @@ const Shapes = function()
         let array = [ a, b, c, d, e, f, g, h, i ];
 
         let icons = await t2.ui.addComponent( { id: "shapes", component: "icons", parent: subcontent, array: array, horizontal: true } );
-            icons.addListener( { type: "click", handler: function() 
+            icons.addListener( { type: "click", handler: async function() 
             { 
                 let e      = arguments[ 0 ];
                 let event  = arguments[ 1 ];
@@ -28,8 +29,12 @@ const Shapes = function()
                 let style  = active.curr.dataset.style;
                 let type   = active.curr.dataset.type;
 
-                submenu.textContent = type;
-                console.log( style, type ); 
+                let popup = t2.ui.components.get( "attributes" );
+                    popup.show();
+                    popup.setTitle( { title: `${ type } ${ style }` } );
+
+                overlay.setType( type );
+                overlay.setStyle( style );
             } } ); 
     };
 };

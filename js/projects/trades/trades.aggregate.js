@@ -22,22 +22,26 @@ const aggregate = function( symbol, records )
         aggregate.dividend  = records.filter( div  ).map( value ).reduce( sum, 0 );        
         aggregate.sell      = records.filter( sell ).map( record => record.qty ).reduce( sum, 0 );
         aggregate.sold      = records.filter( sell ).map( value ).reduce( sum, 0 );
-        aggregate.qty       = aggregate.buy + aggregate.div + aggregate.sell;
+        aggregate.qty       = Math.round( ( aggregate.buy + aggregate.div + aggregate.sell ) * 10000 ) / 10000;
         aggregate.gain      = records.map( record => -record.qty * record.price ).reduce( sum, 0 );
         aggregate.price     = aggregate.gain / aggregate.buy;
 
     total.columns = [];
-    total.open      += aggregate.qty ? aggregate.gain : 0;
-    total.closed    += aggregate.qty ? 0 : aggregate.gain;
+    total.open      += Math.round( aggregate.qty ? aggregate.gain * 10000 : 0 ) / 10000;
+    total.closed    += Math.round( aggregate.qty ? 0 : aggregate.gain * 10000 ) / 10000;
     total.buy       += aggregate.buy;
     total.bought    += aggregate.bought;
     total.div       += aggregate.div;
     total.dividend  += aggregate.dividend * -1;
-    total.sell      += aggregate.sell;
+    total.sell      += Math.round( aggregate.sell * 10000 ) / 10000;
     total.sold      += aggregate.sold;
     total.qty       += aggregate.qty;
-    total.price     =  total.qty ? total.open / total.qty : total.sold / total.sell;
+    total.price     =  Math.round( total.qty ? ( total.open / total.qty ) * 10000 : ( total.sold / total.sell ) * 10000 ) / 10000;
     total.gain      =  -( total.bought + total.sold + total.open );
+
+    //console.warn( symbol )
+    //console.log( aggregate )
+    //console.log( total )
 
     for ( let key in total )
     {

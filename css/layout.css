@@ -23,6 +23,12 @@
     width: 100%;
 }
 
+#context
+{
+    display: none;
+    position: absolute;
+}
+
 #footer
 {
     background-color: black;
@@ -88,7 +94,6 @@
     border-left: 1px solid #222;
     border-top: 1px solid #630;
     bottom: 1px;
-    display: none;
     min-width: 30%;
     overflow-y: auto;
     position: absolute;
@@ -128,6 +133,7 @@
 {
     border-bottom: 1px solid #606;
     border-left: 10px solid #606;
+    font-size: 0.7em;
 }
 
 #wrapper

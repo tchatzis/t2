@@ -25,7 +25,7 @@ const Common = function()
     {
         ids.forEach( id => 
         {              
-            let el = t2.ui.elements.get( id );
+            let el = t2.ui.elements.get( id ).element;
             if ( el )
             {
                 let children = Array.from( el.children );
@@ -71,6 +71,36 @@ const Common = function()
         return ignore.find( dataset => f == dataset );
     };
 
+    this.output = 
+    {
+        object: ( object, target ) =>
+        {
+            target.innerHTML = null;
+            
+            let output = t2.common.el( "div", target );
+                output.classList.add( "flex" );
+
+            for ( let prop in object )
+            {     
+                let key = document.createElement( "div" );
+                    key.textContent = prop;
+                    key.classList.add( "key" );
+
+                output.appendChild( key );
+
+                let value = document.createElement( "div" );
+                    value.textContent = object[ prop ].toFixed( 1 );
+                    value.classList.add( "key" );
+                    value.classList.add( "cyan" );
+                    value.style.minWidth = "25px";
+
+                output.appendChild( value );
+            }
+            
+            target.appendChild( output );
+        }
+    };
+
     this.remove = ( ids ) => 
     {
         ids.forEach( id => 
@@ -95,6 +125,19 @@ const Common = function()
 
         return times;
     };
+
+    this.uuid = function()
+    {
+        var dt = new Date().getTime();
+        var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace( /[xy]/g, ( c ) => 
+        {
+            var r =  ( dt + Math.random() * 16 ) %16 | 0;
+            dt = Math.floor( dt / 16 );
+            return ( c == 'x' ? r :( r&0x3 | 0x8 ) ).toString( 16 );
+        } );
+
+        return uuid;
+    }
 };
 
 export default Common;

@@ -27,7 +27,7 @@ const Data = function( data, create )
         this.brokerage = data.brokerage;
 
     if ( data.datetime )
-        this.datetime = data.datetime.replace( " ", "T" );
+        this.datetime = data.datetime;//.replace( " ", "T" );
     else
         this.datetime = t2.formats.datetime( new Date() );
 };

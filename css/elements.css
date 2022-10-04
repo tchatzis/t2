@@ -21,6 +21,17 @@ body
     z-index: 1;
 }*/
 
+label
+{
+    color: silver;
+    display: inline-block;
+    font-family: courier;
+    font-size: 0.8em;
+    margin-right: 5px;
+    min-width: 10em;
+    line-height: 21px;
+}
+
 li
 {
     margin-left: 0;
@@ -60,6 +71,7 @@ ul
 { 
     list-style-type: disc;
     margin-left: 0.5em;
+    margin-top: 0;
     padding: 0;
     text-transform: initial;
 }

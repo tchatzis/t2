@@ -14,13 +14,16 @@ async function totals( total )
     let condition = total.open ? 1 - ( total.gain > 0 ) : 1 - ( total.closed > 0 );
     let color = [ "green", "red" ][ condition ];
 
-    let row = t2.common.el( "div", t2.ui.elements.get( "margin" ) );
+    let parent = await t2.ui.root( t2.ui.elements.get( "margin" ).element );
+    let container = await parent.addContainer( { id: "day", type: "box", format: "inline-block" } );
+    let title = await container.addComponent( { id: "title", type: "title", format: "text" } );
+        title.set( "Totals" );
 
     Array.from( formats.keys() ).forEach( key =>
     {
         if ( total[ key ] )
         {
-            let line = t2.common.el( "div", row );
+            let line = t2.common.el( "div", container.element );
                 line.classList.add( "row" );
                 line.style.borderLeftColor = color;
             

@@ -9,16 +9,51 @@ const Scripts = function( module )
 
                 scene.pre = async () =>
                 {
-                    await scene.addElement( { id: "middle", parent: "wrapper" } );
-                    await scene.addElement( { id: "subcontent", parent: "middle" } );
-                    await scene.addElement( { id: "margin", parent: "wrapper" } );
+                    await scene.addElement( { id: "menu", parent: t2.ui.getElement( "wrapper" ).element } );
+                    await scene.addElement( { id: "submenu", parent: t2.ui.getElement( "menu" ).element } );
+                    await scene.addElement( { id: "middle", parent: t2.ui.getElement( "wrapper" ).element } );
+                    await scene.addElement( { id: "subcontent", parent: t2.ui.getElement( "middle" ).element } );
+                    await scene.addElement( { id: "margin", parent: t2.ui.getElement( "wrapper" ).element } );
+                    await scene.addElement( { id: "submargin", parent: t2.ui.getElement( "margin" ).element } );
                 };
 
                 scene.post = async () =>
                 {
-                    await scene.addModule( { default: "default", invoke: "init", path: "../modules/draw", namespace: "draw" } );
-                    await scene.addModule( { default: "default", invoke: "init", path: "../projects/2D/2D", namespace: "twoD" } );
-                    await scene.addModule( { default: "default", invoke: "init", path: "../projects/2D/scripts/overlay", namespace: "overlay", arguments: { scene: scene } } );     
+                    let main = await scene.addModule( { default: "default", invoke: "init", path: "../projects/2D/2D", namespace: "2D", arguments: { scene: scene } } );
+                    
+                    /*let loaded = false;
+                    let tree = await t2.ui.addComponent( { id: "layers", component: "tree", parent: t2.ui.elements.get( "menu" ), breadcrumb: 1 } );
+                        tree.addListener( { type: "click", handler: click } ); 
+                    let root = tree.addBranch( { label: "root", parent: null } );
+                    let child1 = tree.addBranch( { label: "child 1", parent: root } );
+                    let child2 = tree.addBranch( { label: "child 2", parent: root } );
+                    let child3 = tree.addBranch( { label: "child 3", parent: child2 } );
+
+                    tree.populate();
+
+                    function click( link, branch )
+                    {
+                        load(); 
+                    }*/
+                    
+                    async function load()
+                    {
+                        if ( loaded )
+                            return;
+
+                        
+                        
+                        //await scene.addModule( { default: "default", invoke: "init", path: "../projects/2D/2D.handlers", namespace: "handlers" } );
+                        //await scene.addModule( { default: "default", invoke: "init", path: "../projects/2D/2D.overlay", namespace: "overlay", arguments: { scene: scene } } );  
+                        //await scene.addModule( { default: "default", invoke: "init", path: "../projects/2D/2D.icons.shapes", namespace: "shapes", arguments: { scene: scene } } );
+                        //await scene.addModule( { default: "default", invoke: "init", path: "../projects/2D/2D.icons.views", namespace: "views" } );
+                        
+                            popup.hide();
+
+                        loaded = true;
+                    }
+                    
+
                 };
 
                 return scene;   
@@ -276,29 +311,37 @@ const Scripts = function( module )
 
                 scene.pre = async () => 
                 { 
-                    await scene.addElement( { id: "menu", parent: "wrapper" } );
-                    await scene.addElement( { id: "submenu", parent: "menu", ignore: "clear" } );
-                    await scene.addElement( { id: "middle", parent: "wrapper" } );
-                    await scene.addElement( { id: "content", parent: "middle" } );
-                    await scene.addElement( { id: "subcontent", parent: "middle", ignore: "clear" } );
-                    await scene.addElement( { id: "margin", parent: "wrapper" } );
-                    await scene.addElement( { id: "submargin", parent: "margin", ignore: "clear" } );
+                    await scene.addElement( { id: "menu", parent: t2.ui.getElement( "wrapper" ).element } );
+                    await scene.addElement( { id: "submenu", parent: t2.ui.getElement( "menu" ).element, ignore: "clear" } );
+                    await scene.addElement( { id: "middle", parent: t2.ui.getElement( "wrapper" ).element } );
+                    await scene.addElement( { id: "content", parent: t2.ui.getElement( "middle" ).element  } );
+                    await scene.addElement( { id: "subcontent", parent: t2.ui.getElement( "middle" ).element , ignore: "clear" } );
+                    await scene.addElement( { id: "margin", parent: t2.ui.getElement( "wrapper" ).element } );
+                    await scene.addElement( { id: "submargin", parent: t2.ui.getElement( "margin" ).element, ignore: "clear" } );
+
                     await scene.addUnload( { namespace: "this", execute: "reset", arguments: [] } );   
 
-                    // menu links
-                    let module = await scene.addModule( { default: "default", invoke: "init", path: "../projects/trades/trades", namespace: "trades" } );
+                    await scene.addModule( { default: "default", invoke: "init", path: "../projects/trades/trades", namespace: "trades" } );
 
-                    let symbols = await t2.ui.addComponent( { id: "symbols", component: "menu", parent: t2.ui.elements.get( "menu" ), array: module.data.symbol, breadcrumb: 2, horizontal: false } );
-                        symbols.addListener( { type: "click", handler: function() { module.clicked( ...arguments ) } } ); 
-                        symbols.setBreadcrumbs( t2.ui.components.get( "breadcrumbs" ) );
-                    
-                    let views = await t2.ui.addComponent( { id: "views", component: "menu", parent: t2.ui.elements.get( "header" ), array: module.views, breadcrumb: 1, horizontal: true } );
+                    /*
+                    let footer = t2.ui.elements.get( "footer" );
+                    let breadcrumbs = footer.children.get( "breadcrumbs" );
+
+                    let symbols = await menu.addComponent( { id: "symbols", type: "menu", array: module.data.symbol, format: "block" } );
+                        symbols.addListener( { type: "click", handler: function() 
+                        { 
+                            module.clicked( ...arguments );
+                            breadcrumbs.set.path( 1, arguments[ 2 ].curr.textContent )
+                        } } ); 
+
+                    let views = await footer.addComponent( { id: "views", type: "menu", array: module.views, format: "flex" } );
                         views.addListener( { type: "click", handler: function() { module.change( ...arguments ) } } );  
-                        views.setBreadcrumbs( t2.ui.components.get( "breadcrumbs" ) );
-                        //views.activate( module.view );
+                        views.activate( "day" );*/
+
+                    //console.warn( this );
                         
-                    module.update();
-                    module.refresh();
+                    //module.update();
+                    //module.refresh();
                 };
 
                 scene.post = async () =>

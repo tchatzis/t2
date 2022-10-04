@@ -17,6 +17,8 @@ const IDBTable = function( module )
 
                 await t2.db.table.add( data );
 
+                //console.log( t2.db.table.add )
+
                 version.value = ( t2.db.version || 1 ) + 1;
                 table.value = null;
             } );

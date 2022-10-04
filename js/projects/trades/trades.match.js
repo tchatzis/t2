@@ -49,23 +49,28 @@ const Transactions = function( module )
     // matched transactions
     async function results()
     {
-        let container = await t2.ui.addComponent( { title: "Matches", component: "container", parent: t2.ui.elements.get( "content" ), module: module } );
+        let container = await t2.ui.addComponent( { id: "matches", title: "Matches", component: "container", parent: t2.ui.elements.get( "content" ), module: module } );
         self.container = container.element;
         
         // margin subtotals
-        let table = await t2.ui.addComponent( { title: "Subtotals", component: "table", parent: t2.ui.elements.get( "margin" ), module: module } );
+        let summary = await t2.ui.addComponent( { id: "summary", title: "Summary", component: "container", parent: t2.ui.elements.get( "margin" ), module: module } );
+
+        let table = await t2.ui.addComponent( { title: "Subtotals", component: "table", parent: summary.element, module: module } );
+            table.handlers = { row: ( e, record ) => deselect.call( e, record ) };   
             table.addColumn( { 
                 input: { name: "qty", type: "number", step: 1, min: 0 }, 
-                cell: { css: { class: "info" }, display: 3, modes: [ "read" ] } } );
+                cell: { css: { class: "info" }, display: 3, modes: [ "read" ] },
+                format: [ "negate" ] } );
             table.addColumn( { 
-                input: { name: "price", type: "number", step: 0.001 }, 
-                cell: { css: { class: "value" }, display: 4, modes: [ "read" ] },
-                format: [ "precision" ] } );
+                input: { name: "price", type: "text", step: 1, min: 0 }, 
+                cell: { css: { class: "value" }, display: 3, modes: [ "read" ] },
+                format: [ "precision" ] } );  
             table.addColumn( { 
                 input: { name: "value", type: "number", readonly: "" }, 
                 cell: { css: { class: "value" }, display: 6, modes: [ "read" ] },
-                format: [ "precision" ] } );
-            table.setColumns( module.mode, true );
+                format: [ "precision", "negate" ] } );
+            table.setColumns( module.mode );
+            table.populate( { array: [] } );
 
         self.subtotals = table;
     }
@@ -156,6 +161,50 @@ const Transactions = function( module )
         return table.totals;
     }
 
+    function deselect( record )
+    {
+        if ( !record.records )
+            return;
+
+        let el = this.target;
+
+        while ( el.tagName !== "TR" )
+        {
+            el = el.parentNode;
+        }
+
+        el.remove();   
+
+        let index = Number( el.dataset.index );
+        subtotals.splice( index, 1 );
+
+        record.records.forEach( record =>
+        {
+            let trs = document.querySelectorAll( `[ data-id = "${ record.id }" ]` );
+            Array.from( trs ).forEach( tr =>
+            {
+                if ( tr.classList.contains( "disabled" ) )
+                {
+                    tr.classList.remove( "disabled" );
+                    tr.classList.remove( "nomatch" );
+                    tr.classList.remove( "pair" );
+                    tr.classList.remove( "pairing" );
+                }
+                else
+                {
+                    let el = tr;
+
+                    while ( el.tagName !== "TABLE" )
+                    {
+                        el = el.parentNode;
+                    }
+
+                    el.remove();
+                }
+            } );
+        } );
+    }
+
     async function select( record )
     {
         this.preventDefault();
@@ -194,7 +243,7 @@ const Transactions = function( module )
             let matched = match.get( "active" ).set( record.id, { tr: tr, record: record } );
             let m = Array.from( matched.values() );
             let qty = m.map( o => o.record.qty ).reduce( ( a, b ) => a + b, 0 );
-            let value = m.map( o => o.record.value ).reduce( ( a, b ) => a + b, 0 );
+            let value = m.map( o => { return o.record.action == "SELL" ? o.record.value : Math.abs( o.record.value ) } ).reduce( ( a, b ) => a + b, 0 );
 
             // only one is selected - no match possible
             if ( matched.size == 1 )
@@ -231,8 +280,11 @@ const Transactions = function( module )
                 // TODO: flag the records as matched - save ids
                 let records = m.map( o => o.record );
                 let total = await display( "matches", records );
+                    total.records = records;
+                    total.price = record.price;
                 subtotals.push( total );
 
+                self.subtotals.parent.classList.remove( "hidden" );
                 self.subtotals.populate( { array: subtotals } );
                 self.subtotals.setTotals();
 
@@ -310,11 +362,11 @@ const Transactions = function( module )
             // filter out marks in each range
             let prices = sorted.filter( mark => ( ( ( mark < high ) && ( mark >= p ) ) ) );
 
-            tables( cells, prices, precision );
+            tables( cells, prices );
         }
     };
 
-    function tables( cells, prices, precision )
+    function tables( cells, prices )
     {
         prices.forEach( mark =>
         {    
@@ -330,12 +382,12 @@ const Transactions = function( module )
                 let array = records.filter( record => actions[ action ].find( action => record.action == action ) );
 
                 if ( array.length )
-                    transactions( cells[ action ], array, action, precision );     
+                    transactions( cells[ action ], array, action );     
             } ); 
         } );
     }
 
-    async function transactions( cell, array, action, precision )
+    async function transactions( cell, array, action )
     {
         let table = await t2.ui.addComponent( { id: action, component: "table", parent: cell, module: module } );
             table.handlers = { row: ( e, record ) => select.call( e, record ), update: module.handlers.update };    

@@ -5,6 +5,7 @@ const Popup = function()
     let links = [];
     let clear = [];
     let args = arguments[ 0 ];
+    let title;
 
     this.addLink = function( link )
     {
@@ -41,9 +42,8 @@ const Popup = function()
         self.links( flex );
         self.update();
 
-        let title = el( "div", self.toolbar );
-            title.classList.add( "title" );
-            title.textContent = params.title;
+        title = el( "div", self.toolbar );
+        self.setTitle( params );
 
         return self;
     };
@@ -63,6 +63,12 @@ const Popup = function()
     };
 
     this.refresh = () => t2.common.clear( [ "popup" ] );
+
+    this.setTitle = function( params )
+    {
+        title.classList.add( "popup" );
+        title.textContent = params.title;
+    };
 
     this.show = function()
     {

@@ -64,7 +64,7 @@ const IndexedDB = function()
             };
         } );
         
-        function filter( result )
+        /*function filter( result )
         {
             let match = [];
             
@@ -74,6 +74,25 @@ const IndexedDB = function()
                 let value = filter[ 1 ];
                 let condition = result[ key ] == value;
                 
+                if ( condition )
+                    match.push( condition );
+            } );
+            
+            let conditions = [];
+                conditions.push( Object.entries( filters ).length == match.length );
+                conditions = conditions.concat( match );
+            
+            return conditions.every( bool => bool );      
+        }*/
+
+        function filter( result )
+        {
+            let match = [];
+            
+            filters.forEach( filter => 
+            {
+                let condition = eval( `"${ result[ filter.key ] }" ${ filter.operator } "${ filter.value }"` );
+
                 if ( condition )
                     match.push( condition );
             } );
@@ -203,13 +222,13 @@ const IndexedDB = function()
     {
         await scope.open( params );
         params.persists = await navigator.storage.persist();
+        t2.db.persists = params.persists;
         t2.db.version = params.version;
-        console.log( "Open IndexedDB:", params );
+        console.log( "IndexedDB", params );
     }
     
     this.open = async function( params )
     {    
-        //let params = { name: data.name, version: Number( data.version ) };
         let request = window.indexedDB.open( ...Object.values( params ) );
             request.onerror = ( e ) => 
             {
@@ -229,7 +248,7 @@ const IndexedDB = function()
     
     this.promise = function( emitter, type )
     {
-        return new Promise( ( resolve, reject ) => 
+        return new Promise( ( resolve ) => 
         {
             const handle = ( e ) =>
             {
@@ -237,7 +256,7 @@ const IndexedDB = function()
                 emitter.removeEventListener( type, handle );
             };
 
-            emitter.addEventListener( type, handle );
+            emitter.addEventListener( type, handle ); 
         } );  
     };
     
@@ -245,15 +264,21 @@ const IndexedDB = function()
 
     this.table.add = async function ( data )
     {
-        scope.name = data.name;
         scope.version = Number( data.version );
 
-        let request = window.indexedDB.open( data.name, data.version );
-        let upgrade = await scope.promise( request, "upgradeneeded" );
-        let db = upgrade.result;
+        scope.db.close();
 
-        if( !db.objectStoreNames.contains( data.table ) )
-            db.createObjectStore( data.table, { autoIncrement: true, keyPath: "id" } );
+        let request = window.indexedDB.open( scope.name, data.version );
+            request.onupgradeneeded = ( e ) =>
+            {
+                scope.db = e.target.result;
+
+                console.log( "upgrade", scope.db );
+
+                if( !scope.db.objectStoreNames.contains( data.table ) )
+                    scope.db.createObjectStore( data.table, { autoIncrement: true, keyPath: "id" } );
+            };
+            
     };
 
     this.table.get = async function( table )

@@ -8,7 +8,8 @@ async function init( namespace )
         [ 
             { id: "header",  ignore: "clear", parent: document.body }, 
             { id: "wrapper", ignore: "clear", parent: document.body },
-            { id: "footer",  ignore: "clear", parent: document.body }
+            { id: "footer",  ignore: "clear", parent: document.body },
+            { id: "context", ignore: "clear", parent: document.body }
         ] );
 
     // import the movie scripts
@@ -22,24 +23,28 @@ async function init( namespace )
     //scenes.login       = t2.movie.addScene( { duration: 2000, name: "login", next: "database", script: scripts.login } );
     scenes.database      = t2.movie.addScene( { duration: Infinity, name: "database", next: "imports", script: scripts.databases } );
     //scenes.imports     = t2.movie.addScene( { duration: Infinity, name: "imports", next: "trades", script: scripts.imports } );
-    scenes.trades        = t2.movie.addScene( { duration: Infinity, name: "trades", next: "svg", script: scripts.trades } );
-    //scenes.svg         = t2.movie.addScene( { duration: Infinity, name: "svg", next: "2D", script: scripts.svg } );
-    //scenes[ "2D" ]     = t2.movie.addScene( { duration: Infinity, name: "2D", next: "end", script: scripts[ "2D" ] } );
+    scenes.trades        = t2.movie.addScene( { duration: Infinity, name: "trades", next: "2D", script: scripts.trades } );
+    //scenes.svg           = t2.movie.addScene( { duration: Infinity, name: "svg", next: "2D", script: scripts.svg } );
+    scenes[ "2D" ]       = t2.movie.addScene( { duration: Infinity, name: "2D", next: "end", script: scripts[ "2D" ] } );
     scenes.end           = t2.movie.addScene( { duration: Infinity, name: "end", next: null, script: null } );
-    
-    let breadcrumbs = await t2.ui.addComponent( { id: "breadcrumbs", component: "info", parent: t2.ui.elements.get( "footer" ), css: "breadcrumbs" } );
-
-    await scenes[ scene ].start();
 
     // footer navigation
-    let names = Array.from( t2.movie.scenes.keys() );
-
-    let menu = await t2.ui.addComponent( { id: "scenes", component: "menu", parent: t2.ui.elements.get( "footer" ), array: names, horizontal: true } );
-        menu.addListener( { type: "click", handler: scenes.end.change } );
+    let header = await t2.ui.root( t2.ui.elements.get( "header" ).element );
+    let menu = await header.addComponent( { id: "scenes", type: "menu", array: Array.from( t2.movie.scenes.keys() ), format: "flex" } );
         menu.element.dataset.ignore = "clear";
-        menu.setBreadcrumbs( breadcrumbs );
+        menu.addListener( { type: "click", handler: ( e, listener, active ) => 
+        { 
+            breadcrumbs.set.path( 0, active.curr.textContent ); 
+            scenes.end.change( e, listener, active );
+        } } );
         menu.activate( scene );
-        menu.disable( [ "end" ] );
+
+    // add breadcrumbs ( path ) component
+    let footer = await t2.ui.root( t2.ui.elements.get( "footer" ).element );
+    let breadcrumbs = await footer.addComponent( { id: "breadcrumbs", type: "path" } );
+        breadcrumbs.set.path( 0, scene );
+
+    await scenes[ scene ].start();
 };
 
 window.onload = () => init( "t2" );

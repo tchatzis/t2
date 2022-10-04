@@ -4,13 +4,6 @@
     border-left: 10px solid #060 !important;
 }
 
-.breadcrumbs
-{
-    color: #666;
-    font-family: monospace;
-    padding: 4px 1em 4px 1em;
-}
-
 .buy
 {
     color: lightgreen !important;
@@ -25,10 +18,15 @@
 {
     border: 1px solid #333;
     border-radius: 10px;
-    display: inline-block;
+    display: block;
     overflow-y: auto;
     margin: 10px;
     max-height: 80vh;
+    padding: 10px;
+}
+
+.content
+{
     padding: 10px;
 }
 
@@ -36,6 +34,11 @@
 {
     background-color: #222;
     border-left: 10px solid green !important;
+}
+
+.cyan
+{
+    color: cyan;
 }
 
 .data
@@ -64,6 +67,11 @@
 .div, .edit
 {
     color: yellow;
+}
+
+.field
+{
+    margin-bottom: 4px;
 }
 
 .flex
@@ -123,6 +131,11 @@
 {
     background-color: #033;
     transition: background-color 1000ms linear;
+}
+
+.key
+{
+    padding-right: 3px;
 }
 
 .link, .tool
@@ -206,6 +219,13 @@
     background-color: rgba( 0, 128, 0, 0.3 ); 
 }
 
+.path
+{
+    color: #666;
+    font-family: monospace;
+    padding: 4px 1em 4px 1em;
+}
+
 .picked
 {
     background-color: #060;
@@ -214,6 +234,16 @@
 .picked:hover
 {
     background-color: #060;
+}
+
+.popup
+{
+    border-bottom: 1px dotted #222;
+    color: #999;
+    font-family: courier;
+    font-size: 1em;
+    font-weight: normal;  
+    padding: 2px 5px 2px 5px; 
 }
 
 .row
@@ -262,7 +292,7 @@
 {
     border-bottom: 1px dotted #222;
     color: #999;
-    font-family: "Comic Sans MS";
+    font-family: Impact;
     font-size: 1.2em;
     font-weight: normal;  
     padding: 2px 5px 2px 5px;  

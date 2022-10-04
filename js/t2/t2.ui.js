@@ -1,7 +1,16 @@
+import Handlers from "./t2.container.handlers.js";
+
 const UI = function()
 {
     let self = this;
 
+    function Element( element )
+    {
+        this.element = element;
+        this.id = this.element.id;
+        this.type = "element";
+    };
+    
     this.addComponent = async function( componentParams )
     {
         let module    = await import( `../t2/t2.ui.${ componentParams.component }.js` );
@@ -12,23 +21,44 @@ const UI = function()
 
         return component;
     };
-    
-    this.addElement = function( elParams )
+
+    this.addContainer = async function( params )
     {
-        let parent = t2.common.getParent( elParams );
-        let element = t2.common.el( "div", elParams.parent );
-            element.id = elParams.id;
-        if ( elParams.ignore )
-            element.setAttribute( "data-ignore", elParams.ignore );
+        let module    = await import( `../t2/t2.ui.${ params.type }.js` );
+        let container = await new module.default();
+            container.init( params );
+        
+        this.containers.set( params.id, container );
 
-        self.elements.set( elParams.id, element );
-
-        return element;
+        return container;
     };
 
-    this.breadcrumbs = [];
+    this.root = async function( params )
+    {
+        let elParams = new Element( params );
+
+        this.elements.set( elParams.id, elParams );
+
+        Handlers.call( elParams );
+
+        return elParams;
+    };
+
+    this.addElement = async function( params )
+    {
+        let element = t2.common.el( "div", params.parent );
+            element.id = params.id;
+        if ( params.ignore )
+            element.setAttribute( "data-ignore", params.ignore );
+
+        let rooted = await self.root( element );
+
+        return rooted;
+    };
 
     this.components = new Map();
+
+    this.containers = new Map();
     
     this.elements = new Map();
     
@@ -37,9 +67,8 @@ const UI = function()
     this.init = function( elArray )
     {
         elArray.forEach( elParams => this.addElement( elParams ) );
-
-        this.addElement( { id: "popup", ignore: "clear", parent: self.elements.get( "wrapper" ) } );
     };
+
 };
 
 export default UI;

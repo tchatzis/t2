@@ -9,6 +9,7 @@ body
     border: 0;
     padding: 0;
     overflow: hidden;
+    user-select: none;
 }
 
 /*canvas
@@ -28,7 +29,7 @@ label
     font-family: courier;
     font-size: 0.8em;
     margin-right: 5px;
-    min-width: 10em;
+    min-width: 8em;
     line-height: 21px;
 }
 

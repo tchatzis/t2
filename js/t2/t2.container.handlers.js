@@ -1,3 +1,5 @@
+import Common from "./t2.common.handlers.js";
+
 const Handlers = function()
 {
     this.addComponent = async function( params )
@@ -5,8 +7,13 @@ const Handlers = function()
         let module    = await import( `../t2/t2.ui.component.${ params.type }.js` );
         let component = await new module.default();
             component.parent = this;
-            component.init( params );   
-        
+            component.path = new Map();
+            component.path.set( params.id, this.path.get( this.id ).concat( params.id ) );
+            component.init( params );  
+
+        let path = component.path.get( params.id ).join( "." );
+        t2.ui.children.set( path, component );
+
         this.children.set( params.id, component );
 
         return component;
@@ -17,28 +24,23 @@ const Handlers = function()
         let module    = await import( `../t2/t2.ui.container.${ params.type }.js` );
         let container = await new module.default();
             container.parent = this;
-            container.init( params );   
+            container.path = new Map();
+            container.path.set( params.id, this.path.get( this.id ).concat( params.id ) );
+            container.init( params ); 
+    
+        let path = container.path.get( params.id ).join( "." );
+        t2.ui.children.set( path, container );
         
         this.children.set( params.id, container );
 
         return container;
     };
 
-    this.class = this.constructor.name;
-
     this.clear = () => Array.from( this.element.children ).forEach( child => child.remove() );
 
     this.children = new Map();
 
-    this.element.setAttribute( "data-id", this.id );
-    this.element.setAttribute( "data-type", this.type );
-    this.element.setAttribute( "data-class", this.class );
-    
-    this.hide = () => this.element.classList.add( "hidden" );
-
-    this.remove = () => this.element.remove();
-
-    this.show = () => this.element.classList.remove( "hidden" );
+    Common.call( this );
 };
 
 export default Handlers;

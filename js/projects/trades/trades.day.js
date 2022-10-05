@@ -17,10 +17,9 @@ const Day = function( module )
         let max = Math.max.apply( null, module.data.all.map( record => new Date( record.datetime ) ) );
         let date = t2.formats.isoDate( new Date( max ) );
 
-        let footer = t2.ui.elements.get( "footer" );
-        breadcrumbs = await footer.children.get( "breadcrumbs" );
+        breadcrumbs = await t2.ui.children.get( "footer.breadcrumbs" );
         
-        let submenu = t2.ui.elements.get( "submenu" );
+        let submenu = t2.ui.children.get( "submenu" );
 
         let dates = await submenu.addComponent( { id: "date", type: "form", format: "flex" } );
             dates.addListener( { type: "submit", handler: async ( data ) => this.setDate( data ) } );
@@ -58,7 +57,7 @@ const Day = function( module )
             aggregate( symbol, records );
         } );
 
-        totals( total );
+        //totals( total );
     }
 
     function filter()
@@ -76,8 +75,8 @@ const Day = function( module )
     // day trades
     async function transactions( array, brokerage )
     {
-        let content = t2.ui.elements.get( "content" );
-        let container = await content.addContainer( { id: "day", type: "box", format: "inline-block" } );
+        let content = t2.ui.children.get( "content" );
+        let container = await content.addContainer( { id: brokerage.toLowerCase(), type: "box", format: "inline-block" } );
         let title = await container.addComponent( { id: "title", type: "title", format: "text" } );
             title.set( `${ brokerage } \u00BB ${ self.date }` );
 
@@ -88,6 +87,11 @@ const Day = function( module )
                 let form = this;
 
                 let record = await t2.db.tx.update( module.table, Number( data.id ), new Data( data ) );
+
+                let records = await t2.db.tx.filter( module.table, [ { key: "brokerage", operator: "==", value: brokerage }, { key: "datetime", operator: "==", value: self.date } ] );
+
+                table.populate( { array: records.data, orderBy: "datetime" } );
+                table.setTotals();
 
                 form.parent.remove();
 
@@ -120,11 +124,11 @@ const Day = function( module )
                 input: { name: "notes", type: "text" }, 
                 cell: { css: { value: "action" }, display: 4, modes: [ "read", "edit" ] } } );
             table.addColumn( { 
-                input: { name: "qty", type: "number", step: 1 }, 
+                input: { name: "qty", type: "number", step: 0.0001 }, 
                 cell: { css: { class: "info" }, display: 3, modes: [ "read", "edit" ] },
-                format: [ "precision" ] } );
+                format: [ "absolute", "precision" ] } );
             table.addColumn( { 
-                input: { name: "price", type: "number", step: 0.001 }, 
+                input: { name: "price", type: "number", step: 0.0001 }, 
                 cell: { css: { class: "value" }, display: 4, modes: [ "read", "edit" ] },
                 format: [ "precision" ],
                 formula: ( args ) => 

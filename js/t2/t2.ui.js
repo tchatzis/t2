@@ -9,9 +9,10 @@ const UI = function()
         this.element = element;
         this.id = this.element.id;
         this.type = "element";
+        this.path = new Map();
     };
     
-    this.addComponent = async function( componentParams )
+    /*this.addComponent = async function( componentParams )
     {
         let module    = await import( `../t2/t2.ui.${ componentParams.component }.js` );
         let component = await new module.default( componentParams.module );
@@ -31,13 +32,17 @@ const UI = function()
         this.containers.set( params.id, container );
 
         return container;
-    };
+    };*/
 
     this.root = async function( params )
     {
         let elParams = new Element( params );
 
-        this.elements.set( elParams.id, elParams );
+        elParams.path.set( elParams.id, [ elParams.id ] );
+
+        let path = elParams.path.get( elParams.id ).join( "." );
+
+        this.children.set( path, elParams );
 
         Handlers.call( elParams );
 
@@ -56,13 +61,13 @@ const UI = function()
         return rooted;
     };
 
-    this.components = new Map();
+    //this.components = new Map();
 
-    this.containers = new Map();
+    //this.containers = new Map();
     
-    this.elements = new Map();
+    this.children = new Map();
     
-    this.getElement = ( id ) => this.elements.get( id );
+    //this.getElement = ( id ) => this.elements.get( id );
 
     this.init = function( elArray )
     {

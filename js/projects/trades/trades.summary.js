@@ -15,17 +15,8 @@ const Summary = function( module )
 
         totals( total );
 
-        let footer = t2.ui.elements.get( "footer" );
-        let breadcrumbs = await footer.children.get( "breadcrumbs" );
-
-        let menu = await t2.ui.root( t2.ui.getElement( "menu" ).element );
-
-        let symbols = await menu.addComponent( { id: "symbols", type: "menu", array: module.data.symbol, format: "block" } );
-            symbols.addListener( { type: "click", handler: function() 
-            { 
-                module.clicked( ...arguments );
-                breadcrumbs.set.path( 1, arguments[ 2 ].curr.textContent )
-            } } ); 
+        let symbols = t2.ui.children.get( "menu.symbols" );
+            symbols.show();
     };
 
     function preamble()
@@ -47,7 +38,7 @@ const Summary = function( module )
     // summary
     async function summary( array )
     {
-        let content = t2.ui.elements.get( "content" );
+        let content = t2.ui.children.get( "content" );
         let container = await content.addContainer( { id: "day", type: "box", format: "inline-block" } );
         let title = await container.addComponent( { id: "title", type: "title", format: "text" } );
             title.set( "Summary" );
@@ -116,7 +107,7 @@ const Summary = function( module )
     {
         let array = module.data.all.filter( record => ( record.action == "DIV") );
 
-        let content = t2.ui.elements.get( "content" );
+        let content = t2.ui.children.get( "content" );
         let container = await content.addContainer( { id: "day", type: "box", format: "inline-block" } );
         let title = await container.addComponent( { id: "title", type: "title", format: "text" } );
             title.set( "Dividends" );

@@ -110,21 +110,31 @@ const Trades = function()
 
     this.init = async function()
     {
+        //console.log( t2.ui.children );
+        
         this.mode = "read";
         this.view = "day";
-        this.views = [ "Day", "Summary" ];
+        this.views = [ "Day", "Symbol", "Summary" ];
 
-        let footer = t2.ui.elements.get( "footer" );
+        breadcrumbs = t2.ui.children.get( "footer.breadcrumbs" );
 
-        breadcrumbs = await footer.children.get( "breadcrumbs" );
-
+        let footer = await t2.ui.children.get( "footer" );
         views = await footer.addComponent( { id: "views", type: "menu", array: this.views, format: "flex" } );
         views.addListener( { type: "click", handler: function() { self.change( ...arguments ) } } );  
         views.activate( "day" );
 
         await this.refresh();
 
-        fix();
+        symbols = t2.ui.children.get( "menu.symbols" );
+        symbols.update( this.data.symbol );
+        symbols.hide();
+        symbols.addListener( { type: "click", handler: function() 
+        { 
+            self.clicked( ...arguments );
+            breadcrumbs.set.path( 2, arguments[ 2 ].curr.textContent );
+        } } ); 
+
+        //fix();
     };
 
     this.filter = function()
@@ -215,7 +225,7 @@ const Trades = function()
     // add trade form
     this.setForms = async function()
     {
-        let subcontent = t2.ui.elements.get( "subcontent" );
+        let subcontent = t2.ui.children.get( "subcontent" );
         
         let form = await subcontent.addComponent( { id: "transaction", type: "form", format: "flex" } );
             form.addListener( { type: "submit", handler: async function ( data )

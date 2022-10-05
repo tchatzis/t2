@@ -1,5 +1,6 @@
 const formats = 
 {
+    absolute:   ( value ) => Math.abs( value ),
     date:       ( value ) => new Date( value ).toLocaleDateString(),
     datetime:   ( value ) => 
     {

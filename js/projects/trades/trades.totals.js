@@ -14,7 +14,7 @@ async function totals( total )
     let condition = total.open ? 1 - ( total.gain > 0 ) : 1 - ( total.closed > 0 );
     let color = [ "green", "red" ][ condition ];
 
-    let parent = await t2.ui.root( t2.ui.elements.get( "margin" ).element );
+    let parent = await t2.ui.root( t2.ui.children.get( "margin" ).element );
     let container = await parent.addContainer( { id: "day", type: "box", format: "inline-block" } );
     let title = await container.addComponent( { id: "title", type: "title", format: "text" } );
         title.set( "Totals" );

@@ -7,6 +7,7 @@ const Table = function()
     let columns = new Map();
     let allowed = new Map();
     let listeners = { row: [], column: [], submit: [] };
+    let active = { highlight: null };
 
     this.totals = {};
 
@@ -66,17 +67,18 @@ const Table = function()
 
     this.edit = async function()
     {
-        let e = arguments[ 0 ];
-            e.preventDefault();
+        let data = arguments[ 0 ];
 
-        let data = arguments[ 1 ];
+        let columns = arguments[ 1 ];
 
-        let columns = arguments[ 2 ];
+        let subcontent = t2.ui.children.get( "subcontent" );
+        let parent = await subcontent.addContainer( { id: "popop", type: "popup" } );
+            parent.clear();
+            parent.show();
 
         self.highlight( data.id );
 
-        let content = t2.ui.elements.get( "content" );
-        let container = await content.addContainer( { id: "edit", type: "box", format: "inline-block" } );
+        let container = await parent.addContainer( { id: "edit", type: "box", format: "inline-block" } );
         let title = await container.addComponent( { id: "title", type: "title", format: "text" } );
             title.set( `Edit \u00BB ${ data.id }` );  
 
@@ -84,6 +86,7 @@ const Table = function()
             form.addListener( { type: "submit", handler: function ( data )
             {
                 listeners.submit.forEach( listener => listener.handler.call( form, data ) );
+                parent.hide();
             } } );
 
         Array.from( columns.entries() ).forEach( column =>
@@ -190,7 +193,17 @@ const Table = function()
 
                 listeners.row.forEach( listener =>
                 {
-                    row.addEventListener( listener.type, ( e ) => listener.handler( e, record, columns ) );
+                    row.addEventListener( listener.type, ( e ) => 
+                    { 
+                        e.preventDefault(); 
+
+                        listener.handler( record, columns ); 
+
+                        self.normal( active.highlight?.getAttribute( "data-id" ) );
+
+                        active.highlight = row;
+                    } );
+
                     row.classList.add( "tr" );
                 } );
 
@@ -246,42 +259,9 @@ const Table = function()
     {
         row.innerHTML = null;
 
-        //let modes = [ "read", "edit" ];
-
-        /*let form = el( "form", row );
-            form.setAttribute( "id", record.id );
-            form.addEventListener( "submit", ( e ) => 
-            { 
-                e.preventDefault(); 
-
-                let form = e.target; 
-                let formdata = new FormData( form );
-                let data = {};   
-                let array = Array.from( formdata.entries() );
-                    array.forEach( input => data[ input[ 0 ] ] = input[ 1 ] );
-                
-                self.handlers.update( e, data ); 
-            } );*/
-
         let th = el( "th", row );
             th.style.width = "2em";
             th.textContent = index + 1;
-        /*if ( Array.from( allowed.keys() ).find( mode => mode == "edit" ) )
-        {
-            th.style.cursor = "pointer";
-            th.addEventListener( "click", ( e ) =>
-            {
-                e.preventDefault();
-                e.stopPropagation();
-
-                let index = modes.indexOf( mode );
-
-                mode = modes[ 1 - index ];
-
-                self.setColumns( mode );
-                display( mode, row, record, index );
-            } );
-        }*/
         
         self.columns.forEach( ( column, index ) => 
         {
@@ -312,10 +292,7 @@ const Table = function()
                 break;
             };
 
-            if ( format  )
-            {
-                format.forEach( f => value = formats[ f ]( value, column, record ) );
-            }
+            format?.forEach( f => value = formats[ f ]( value, column, record ) );
 
             let td = el( "td", row );
                 td.classList.add( "data" );
@@ -323,41 +300,6 @@ const Table = function()
                 td.classList.add( css( cell, column, record ) );
                 td.style.display = display;
                 td.textContent = value;
-            /*if ( handler && mode == "read" && value )
-            {
-                td.addEventListener( "click", ( e ) => { e.preventDefault(); e.stopPropagation(); handler( e.target, record ) } );
-                td.classList.add( "handler" );
-                td.setAttribute( "data-column", column );
-            }*/
-
-            /* switch disply mode
-            if ( cell.modes.find( e => e == mode ) )
-            {
-                switch ( mode )
-                {
-                    case "edit":
-                        td.innerHTML = null;
-
-                        let input = el( "input", td );
-                            input.style.width = ( cell.display + 1 ) + "em";
-                            input.setAttribute( "placeholder", column );
-                            input.setAttribute( "Form", record.id );
-                        if ( value )
-                        {
-                            input.setAttribute( "data-value", value );
-                            input.setAttribute( "value", value );
-                        }
-
-                        for ( let attr in attributes )
-                            if ( attributes.hasOwnProperty( attr ) )
-                                input.setAttribute( attr, attributes[ attr ] );  
-                    break;
-
-                    case "read":
-                        td.textContent = value;
-                    break;
-                }
-            }*/
 
             // set header / footer column widths
             th.style.width = td.offsetWidth + "px";

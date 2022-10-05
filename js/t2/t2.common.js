@@ -25,7 +25,7 @@ const Common = function()
     {
         ids.forEach( id => 
         {              
-            let el = t2.ui.elements.get( id ).element;
+            let el = t2.ui.children.get( id ).element;
             if ( el )
             {
                 let children = Array.from( el.children );

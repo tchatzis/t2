@@ -1,3 +1,5 @@
+import Common from "./t2.common.handlers.js";
+
 const Handlers = function()
 {
     this.set = function( content )
@@ -23,20 +25,15 @@ const Handlers = function()
         }
     };
 
-    this.class = this.constructor.name;
+    this.element.setAttribute( "data-format", this.format || "" );
 
-    this.element.setAttribute( "data-id", this.id );
-    this.element.setAttribute( "data-type", this.type );
-    this.element.setAttribute( "data-class", this.class );
-    if ( this.format )
-        this.element.setAttribute( "data-format", this.format );
-
-    
     this.hide = () => this.element.classList.add( "hidden" );
 
     this.remove = () => this.element.remove();
 
     this.show = () => this.element.classList.remove( "hidden" );
+
+    Common.call( this );
 };
 
 export default Handlers;

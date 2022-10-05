@@ -93,12 +93,12 @@
     border-bottom: 1px solid #630;
     border-left: 1px solid #222;
     border-top: 1px solid #630;
-    bottom: 1px;
+    bottom: 0;
     min-width: 30%;
     overflow-y: auto;
     position: absolute;
-    min-height: 20%;
-    max-height: 80%;
+    min-height: 20vh;
+    max-height: 80vh;
     right: 0;  
 }
 

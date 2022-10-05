@@ -86,12 +86,6 @@ const Scene = function( sceneParams )
         if ( self.post )
             await self.post();
 
-        // TODO: devise a better hook
-        let menu = t2.ui?.components.get( "movies" );
-
-        if ( menu )
-            menu.activate( self.parameters.name );
-
         if ( self.parameters.duration < Infinity )
             self.timeout = setTimeout( 
                 function()

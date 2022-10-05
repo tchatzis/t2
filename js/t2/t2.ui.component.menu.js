@@ -1,3 +1,5 @@
+import Handlers from "./t2.component.handlers.js";
+
 const Component = function()
 {
     let self = this;
@@ -34,6 +36,10 @@ const Component = function()
         this.element.style.display = params.format;
 
         this.update( params.array );
+
+        Object.assign( this, params );
+
+        Handlers.call( this );
     };
 
     this.setActive = function( link )

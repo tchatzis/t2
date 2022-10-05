@@ -91,7 +91,15 @@ const IndexedDB = function()
             
             filters.forEach( filter => 
             {
-                let condition = eval( `"${ result[ filter.key ] }" ${ filter.operator } "${ filter.value }"` );
+                let condition = false;
+                
+                if ( filter.key == "datetime" )
+                {
+                    let date = t2.formats.isoDate( result[ filter.key ] );
+                    condition = eval( `"${ date }" ${ filter.operator } "${ filter.value }"` );
+                }
+                else
+                    condition = eval( `"${ result[ filter.key ] }" ${ filter.operator } "${ filter.value }"` );
 
                 if ( condition )
                     match.push( condition );

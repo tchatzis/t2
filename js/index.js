@@ -28,8 +28,8 @@ async function init( namespace )
     scenes[ "2D" ]       = t2.movie.addScene( { duration: Infinity, name: "2D", next: "end", script: scripts[ "2D" ] } );
     scenes.end           = t2.movie.addScene( { duration: Infinity, name: "end", next: null, script: null } );
 
-    // footer navigation
-    let header = await t2.ui.root( t2.ui.elements.get( "header" ).element );
+    // header menu
+    let header = await t2.ui.root( t2.ui.children.get( "header" ).element );
     let menu = await header.addComponent( { id: "scenes", type: "menu", array: Array.from( t2.movie.scenes.keys() ), format: "flex" } );
         menu.element.dataset.ignore = "clear";
         menu.addListener( { type: "click", handler: ( e, listener, active ) => 
@@ -39,8 +39,8 @@ async function init( namespace )
         } } );
         menu.activate( scene );
 
-    // add breadcrumbs ( path ) component
-    let footer = await t2.ui.root( t2.ui.elements.get( "footer" ).element );
+    // footer breadcrumbs
+    let footer = await t2.ui.root( t2.ui.children.get( "footer" ).element );
     let breadcrumbs = await footer.addComponent( { id: "breadcrumbs", type: "path" } );
         breadcrumbs.set.path( 0, scene );
 

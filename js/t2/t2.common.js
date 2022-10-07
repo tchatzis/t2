@@ -49,6 +49,12 @@ const Common = function()
         return dates;
     };
 
+    this.delay = async function( fn, ms, ...args ) 
+    {
+        await this.sleep( ms );
+        return fn( ...args );
+    };
+
     this.el = ( tag, parent ) => 
     { 
         let el = document.createElement( tag ); 
@@ -108,6 +114,11 @@ const Common = function()
             let el = t2.ui.elements.get( id );
                 el.remove();
         } );
+    };
+
+    this.sleep = function( ms )  
+    {
+        return new Promise( resolve => setTimeout( resolve, ms ) );
     };
     
     this.sort = ( array, key ) => array.sort( ( a, b ) => ( key ? a[ key ] > b[ key ] : a > b ) ? 1 : -1 );

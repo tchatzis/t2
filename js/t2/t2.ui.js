@@ -34,11 +34,12 @@ const UI = function()
         return container;
     };*/
 
-    this.root = async function( params )
+    this.root = async function( element )
     {
-        let elParams = new Element( params );
+        let elParams = new Element( element );
 
         elParams.path.set( elParams.id, [ elParams.id ] );
+        elParams.format = getComputedStyle( element ).getPropertyValue( "display" );
 
         let path = elParams.path.get( elParams.id ).join( "." );
 
@@ -55,19 +56,15 @@ const UI = function()
             element.id = params.id;
         if ( params.ignore )
             element.setAttribute( "data-ignore", params.ignore );
+        if ( params.css )
+            element.classList.add( params.css );
 
-        let rooted = await self.root( element );
+        let root = await self.root( element );
 
-        return rooted;
+        return root;
     };
 
-    //this.components = new Map();
-
-    //this.containers = new Map();
-    
     this.children = new Map();
-    
-    //this.getElement = ( id ) => this.elements.get( id );
 
     this.init = function( elArray )
     {

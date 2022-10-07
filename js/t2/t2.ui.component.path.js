@@ -21,6 +21,12 @@ const Component = function()
             self.element.textContent = path.join( "/" );
         };
     }; 
+
+    this.unset = function( index )
+    {
+        path.splice( index, 1 );
+        self.element.textContent = path.join( "/" );
+    };
 };
 
 export default Component;

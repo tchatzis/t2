@@ -308,20 +308,18 @@ const Scripts = function( module )
             trades: async function()
             {
                 let scene = this;
-
+                
                 scene.pre = async () => 
                 { 
-                    let menu = await scene.addElement( { id: "menu", parent: t2.ui.children.get( "wrapper" ).element } );
-                    await scene.addElement( { id: "submenu", parent: t2.ui.children.get( "menu" ).element, ignore: "clear" } );
-                    await scene.addElement( { id: "middle", parent: t2.ui.children.get( "wrapper" ).element } );
-                    await scene.addElement( { id: "content", parent: t2.ui.children.get( "middle" ).element } );
-                    await scene.addElement( { id: "subcontent", parent: t2.ui.children.get( "middle" ).element, ignore: "clear" } );
-                    await scene.addElement( { id: "margin", parent: t2.ui.children.get( "wrapper" ).element } );
-                    await scene.addElement( { id: "submargin", parent: t2.ui.children.get( "margin" ).element, ignore: "clear" } );
+                    await t2.ui.addElement( { id: "menu", parent: t2.ui.children.get( "wrapper" ).element } );
+                    await t2.ui.addElement( { id: "submenu", parent: t2.ui.children.get( "menu" ).element, ignore: "clear" } );
+                    await t2.ui.addElement( { id: "middle", parent: t2.ui.children.get( "wrapper" ).element } );
+                    await t2.ui.addElement( { id: "content", parent: t2.ui.children.get( "middle" ).element } );
+                    await t2.ui.addElement( { id: "subcontent", parent: t2.ui.children.get( "middle" ).element, ignore: "clear" } );
+                    await t2.ui.addElement( { id: "margin", parent: t2.ui.children.get( "wrapper" ).element } );
+                    await t2.ui.addElement( { id: "submargin", parent: t2.ui.children.get( "margin" ).element, ignore: "clear" } );
 
                     await scene.addUnload( { namespace: "this", execute: "reset", arguments: [] } );   
-
-                    await menu.addComponent( { id: "symbols", type: "menu", array: [], format: "block" } );
 
                     await scene.addModule( { default: "default", invoke: "init", path: "../projects/trades/trades", namespace: "trades" } );
                 };

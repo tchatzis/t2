@@ -1,11 +1,10 @@
-import Handlers from "./t2.container.handlers.js";
+import Handlers from "./t2.component.handlers.js";
 
-const Container = function()
+const Component = function()
 {
     this.init = function( params )
     {
         this.element = t2.common.el( "div", this.parent.element );
-        this.element.classList.add( "panel" );
 
         Object.assign( this, params );
 
@@ -13,4 +12,4 @@ const Container = function()
     };
 };
 
-export default Container;
+export default Component;

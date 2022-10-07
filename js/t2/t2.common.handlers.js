@@ -2,6 +2,10 @@ const Common = function()
 {
     this.class = this.constructor.name;
 
+    if ( !this.format )
+        console.warn( this.id, this.format, this )
+
+    this.element.classList.add( this.format );
     this.element.setAttribute( "data-id", this.id );
     this.element.setAttribute( "data-type", this.type );
     this.element.setAttribute( "data-class", this.class );
@@ -11,7 +15,7 @@ const Common = function()
 
     this.remove = () => this.element.remove();
 
-    this.show = () => { this.element.classList.remove( "hidden" ); this.element.style.display = "block" };    
+    this.show = () => this.element.classList.remove( "hidden" );   
 };
 
 export default Common;

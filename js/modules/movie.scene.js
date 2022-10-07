@@ -8,11 +8,9 @@ const Scene = function( sceneParams )
     this.name = sceneParams.name;
 
     // forms, html
-    this.addContent = ( contentParams ) => contents.push( contentParams );
+    //this.addContent = ( contentParams ) => contents.push( contentParams );
 
     this.addModule = async ( params ) => await importModule( params );
-
-    this.addElement = t2.ui.addElement;
 
     /*this.addUI = async function( componentParams )
     {
@@ -67,7 +65,7 @@ const Scene = function( sceneParams )
     this.reset = function()
     {
         //console.trace( Array.from( t2.ui.elements.keys() ) )
-        t2.common.clear( Array.from( t2.ui.elements.keys() ) );
+        t2.common.clear( Array.from( t2.ui.children.keys() ) );
     };
 
     this.start = async function()

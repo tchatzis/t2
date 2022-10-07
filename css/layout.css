@@ -107,9 +107,9 @@
     background-color: #111;
     border-top: 1px solid #222;
     bottom: 1px;
-    display: flex;
-    justify-content: space-around;
+    display: flex !important;
     height: 21px;
+    justify-content: space-around;
     left: 0;
     position: absolute;
     width: 100%;
@@ -118,22 +118,21 @@
 #subcontent
 {    
     border-bottom: 1px solid #066;
-    border-left: 1px solid #066;
+    border-left: 10px solid #066;
 }
 
 #submargin
 {
     border-bottom: 1px solid #660;
-    border-left: 1px solid #660;
-    justify-content: start;
-    overflow-y: auto;
+    border-left: 10px solid #660;
+    /*justify-content: start;*/
+    /*overflow-y: auto;*/
 }
 
 #submenu
 {
     border-bottom: 1px solid #606;
     border-left: 10px solid #606;
-    font-size: 0.7em;
 }
 
 #wrapper

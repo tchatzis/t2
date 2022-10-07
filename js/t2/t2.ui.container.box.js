@@ -6,7 +6,6 @@ const Container = function()
     {
         this.element = t2.common.el( "div", this.parent.element );
         this.element.classList.add( "container" );
-        this.element.style.display = params.format;
 
         Object.assign( this, params );
 

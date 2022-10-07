@@ -1,3 +1,5 @@
+import Handlers from "./t2.component.handlers.js";
+
 const Component = function()
 {
     let self = this;
@@ -5,14 +7,18 @@ const Component = function()
     
     this.init = function( params )
     {
-        this.form = t2.common.el( "form", this.parent.element );
+        this.element = t2.common.el( "div", this.parent.element );
+        this.element.classList.add( params.format );
+        
+        this.form = t2.common.el( "form", this.element );
         this.form.setAttribute( "id", params.id );
         this.form.style.display = "none";
         this.form.addEventListener( "submit", this.submit );
         this.form.data = {};
-        
-        this.element = t2.common.el( "div", this.parent.element );
-        this.element.style.display = params.format;
+
+        Object.assign( this, params );
+
+        Handlers.call( this );
     };
 
     this.addField = function( params )
@@ -23,6 +29,7 @@ const Component = function()
         let div = t2.common.el( "div", this.element );
             div.classList.add( "field" );
             div.setAttribute( "data-name", attributes.name || attributes.type );
+            div.classList.add( "underline" );
 
         if ( attributes.label && attributes.type !== "hidden" )
         {
@@ -82,7 +89,7 @@ const Component = function()
             break;
 
             case "submit":
-                if ( this.element.style.display == "block" )
+                if ( this.element.classList.contains( "block" ) )
                 {
                     let label = t2.common.el( "label", div );
                         label.classList.add( "label" );
@@ -104,14 +111,27 @@ const Component = function()
         }
             
         for ( let attr in attributes )
+        {
             if ( attributes.hasOwnProperty( attr ) )
             {
                 if ( [ "id", "checked", "label", "list", "type" ].indexOf( attr ) == -1  )
                     input.setAttribute( attr, attributes[ attr ] );
             }
 
+            // submit fixes
+            if ( attributes.type == "submit" )
+            {
+                div.classList.remove( "underline" );
+                
+                if ( attr == "name" )
+                    input.removeAttribute( attr );
+            }
+        }
+
+        let fid = this.form.getAttribute( "id" );
+
         input.style.width = ( params.cell.display + 1 ) + "em"; 
-        input.setAttribute( "Form", this.form.getAttribute( "id" ) );
+        input.setAttribute( "Form", fid );
 
         params.listeners?.forEach( listener => 
         {
@@ -148,12 +168,9 @@ const Component = function()
                 self.form.data[ input.name ] = input.value;
             break;
         }
-        
-        //console.warn( input.name, input.value, input.checked, input.selectedIndex );
-        //console.log( self.form.data );
     };
 
-    this.save = async function( table, data, key )
+    /*this.save = async function( table, data, key )
     {        
         let filtered = await t2.db.tx.filter( table, [ { key: key, operator: "==" , value: data[ key ] } ] );
 
@@ -170,7 +187,7 @@ const Component = function()
 
             return record;
         }
-    };
+    };*/
 
     this.submit = function( e )
     { 

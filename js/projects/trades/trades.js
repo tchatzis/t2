@@ -4,10 +4,43 @@ const Trades = function()
 {
     const self = this;
     let breadcrumbs;
-    let symbols;
     let views;
-    
-    this.actions = [ "BUY", "SELL", "DIV" ];
+
+    this.init = async function()
+    {
+        this.mode = "read";
+        this.view = "day";
+        this.views = [ "Day", "Summary", "Symbol", "Fix", "Deposits" ];
+
+        breadcrumbs = t2.ui.children.get( "footer.breadcrumbs" );
+
+        await this.refresh();
+
+        layout();
+    };
+
+    async function layout()
+    {
+        let footer = await t2.ui.children.get( "footer" );
+
+        views = await footer.addComponent( { id: "views", type: "menu", array: self.views, format: "flex" } );
+        views.addListener( { type: "click", handler: function() 
+        { 
+            self.handlers.change( ...arguments );
+        } } );  
+        views.activate( self.view );
+
+        let menu = t2.ui.children.get( "menu" );
+
+        let symbols = await menu.addComponent( { id: "symbols", type: "menu", array: [], format: "block" } );
+            symbols.update( self.data.symbol );
+            symbols.hide();
+            symbols.addListener( { type: "click", handler: function() 
+            { 
+                self.handlers.clicked( ...arguments );
+                breadcrumbs.set.path( 2, arguments[ 2 ].curr.textContent );
+            } } );
+    }
 
     function activate( args )
     {
@@ -24,36 +57,35 @@ const Trades = function()
             active.link = element;
     }
 
-    // top menu ( view )
-    this.change = async function()
-    {
-        activate( arguments );
-
-        let element = arguments[ 0 ].target;
-        let view = element.getAttribute( "data-link" ).toLowerCase();
-
-        await this.setView( view );
-        await this.setForms();
-    };
-
     this.clear = () => t2.common.clear( [ "content", "margin", "subcontent", "submargin" ] );
 
-    // side menu ( symbol )
-    this.clicked = async function()
+    this.handlers = 
     {
-        activate( arguments );
+        change: async function()
+        {
+            activate( arguments );
+
+            let element = arguments[ 0 ].target;
+            let view = element.getAttribute( "data-link" ).toLowerCase();
+
+            await self.setView( view );
+            //await transaction();
+        },
         
-        let element = arguments[ 0 ].target;
-        let symbol = element.getAttribute( "data-link" ).toUpperCase();
+        clicked: async function()
+        {
+            activate( arguments );
+            
+            let element = arguments[ 0 ].target;
+            let symbol = element.getAttribute( "data-link" ).toUpperCase();
 
-        await this.setSymbol( symbol ); 
-        await this.setView( this.view );
-        await this.setForms();
-    };
+            await self.setSymbol( symbol ); 
+            await self.setView( self.view );
+        },
 
-    /*this.handlers = 
-    {
-        create: async ( e ) => 
+
+        
+         /*create: async ( e ) => 
         { 
             e.preventDefault(); 
 
@@ -105,36 +137,7 @@ const Trades = function()
             let record = await t2.db.tx.update( this.table, data.id, new Data( data ) );
 
             this.refresh( record );
-        }
-    };*/
-
-    this.init = async function()
-    {
-        //console.log( t2.ui.children );
-        
-        this.mode = "read";
-        this.view = "day";
-        this.views = [ "Day", "Symbol", "Summary" ];
-
-        breadcrumbs = t2.ui.children.get( "footer.breadcrumbs" );
-
-        let footer = await t2.ui.children.get( "footer" );
-        views = await footer.addComponent( { id: "views", type: "menu", array: this.views, format: "flex" } );
-        views.addListener( { type: "click", handler: function() { self.change( ...arguments ) } } );  
-        views.activate( "day" );
-
-        await this.refresh();
-
-        symbols = t2.ui.children.get( "menu.symbols" );
-        symbols.update( this.data.symbol );
-        symbols.hide();
-        symbols.addListener( { type: "click", handler: function() 
-        { 
-            self.clicked( ...arguments );
-            breadcrumbs.set.path( 2, arguments[ 2 ].curr.textContent );
-        } } ); 
-
-        //fix();
+        }*/
     };
 
     this.filter = function()
@@ -172,8 +175,10 @@ const Trades = function()
 
         this.data = 
         {
-            all: records.data,
-            filtered: records.data   
+            actions:    [ "BUY", "SELL", "DIV" ],
+            all:        records.data,
+            brokerage:  [ "TDAmeritrade", "JPMorganChase", "Robinhood" ],
+            filtered:   []    
         };
 
         this.filter();
@@ -193,21 +198,22 @@ const Trades = function()
         } ); 
     };
 
-    this.refresh = async function( record )
+    this.refresh = async function()
     {
         await this.queries();
         await this.setView( this.view );
-        await this.setForms();
+
+        transaction();
     };
 
-    this.setDate = async function( record )
+    /*this.setDate = async function()
     {
         this.date = t2.formats.isoDate( record.datetime );
 
         breadcrumbs.set.path( 2, this.date );
 
-        await this.refresh( record );
-    };
+        await this.refresh();
+    };*/
 
     /*this.setDates = async function( e )
     {
@@ -223,76 +229,10 @@ const Trades = function()
     };*/
 
     // add trade form
-    this.setForms = async function()
+
+
+    /*async function range()
     {
-        let subcontent = t2.ui.children.get( "subcontent" );
-        
-        let form = await subcontent.addComponent( { id: "transaction", type: "form", format: "flex" } );
-            form.addListener( { type: "submit", handler: async function ( data )
-            {
-                data.action = this.submitter.value;
-
-                let record = await form.save( self.table, new Data( data ), "id" );
-
-                self.setDate( record.data );
-            } } );
-            //form.form.addEventListener( "submit", this.handlers.create );
-            form.addField( { 
-                input: { name: "datetime", type: "datetime", value: t2.formats.datetime( new Date() ) },
-                cell: { css: {}, display: 10.5 },
-                format: [] } )/*,
-                update: ( input ) => 
-                {
-                    function set()
-                    {
-                        let datetime = new Date();
-    
-                        input.value = t2.formats.datetime( datetime );
-                    }
-
-                    setInterval( set, 1000 );
-                } } );*/
-            form.addField( { 
-                input: { name: "symbol", type: "datalist", value: this.symbol || "" }, 
-                cell: { css: {}, display: 4 },
-                format: [ "uppercase" ],
-                options: this.data.symbol } );
-            form.addField( { 
-                input: { name: "qty", type: "number", value: "", min: 0, step: 0.0001, required: "" }, 
-                cell: { css: {}, display: 4 },
-                format: [] } );
-            form.addField( { 
-                input: { name: "price", type: "number", value: "", min: 0, step: 0.0001, required: "" }, 
-                cell: { css: {}, display: 5 },
-                format: [] } );
-            form.addField( { 
-                input: { name: "notes", type: "text", value: "" }, 
-                cell: { css: {}, display: 4 },
-                format: [ "uppercase" ] } );
-            form.addField( { 
-                input: { name: "brokerage", type: "select", value: "TDAmeritrade" }, 
-                cell: { css: {}, display: 8 },
-                format: [],
-                options: [ "TDAmeritrade", "JPMorganChase", "Robinhood" ] } );  
-            form.addField( { 
-                input: { type: "submit", value: "BUY" }, 
-                cell: { css: {}, display: 3 },
-                format: [] } );
-            form.addField( { 
-                input: { type: "submit", value: "SELL" }, 
-                cell: { css: {}, display: 3 },
-                format: [] } );
-            form.addField( { 
-                input: { type: "submit", value: "DIV" }, 
-                cell: { css: {}, display: 3 },
-                format: [] } );
-  
-
-        /*if ( !this.symbol )
-            return;
-
-            //console.log( this.from, this.to, this.data.datetime );
-
         let max = t2.formats.isoDate( Date.now() );
         let min = t2.formats.isoDate( this.data.datetime[ 0 ] );
 
@@ -309,17 +249,21 @@ const Trades = function()
             dates.addField( { 
                 input: { type: "submit", value: "FILTER" }, 
                 cell: { css: {}, display: 4 },
-                format: [] } );*/       
-    };
+                format: [] } );
+    };*/
 
+    this.setDate = function( data )
+    {
+        self.date = data.date;
+        
+        breadcrumbs.set.path( 2, data.date );
+
+        this.refresh();
+    };
+    
     this.setSymbol = function( symbol )
     {
         this.symbol = symbol;
-        this.views = [ "Day", "Summary", "Edit", "Date", "Short", "Match", "Timeline" ];
-
-        //console.log( t2 )
-    
-        //views.update( this.views );
     };
 
     this.setView = async function( view )
@@ -327,7 +271,7 @@ const Trades = function()
         this.clear();
         
         this.view = view;
-        
+
         let module = await import( `./trades.${ this.view }.js` );
 
         this.module = await new module.default( this );
@@ -339,109 +283,74 @@ const Trades = function()
 
     this.sort =
     {
-        asc: ( a, b ) => ( a > b ) ? 1 : -1,
+        asc:  ( a, b ) => ( a > b ) ? 1 : -1,
         desc: ( a, b ) => ( a < b ) ? 1 : -1
     };
 
-    function fix()
+    // transaction entry form
+    async function transaction()
     {
-        /* clean up reverse split
-        let data = self.data.all.filter( record => record.symbol == "SNDL" );
-            data.forEach( async ( record ) => 
+        let subcontent = t2.ui.children.get( "subcontent" );
+        
+        let form = await subcontent.addComponent( { id: "transaction", type: "form", format: "flex" } );
+            form.addListener( { type: "submit", handler: async function ( data )
             {
-                if ( record.brokerage == "TDAmeritrade" )
+                data.action = this.submitter.value;
+
+                let record = await t2.db.tx.create( self.table, new Data( data ) );
+
+                self.setDate( record.data );
+            } } );
+            form.addField( { 
+                input: { name: "datetime", type: "datetime", value: t2.formats.datetime( new Date() ) },
+                cell: { css: {}, display: 10.5 },
+                format: [] } )/*,
+                update: ( input ) => 
                 {
-                    record.qty /= 10;
-                    record.price *= 10;
-                }
+                    function set()
+                    {
+                        let datetime = new Date();
+    
+                        input.value = t2.formats.datetime( datetime );
+                    }
 
-                await t2.db.tx.update( self.table, record.id, new Data( record ) );
-            } );
-        */
-
-        /* update symbol
-        let data = self.data.all.filter( record => record.symbol == "NRZ" );
-            data.forEach( async ( record ) => 
-            {
-                record.symbol = "RITM";
-
-                await t2.db.tx.update( self.table, record.id, new Data( record ) );
-            } );
-        */
-
-        /*
-        let data = self.data.all;//.filter( record => ( record.action == "SELL" ) );
-            data.forEach( async ( record ) => 
-            {
-                //record.action = "DIV";
-                record.sign = ( record.action == "SELL" ) ? -1 : 1;
-                record.qty = Math.abs( record.qty ) * record.sign;
-                //record.brokerage = "TDAmeritrade";
-                //record.notes = "";
-                //record.sign = -1;
-                //record.symbol = "ARCC";
-                record.value = record.price * record.qty;
-                console.log( record )
-
-                await t2.db.tx.update( self.table, record.id, record );
-            } );
-        */
-
-        /*let data = self.data.all;//.filter( record => record.symbol !== "TEST" );
-            data.forEach( async ( record ) => 
-            {   
-                //let datetime = t2.common.addTime( record.date, record.time );
-                
-                //record.datetime = t2.formats.datetime( datetime );
-                //record.date = t2.formats.isoDate( record.date );
-
-                //await t2.db.tx.update( self.table, record.id, record );
-                //console.log( record.id, record.datetime );
-            } );*/
-
-        /*let data = self.data.all.filter( record => record.id == 1561 );
-            data.forEach( async ( _record ) => 
-            {   
-                let record =
-                {
-                    action: _record.action,
-                    brokerage: _record.brokerage,
-                    datetime: _record.datetime,
-                    id: _record.id,
-                    notes: _record.notes,
-                    price: _record.price,
-                    qty: _record.qty,
-                    sign: _record.sign,
-                    symbol: _record.symbol,
-                    value: _record.value
-                };
-
-                await t2.db.tx.overwrite( self.table, record.id, record );     
-            } );*/
-
-        /*let data = self.data.all.filter( record => record.id == 1562 );
-            data.forEach( async ( _record ) => 
-            {   
-                let record =
-                {
-                    action: "SELL",
-                    brokerage: _record.brokerage,
-                    datetime: _record.datetime,
-                    id: _record.id,
-                    notes: _record.notes,
-                    price: 6.35,
-                    qty: 100,
-                    sign: -1,
-                    symbol: _record.symbol,
-                    value: -635
-                };
-
-                console.log( _record, record );
-
-                let result = await t2.db.tx.overwrite( self.table, record.id, record ); 
-                console.log( result );    
-            } );*/
-    }
+                    setInterval( set, 1000 );
+                } } );*/
+            form.addField( { 
+                input: { name: "symbol", type: "datalist", value: self.symbol || "" }, 
+                cell: { css: {}, display: 4 },
+                format: [ "uppercase" ],
+                options: self.data.symbol } );
+            form.addField( { 
+                input: { name: "qty", type: "number", value: "", min: 0, step: 0.0001, required: "" }, 
+                cell: { css: {}, display: 4 },
+                format: [] } );
+            form.addField( { 
+                input: { name: "price", type: "number", value: "", min: 0, step: 0.0001, required: "" }, 
+                cell: { css: {}, display: 5 },
+                format: [] } );
+            form.addField( { 
+                input: { name: "notes", type: "text", value: "" }, 
+                cell: { css: {}, display: 4 },
+                format: [ "uppercase" ] } );
+            form.addField( { 
+                input: { name: "brokerage", type: "select", value: "TDAmeritrade" }, 
+                cell: { css: {}, display: 9 },
+                format: [],
+                options: self.data.brokerage } );  
+            form.addField( { 
+                input: { type: "submit", value: "BUY" }, 
+                cell: { css: {}, display: 3 },
+                format: [] } );
+            form.addField( { 
+                input: { type: "submit", value: "SELL" }, 
+                cell: { css: {}, display: 3 },
+                format: [] } );
+            form.addField( { 
+                input: { type: "submit", value: "DIV" }, 
+                cell: { css: {}, display: 3 },
+                format: [] } );   
+    };
 };
 
 export default Trades;

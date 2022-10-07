@@ -4,13 +4,13 @@ const Component = function()
 {
     let self = this;
     let listeners = [];
-    let panels = new Map();
+    //let panels = new Map();
     
     this.init = async function( params )
     {        
         let direction;
         
-        switch ( params.format )
+        switch ( params.output )
         {
             case "horizontal":
                 direction = "row";
@@ -37,15 +37,53 @@ const Component = function()
         listeners.push( listener );
     };
 
-    this.addPanel = function( params )
+    this.refresh = function()
     {
-        panels.set( params.id, params );
+
     };
 
-    this.render = async function()
+    this.setComponent = async function( params )
+    {
+        let module = await this.addComponent( params );
+
+        if ( params.label )
+        {
+            this.panels.set( params.id, module );
+            module.hide();
+        }
+
+        return module;
+    };
+
+    this.setContainer = async function( params )
+    {
+        let module = await this.addContainer( params );
+
+        if ( params.label )
+        {
+            this.panels.set( params.id, module );
+            module.hide();
+        }
+
+        return module;
+    };
+
+    this.setModule = async function( params )
+    {
+        let module = await this.addModule( params );
+
+        if ( params.label )
+        {
+            this.panels.set( params.id, module );
+            module.hide();
+        }
+
+        return module;
+    };
+
+    /*this.render = async function()
     {
         let formats = { tabs: self.format, title: "text" };
-        let promises = [];
         let types = [ ...arguments ];
         let array = Array.from( panels.keys() );
         let components = [];
@@ -66,47 +104,44 @@ const Component = function()
         }
 
         // add in order
-        components.forEach( ( id ) => promises.push
-        (    
-            new Promise( ( resolve ) =>
+        async function load( i )
+        {
+            let id = components[ i ];
+            let condition = panels.get( id );
+            let config = condition ? { f: "addContainer", p: panels.get( id ) } : { f: "addComponent", p: { id: id, type: id, format: formats[ id ] } };
+            let component = await self[ config.f ]( config.p );
+
+            if ( condition )
             {
-                let condition = panels.get( id );
-                let config = condition ? { f: "addContainer", p: panels.get( id ) } : { f: "addComponent", p: { id: id, type: id, format: formats[ id ] } };
+                component.element.classList.add( "hidden" );
+                self.panels.set( id, component );
+            }
 
-                let component = self[ config.f ]( config.p );
-
-                resolve( component );   
-            } )  
-        ) );
-
-        // hide the panel containers
-        let result = await Promise.all( promises );
-            result.forEach( c => 
+            if ( i < components.length - 1 )
             {
-                if ( c.class == "Container" )
-                {
-                    c.element.classList.add( "hidden" );
-                    this.panels.set( c.id, c );
-                };
-            } );
+                i++;
+                await load( i );
+            } 
+        }
 
-        
+        await load( 0 );
+
         if ( components.find( id => id == "tabs" ) )
             setTabs.call( this );
 
         return this.panels;
-    };
+    };*/
 
     // hook to tabs component
-    function setTabs()
+    /*function setTabs()
     {
-        let tabs = this.children.get( "tabs" );
-            tabs.clear();
+        let tabs = self.children.get( "tabs" );
+            //tabs.clear();
 
         listeners.forEach( listener => tabs.addListener( listener ) );
  
         Array.from( this.panels.entries() ).forEach( panel => tabs.addTab( ...panel ) );
-    };
+    };*/
 };
 
 export default Component;

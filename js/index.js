@@ -41,7 +41,7 @@ async function init( namespace )
 
     // footer breadcrumbs
     let footer = await t2.ui.root( t2.ui.children.get( "footer" ).element );
-    let breadcrumbs = await footer.addComponent( { id: "breadcrumbs", type: "path" } );
+    let breadcrumbs = await footer.addComponent( { id: "breadcrumbs", type: "path", format: "block" } );
         breadcrumbs.set.path( 0, scene );
 
     await scenes[ scene ].start();

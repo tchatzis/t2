@@ -36,6 +36,25 @@ const Handlers = function()
         return container;
     };
 
+    this.addModule = async function( params )
+    {
+        let module    = await import( params.config.src );
+        let object = await new module.default( ...params.config.arguments );
+            object.parent = this;
+            object.path = new Map();
+            object.path.set( params.id, this.path.get( this.id ).concat( params.id ) );
+            await object.init( this, params ); 
+        
+            let path = object.path.get( params.id ).join( "." );
+            t2.ui.children.set( path, object );
+        
+        this.children.set( params.id, object );
+
+        Object.assign( object, params );
+
+        return object;
+    };
+
     this.clear = () => Array.from( this.element.children ).forEach( child => child.remove() );
 
     this.children = new Map();

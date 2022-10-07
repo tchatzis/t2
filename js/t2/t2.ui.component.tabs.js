@@ -3,7 +3,7 @@ import Handlers from "./t2.component.handlers.js";
 const Component = function()
 {
     let self = this;
-    let active = { curr: null, panel: null };
+    let active = { curr: null, id: null, panel: null };
     let listeners = [];
 
     this.activate = function( id )
@@ -18,9 +18,10 @@ const Component = function()
             title.set( tab?.textContent || this.parent.id || this.id );
 
         let panel = get( id );
-            panel?.show();
+            panel.show();
 
         active.curr = tab;
+        active.id = id;
         active.panel = panel;
 
         listeners.forEach( listener => listener.handler( active ) );
@@ -77,16 +78,16 @@ const Component = function()
         let position;
         let axis;
         
-        switch ( params.format )
+        switch ( params.output )
         {
-            case "horizontal":
+            case "vertical":
                 display = "block";
                 position = "left";
                 axis = "height";
             break;
 
-            case "vertical":
-                display = "flex";
+            case "horizontal":
+                display = "flex-left";
                 position = "bottom";
                 axis = "width";
             break;
@@ -94,7 +95,6 @@ const Component = function()
         
         this.element = t2.common.el( "div", this.parent.element );
         this.element.classList.add( "tabs" );
-        this.element.style.display = display;
         this.element.style[ position ] = 0;
         this.element.style[ axis ] = "100%";
 
@@ -103,6 +103,14 @@ const Component = function()
         Handlers.call( this );
         
         this.tabs = new Map();
+    };
+
+    this.update = function( map )
+    {
+        for ( let [ id, component ] of map )
+        {
+            this.addTab( id, component );
+        }
     };
 };
 

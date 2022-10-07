@@ -1,4 +1,5 @@
 import formats from "./t2.formats.js";
+import Handlers from "./t2.component.handlers.js";
 
 const Table = function()
 {
@@ -20,6 +21,12 @@ const Table = function()
         this.header = el( "thead", table );
         this.element = el( "tbody", table );
         this.footer = el( "tfoot", table );
+
+        this.format = "block";
+
+        Object.assign( this, params );
+
+        Handlers.call( this );
     };
 
     this.addColumn = function( params )
@@ -72,20 +79,23 @@ const Table = function()
         let columns = arguments[ 1 ];
 
         let subcontent = t2.ui.children.get( "subcontent" );
-        let parent = await subcontent.addContainer( { id: "popop", type: "popup" } );
+        let parent = await subcontent.addContainer( { id: "popop", type: "popup", format: "block" } );
             parent.clear();
             parent.show();
 
         self.highlight( data.id );
 
         let container = await parent.addContainer( { id: "edit", type: "box", format: "inline-block" } );
-        let title = await container.addComponent( { id: "title", type: "title", format: "text" } );
+        let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
             title.set( `Edit \u00BB ${ data.id }` );  
 
-        let form = await container.addComponent( { id: data.id, type: "form", format: "block" } );
+        let form = await container.addComponent( { id: `${ self.id }.${ data.id }`, type: "form", format: "block" } );
             form.addListener( { type: "submit", handler: function ( data )
             {
-                listeners.submit.forEach( listener => listener.handler.call( form, data ) );
+                listeners.submit.forEach( listener => 
+                {
+                    listener.handler.call( form, data );
+                } );
                 parent.hide();
             } } );
 

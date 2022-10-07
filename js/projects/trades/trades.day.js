@@ -17,25 +17,10 @@ const Day = function( module )
         let max = Math.max.apply( null, module.data.all.map( record => new Date( record.datetime ) ) );
         let date = t2.formats.isoDate( new Date( max ) );
 
-        breadcrumbs = await t2.ui.children.get( "footer.breadcrumbs" );
-        
-        let submenu = t2.ui.children.get( "submenu" );
+        await layout( date );
+        await dates( date );
 
-        let dates = await submenu.addComponent( { id: "date", type: "form", format: "flex" } );
-            dates.addListener( { type: "submit", handler: async ( data ) => this.setDate( data ) } );
-            dates.addField( { 
-                input: { name: "date", type: "date", value: date, max: date, required: "" }, 
-                cell: { css: {}, display: 7 },
-                format: [ "date" ] } );
-            dates.addField( { 
-                input: { type: "submit", value: "SET" }, 
-                cell: { css: {}, display: 4 },
-                format: [] } ); 
-
-        let data = {};
-            data.date = date;
-
-        this.setDate( data );
+        this.setDate( { date: date } );
     };
 
     this.setDate = function( data )
@@ -45,8 +30,33 @@ const Day = function( module )
         breadcrumbs.set.path( 2, data.date );
 
         filter();
-        display();
     };
+
+    async function layout()
+    {
+        breadcrumbs = await t2.ui.children.get( "footer.breadcrumbs" );
+
+        let submenu = t2.ui.children.get( "submenu" );
+            submenu.show();
+
+        await filter();
+    }
+
+    async function dates( date )
+    {
+        let submenu = t2.ui.children.get( "submenu" );
+        
+        let dates = await submenu.addComponent( { id: "date", type: "form", format: "flex" } );
+            dates.addListener( { type: "submit", handler: async ( data ) => self.setDate( data ) } );
+            dates.addField( { 
+                input: { name: "date", type: "date", value: date, max: date, required: "" }, 
+                cell: { css: {}, display: 7 },
+                format: [ "date" ] } );
+            dates.addField( { 
+                input: { type: "submit", value: "SET" }, 
+                cell: { css: {}, display: 3 },
+                format: [] } );
+    }
 
     function display()
     {
@@ -57,14 +67,14 @@ const Day = function( module )
             aggregate( symbol, records );
         } );
 
-        //totals( total );
+        totals( total );
     }
 
     function filter()
     {
         t2.common.clear( [ "content" ] );
 
-        [ "TDAmeritrade", "JPMorganChase", "Robinhood" ].forEach( async ( brokerage ) =>
+        module.data.brokerage.forEach( async ( brokerage ) =>
         {
             let array = module.data.all.filter( record => ( t2.formats.isoDate( record.datetime ) == self.date ) && record.brokerage == brokerage );
 
@@ -72,12 +82,11 @@ const Day = function( module )
         } );
     }
 
-    // day trades
     async function transactions( array, brokerage )
     {
         let content = t2.ui.children.get( "content" );
         let container = await content.addContainer( { id: brokerage.toLowerCase(), type: "box", format: "inline-block" } );
-        let title = await container.addComponent( { id: "title", type: "title", format: "text" } );
+        let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
             title.set( `${ brokerage } \u00BB ${ self.date }` );
 
         let table = await container.addComponent( { id: "transactions", type: "table" } );
@@ -93,9 +102,8 @@ const Day = function( module )
                 table.populate( { array: records.data, orderBy: "datetime" } );
                 table.setTotals();
 
-                form.parent.remove();
-
-                table.normal( record.id );
+                let message = await container.addComponent( { id: "message", type: "message", format: "block", output: "text" } );
+                    message.set( `Updated ${ data.id }` );   
             } } );
             table.addColumn( { 
                 input: { name: "id", type: "hidden" }, 
@@ -126,7 +134,15 @@ const Day = function( module )
             table.addColumn( { 
                 input: { name: "qty", type: "number", step: 0.0001 }, 
                 cell: { css: { class: "info" }, display: 3, modes: [ "read", "edit" ] },
-                format: [ "absolute", "precision" ] } );
+                format: [ "precision" ],
+                formula: ( args ) =>
+                {
+                    let value = args.record[ args.column ] * -args.record.sign;
+                    
+                    args.totals[ args.column ] += value;
+
+                    return value;
+                } } );
             table.addColumn( { 
                 input: { name: "price", type: "number", step: 0.0001 }, 
                 cell: { css: { class: "value" }, display: 4, modes: [ "read", "edit" ] },
@@ -140,7 +156,15 @@ const Day = function( module )
             table.addColumn( { 
                 input: { name: "value", type: "number", readonly: "" }, 
                 cell: { css: { class: "value" }, display: 6, modes: [ "read" ] },
-                format: [ "negate", "precision" ] } );
+                format: [ "precision" ],
+                formula: ( args ) =>
+                {
+                    let value = args.record[ args.column ] * args.record.sign;
+                    
+                    args.totals[ args.column ] += value;
+
+                    return value;
+                } } );
             table.addColumn( { 
                 input: { name: "brokerage", type: "select", value: brokerage }, 
                 cell: { css: {}, display: 8, modes: [ "edit" ] },

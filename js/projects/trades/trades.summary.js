@@ -8,6 +8,8 @@ const Summary = function( module )
     
     this.init = async function()
     {
+        layout();
+        
         let array = preamble();
 
         await summary( array );
@@ -35,17 +37,27 @@ const Summary = function( module )
         return array;
     }
 
+    async function layout()
+    {
+        let symbols = t2.ui.children.get( "menu.symbols" );
+            symbols.show();
+
+        let date = t2.ui.children.get( "submenu.date" );
+            date.hide();
+    }
+
     // summary
     async function summary( array )
     {
         let content = t2.ui.children.get( "content" );
         let container = await content.addContainer( { id: "day", type: "box", format: "inline-block" } );
-        let title = await container.addComponent( { id: "title", type: "title", format: "text" } );
+        let title = await container.addComponent( { id: "title", type: "title", format:"block", output: "text" } );
             title.set( "Summary" );
 
-        let qty = { predicate: { conditions: [ { name: "qty", operator: ">", value: 0 } ], options: [ "buy", "sell" ] } };        
+        let qty = { predicate: { conditions: [ { name: "qty", operator: ">", value: 0 } ], options: [ "active", "inactive" ] } };      
+        let average = { predicate: { conditions: [ { name: "qty", operator: "==", value: 0 }, { name: "average", operator: ">", value: 0 } ], options: [ "buy", "value" ] } };  
         let gain = { predicate: { conditions: [ { name: "qty", operator: "==", value: 0 }, { name: "gain", operator: "<=", value: 0 } ], options: [ "sell", "value" ] } };
-        let dividend = { predicate: { conditions: [ { name: "dividend", operator: "<", value: 0 } ], options: [ "buy", "value" ] } }; 
+        let dividend = { predicate: { conditions: [ { name: "dividend", operator: ">", value: 0 } ], options: [ "buy", "value" ] } }; 
 
         let table = await container.addComponent( { id: "aggregates", type: "table" } );  
             table.addColumn( { 
@@ -56,12 +68,12 @@ const Summary = function( module )
                 input: { name: "trades", type: "number", step: 1, min: 0 }, 
                 cell: { css: {}, display: 3, modes: [ "read" ] } } );
             table.addColumn( { 
-                input: { name: "buy", type: "number", step: 1, min: 0 }, 
-                cell: { css: {}, display: 3, modes: [ "read" ] } } );
-            table.addColumn( { 
                 input: { name: "div", type: "number", step: 1, min: 0 }, 
                 cell: { css: {}, display: 3, modes: [ "read" ] },
                 format: [ "precision" ] } );
+            table.addColumn( { 
+                input: { name: "buy", type: "number", step: 1, min: 0 }, 
+                cell: { css: {}, display: 3, modes: [ "read" ] } } );
             table.addColumn( { 
                 input: { name: "sell", type: "number", step: 1, min: 0 }, 
                 cell: { css: {}, display: 3, modes: [ "read" ] } } );
@@ -70,14 +82,14 @@ const Summary = function( module )
                 cell: { css: qty, display: 3, modes: [ "read" ] },
                 format: [ "precision" ] } );
             table.addColumn( { 
-                input: { name: "price", type: "number", step: 0.001 }, 
-                cell: { css: { class: "value" }, display: 4, modes: [ "read" ] },
+                input: { name: "average", type: "number", step: 0.001 }, 
+                cell: { css: average, display: 4, modes: [ "read" ] },
                 format: [ "precision" ],
                 formula: ( args ) =>
                 {
                     args.totals[ args.column ] = 0;
 
-                    return args.record.qty ? args.record.gain / args.record.qty : args.value;
+                    return args.value;
                 } } );
             table.addColumn( { 
                 input: { name: "gain", type: "number", readonly: "" }, 
@@ -95,7 +107,7 @@ const Summary = function( module )
             table.addColumn( { 
                 input: { name: "dividend", type: "number", readonly: "" }, 
                 cell: { css: dividend, display: 4, modes: [ "read" ] },
-                format: [ "negate", "dollar" ] } );
+                format: [ "dollar" ] } );
             table.setColumns( module.mode );
             table.populate( { array: array, orderBy: "symbol" } );
             table.setTotals();
@@ -109,7 +121,7 @@ const Summary = function( module )
 
         let content = t2.ui.children.get( "content" );
         let container = await content.addContainer( { id: "day", type: "box", format: "inline-block" } );
-        let title = await container.addComponent( { id: "title", type: "title", format: "text" } );
+        let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
             title.set( "Dividends" );
 
         let table = await container.addComponent( { id: "dividends", type: "table" } );

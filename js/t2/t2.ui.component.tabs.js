@@ -20,6 +20,12 @@ const Component = function()
         let panel = get( id );
             panel.show();
 
+        let module = this.panels.get( id );
+
+        // run added modules
+        if ( module.run )
+            module.run();
+
         active.curr = tab;
         active.id = id;
         active.panel = panel;
@@ -107,6 +113,8 @@ const Component = function()
 
     this.update = function( map )
     {
+        this.panels = map;
+        
         for ( let [ id, component ] of map )
         {
             this.addTab( id, component );

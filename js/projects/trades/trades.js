@@ -142,6 +142,8 @@ const Trades = function()
 
     this.filter = function()
     {
+        this.data.filtered = [ ...this.data.all ];
+        
         if ( this.symbol )
         {
             //console.log( "symbol", this.symbol );
@@ -164,7 +166,7 @@ const Trades = function()
             this.data.filtered = this.data.filtered.filter( record => t2.formats.isoDate( record.datetime ) == this.date ); 
         }
 
-        //console.log( "filtered", this.data.filtered );
+        console.log( "filtered", this.data.filtered );
     };
 
     this.queries = async () =>
@@ -178,7 +180,8 @@ const Trades = function()
             actions:    [ "BUY", "SELL", "DIV" ],
             all:        records.data,
             brokerage:  [ "TDAmeritrade", "JPMorganChase", "Robinhood" ],
-            filtered:   []    
+            filtered:   [],
+            source:     [ "JPMorganChase", "RBC", "HSBC", "Robinhood", "Cheque" ]    
         };
 
         this.filter();
@@ -303,19 +306,8 @@ const Trades = function()
             } } );
             form.addField( { 
                 input: { name: "datetime", type: "datetime", value: t2.formats.datetime( new Date() ) },
-                cell: { css: {}, display: 10.5 },
-                format: [] } )/*,
-                update: ( input ) => 
-                {
-                    function set()
-                    {
-                        let datetime = new Date();
-    
-                        input.value = t2.formats.datetime( datetime );
-                    }
-
-                    setInterval( set, 1000 );
-                } } );*/
+                cell: { css: {}, display: 10 },
+                format: [] } );
             form.addField( { 
                 input: { name: "symbol", type: "datalist", value: self.symbol || "" }, 
                 cell: { css: {}, display: 4 },

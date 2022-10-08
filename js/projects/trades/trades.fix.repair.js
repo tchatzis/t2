@@ -5,15 +5,26 @@ import handlers from "./trades.fix.handlers.js";
 
 const Panel = function( module )
 {
-    this.init = async function( parent, params )
+    let self = this;
+    let panel;
+    let parent;
+    
+    this.init = async function( _parent, params )
     {
-        let panel = await parent.addContainer( { id: "panel", type: "panel", format: "flex" } );
+        parent = _parent;
+        
+        panel = await parent.addContainer( { id: "panel", type: "panel", format: "flex" } );
 
         this.element = panel.element;
         this.type = panel.type;
 
         Object.assign( this, params );
         Common.call( this );
+    };
+
+    this.run = async function()
+    {
+        panel.clear();
 
         let outline = await panel.addContainer( { id: "outline", type: "box", format: "block" } );
 
@@ -82,8 +93,6 @@ const Panel = function( module )
             let record = new Data( data );
                 record.id = Number( data.id );
 
-                console.log( data, record );
-            
             await details( panel, record, "Updated" );
 
             await handlers.repair( module.table, new Data( data ), data );

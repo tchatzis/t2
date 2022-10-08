@@ -6,18 +6,31 @@ import handlers from "./trades.fix.handlers.js";
 
 const Panel = function( module )
 {
-    this.init = async function( parent, params )
+    let self = this;
+    let panel;
+    let parent;
+    
+    this.init = async function( _parent, params )
     {
-        let records = await t2.db.tx.retrieve( module.table );
-        let sample = records.data[ 0 ];
-
-        let panel = await parent.addContainer( { id: "panel", type: "panel", format: "flex" } );
+        parent = _parent;
+        
+        panel = await parent.addContainer( { id: "panel", type: "panel", format: "flex" } );
 
         this.element = panel.element;
         this.type = panel.type;
 
         Object.assign( this, params );
         Common.call( this );
+    };
+
+    this.run = async function()
+    {
+        panel.clear();
+        
+        await module.queries();
+
+        let records = module.data.filtered;
+        let sample = records[ 0 ];
 
         await details( panel, records );
 
@@ -44,7 +57,7 @@ const Panel = function( module )
         let form = await panel.addComponent( { id: "form", type: "form", format: "flex" } );
             form.addListener( { type: "submit", handler: async function ()
             {
-                await handlers.normalize( module.table, records.data );
+                await handlers.normalize( module.table, records );
 
                 let message = await parent.addComponent( { id: "message", type: "message", format: "block", output: "text" } );
                     message.set( "Success" );

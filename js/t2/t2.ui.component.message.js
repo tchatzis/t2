@@ -7,6 +7,10 @@ const Component = function()
         this.element = t2.common.el( "div", this.parent.element );
         this.element.classList.add( "message" );
 
+        const remove = () => this.element.remove();
+
+        setTimeout( remove, 5000 );
+
         Object.assign( this, params );
 
         Handlers.call( this );

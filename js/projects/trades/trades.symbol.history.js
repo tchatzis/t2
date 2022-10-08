@@ -3,18 +3,28 @@ import Data from "./trades.data.js";
 
 const Panel = function( module )
 {
+    let self = this;
+    let panel;
+    
     this.init = async function( parent, params )
     {
-        let records = await t2.db.tx.filter( module.table, [ { key: "symbol", operator: "==", value: module.symbol } ] );
-
-        let panel = await parent.addContainer( { id: "panel", type: "panel", format: "flex" } );
+        panel = await parent.addContainer( { id: "panel", type: "panel", format: "flex" } );
 
         this.element = panel.element;
         this.type = panel.type;
 
         Object.assign( this, params );
-        Common.call( this );
+        Common.call( this ); 
+    };
 
+    this.run = async function()
+    {
+        panel.clear();
+        
+        await module.queries();
+
+        let records = module.data.filtered;
+        
         let table = await panel.addComponent( { id: "transactions", type: "table" } );
             table.addRowListener( { type: "contextmenu", handler: table.edit } );
             table.addSubmitListener( { type: "submit", handler: async function ( data )
@@ -84,7 +94,7 @@ const Panel = function( module )
                 cell: { css: {}, display: 4, modes: [ "edit" ] },
                 format: [] } );
             table.setColumns( module.mode );
-            table.populate( { array: records.data, orderBy: "datetime" } );
+            table.populate( { array: records, orderBy: "datetime" } );
             table.setTotals();
     };
 };

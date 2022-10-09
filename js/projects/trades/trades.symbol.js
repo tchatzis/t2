@@ -45,6 +45,7 @@ const Symbol = function( module )
             title.set( "Stock Details" );
             await details.setModule( { id: "history", label: "history", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.history.js" } } );
             await details.setModule( { id: "match", label: "match", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.match.js" } } );
+            await details.setModule( { id: "totals", label: "totals", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.totals.js" } } );
 
         let tabs = await details.setComponent( { id: "tabs", type: "tabs", format: "flex-left", output: "horizontal" } );
             tabs.addListener( { type: "click", handler: ( active ) => title.set( `${ module.symbol } ${ active.id }` ) } );

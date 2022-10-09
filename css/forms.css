@@ -19,7 +19,7 @@ input
 
 input[ type=checkbox ]
 {
-    /*margin: 0 !important;*/
+    margin: 0 !important;
     padding: 0 !important;
     pointer-events: auto;
     height: 21px;

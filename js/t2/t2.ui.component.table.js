@@ -6,7 +6,6 @@ const Table = function()
     let self = this;
     let el = t2.common.el;
     let columns = new Map();
-    let allowed = new Map();
     let listeners = { row: [], column: [], submit: [] };
     let active = { highlight: null };
 
@@ -33,7 +32,6 @@ const Table = function()
     {
         let input = params.input;
         let cell = params.cell;
-            cell.modes.forEach( mode => allowed.set( mode ) );
 
         if ( input.type == "number" )
             this.totals[ input.name ] = 0;
@@ -107,6 +105,14 @@ const Table = function()
             if ( config.cell.modes.find( mode => mode == "edit" ) )
             {
                 let input = Object.assign( { label: name, name: name, type: config.input.type, value: data[ name ] || config.input.value || "" }, config.input );
+
+                if ( config.input.type == "checkbox" )
+                {
+                    let checked = !!data[ name ];
+
+                    if ( checked )
+                        input.checked = checked;
+                }
 
                 form.addField( { 
                     input: input, 

@@ -166,7 +166,7 @@ const Trades = function()
             this.data.filtered = this.data.filtered.filter( record => t2.formats.isoDate( record.datetime ) == this.date ); 
         }
 
-        console.log( "filtered", this.data.filtered );
+        t2.common.log( "blue", "filtered:", this.data.filtered.length );
     };
 
     this.queries = async () =>

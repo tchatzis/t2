@@ -9,7 +9,13 @@
     display: block;
 }
 
-.buy, .datetime
+.boolean
+{
+    color: magenta !important;
+    font-weight: bold;
+}
+
+.buy
 {
     color: lightgreen !important;
 }
@@ -41,7 +47,7 @@
     border-left: 10px solid green !important;
 }
 
-.cyan, .number
+.cyan
 {
     color: cyan;
 }
@@ -56,8 +62,9 @@
     padding: 2px 5px 2px 5px;
 }
 
-.date
+.date, .datetime
 {
+    color: #999;
     font-family: courier;
     min-width: 8em !important;
 }
@@ -100,6 +107,11 @@
 .handler:hover
 {
     background-color: #660;
+}
+
+.header
+{
+    padding: 2px 5px 2px 5px;
 }
 
 .highlight
@@ -231,6 +243,12 @@
     transition: background-color 1000ms linear;
 }
 
+.number
+{
+    color: cyan;
+    text-align: right;
+}
+
 .notes
 {
     border: 1px dashed yellow;
@@ -239,6 +257,7 @@
 .object
 {
     color: orange;
+    font-weight: bold;
 }
 
 .outline
@@ -361,6 +380,11 @@
     font-weight: normal;  
     min-width: 4em;
     padding: 2px 5px 2px 5px;
+}
+
+.table-body
+{
+    display: table-row-group;
 }
 
 .tabs

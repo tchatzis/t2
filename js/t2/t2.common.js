@@ -77,6 +77,15 @@ const Common = function()
         return ignore.find( dataset => f == dataset );
     };
 
+    this.log = function ()
+    {
+        let array = [ ...arguments ];
+            array.splice( 0, 1 );
+        let string = array.join( " " );
+
+        console.log( `%c ${ string }`, `background: ${ arguments[ 0 ] };` );
+    };
+
     this.output = 
     {
         object: ( object, target ) =>

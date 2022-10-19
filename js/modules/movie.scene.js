@@ -7,36 +7,9 @@ const Scene = function( sceneParams )
     //this.components = new Map();
     this.name = sceneParams.name;
 
-    // forms, html
-    //this.addContent = ( contentParams ) => contents.push( contentParams );
-
     this.addModule = async ( params ) => await importModule( params );
 
-    /*this.addUI = async function( componentParams )
-    {
-        componentParams.parent = t2.common.getParent( componentParams );
-
-        let module    = await import( `../t2/t2.ui.${ componentParams.component }.js` );
-        let component = await new module.default();
-            component.init( componentParams );
-
-        t2.ui.components.set( componentParams.id, component );
-        
-        return component;
-    };*/
-
     this.addUnload = ( unloadParams ) => unloads.push( unloadParams );  
-
-    this.change = async function()
-    {
-        self.reset();
-        
-        let active = arguments[ 2 ];
-        let link = active.curr;
-        let name = link.textContent;
-        let scene = t2.movie.scenes.get( name );
-        await scene.start();
-    };
 
     this.modules = new Map();
 
@@ -48,7 +21,7 @@ const Scene = function( sceneParams )
         delete this.timeout;
     };
     
-    this.removeComponents = function( array )
+    /*this.removeComponents = function( array )
     {
         array.forEach( id =>
         {
@@ -60,13 +33,7 @@ const Scene = function( sceneParams )
     this.removeElement = function( element )
     {
         element.remove();
-    };
-
-    this.reset = function()
-    {
-        //console.trace( Array.from( t2.ui.elements.keys() ) )
-        t2.common.clear( Array.from( t2.ui.children.keys() ) );
-    };
+    };*/
 
     this.start = async function()
     {
@@ -91,7 +58,7 @@ const Scene = function( sceneParams )
                     if ( self.parameters.next )
                     {
                         self.unload();
-                        t2.movie.next( self.parameters.next );
+                        t2.movie.nextScene( self.parameters.next );
                     }
                 }, 
                 self.parameters.duration );
@@ -118,17 +85,23 @@ const Scene = function( sceneParams )
     
     async function load() 
     {
-        Promise.all( contents.map( async ( params ) => await importModule( params ) ) );
+        return await Promise.all( contents.map( async ( params ) => await importModule( params ) ) );
     }
 
-    // load the module to self[ namespace ] and invoke it
+    // load the module, save to self.modules.get( namespace ) and invoke it
     async function importModule( params )
     {
         let module   = await import( `./${ params.path }.js` );
         let instance = await new module[ params.default ]( params.arguments );
+            instance.info =
+            {
+                namespace: params.namespace,
+                scene: self,
+                class: instance.constructor.name
+            };
 
         // invoke the function
-        await instance[ params.invoke ]( params );
+        await instance[ params.invoke ]( self, params );
 
         self.modules.set( params.namespace, instance );
         

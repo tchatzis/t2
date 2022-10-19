@@ -1,33 +1,44 @@
 const Deposits = function( module )
 {
     const self = this;
-    let breadcrumbs;
-
-    this.init = async function()
+    const Data = function( data )
     {
-        this.table = "deposits";
-        this.actions = [ "DEP", "WD" ];
-        
-        breadcrumbs = t2.ui.children.get( "footer.breadcrumbs" );
+        Object.assign( this, data );
 
-        layout();
+        this.id = Number( this.id );
+    };
+
+    this.run = async function()
+    {
+        Object.assign( module, this );
+
+        this.table = "deposits";
+
+        await this.refresh();  
+    };
+
+    this.refresh = async function()
+    {
+        await module.queries(); 
+        await layout();
     };
 
     async function layout()
     {
-        let symbols = t2.ui.children.get( "menu.symbols" );
-            symbols.hide();
-
         let date = t2.ui.children.get( "submenu.date" );
             date.hide();
-        
-        await history( [ { id: 0, datetime: t2.formats.datetime( new Date() ), amount: 1000, notes: "Test Deposit", source: "RBC", action: "DEP" } ] );
+
+        await history();
         await transaction();
     }
 
-    async function history( array )
+    async function history()
     {
+        let records = await t2.db.tx.retrieve( self.table );
+        let array = records.data;
+        
         let content = t2.ui.children.get( "content" );
+            content.clear();
         let container = await content.addContainer( { id: "day", type: "box", format: "inline-block" } );
         let title = await container.addComponent( { id: "title", type: "title", format:"block", output: "text" } );
             title.set( "Deposit History" );
@@ -38,17 +49,14 @@ const Deposits = function( module )
             { 
                 let form = this;
 
-                console.log( form, data );
+                let d = new Data( data );
 
-                //let record = await t2.db.tx.update( module.table, Number( data.id ), data );
-
-                /*let records = await t2.db.tx.filter( module.table, [ { key: "brokerage", operator: "==", value: brokerage }, { key: "datetime", operator: "==", value: self.date } ] );
-
-                table.populate( { array: records.data, orderBy: "datetime" } );
-                table.setTotals();*/
+                let record = await t2.db.tx.update( self.table, d.id, d );
 
                 let message = await content.addComponent( { id: "message", type: "message", format: "block", output: "text" } );
                     message.set( `Updated ${ data.action }` );   
+
+                self.refresh();
             } } ); 
             table.addColumn( { 
                 input: { name: "id", type: "hidden" }, 
@@ -62,20 +70,20 @@ const Deposits = function( module )
                 input: { name: "action", type: "select" }, 
                 cell: { css: { value: "action" }, display: 3, modes: [ "read", "edit" ] },
                 format: [],
-                options: self.actions } );
+                options: [ "DEP", "WD" ] } );
             table.addColumn( { 
                 input: { name: "amount", type: "number", step: 0.01, min: 0 }, 
                 cell: { css: {}, display: 3, modes: [ "read", "edit" ] },
                 format: [ "precision" ] } );
             table.addColumn( { 
                 input: { name: "notes", type: "text" }, 
-                cell: { css: { value: "action" }, display: 8, modes: [ "read", "edit" ] },
+                cell: { css: { value: "action" }, display: 10, modes: [ "read", "edit" ] },
                 format: [] } );
             table.addColumn( { 
                 input: { name: "source", type: "select" }, 
                 cell: { css: {}, display: 9, modes: [ "read", "edit" ] },
                 format: [],
-                options: module.data.brokerage } ); 
+                options: module.data.source } ); 
             table.addColumn( { 
                 input: { type: "submit", value: "SUBMIT" }, 
                 cell: { css: {}, display: 4, modes: [ "edit" ] },
@@ -90,6 +98,7 @@ const Deposits = function( module )
     {
         let content = t2.ui.children.get( "content" );
         let subcontent = t2.ui.children.get( "subcontent" );
+            subcontent.clear();
         
         let form = await subcontent.addComponent( { id: "deposits", type: "form", format: "flex" } );
             form.addListener( { type: "submit", handler: async function ( data )
@@ -98,13 +107,15 @@ const Deposits = function( module )
 
                 let record = await t2.db.tx.create( self.table, data );
 
+                self.refresh();
+
                 let message = await content.addComponent( { id: "message", type: "message", format: "block", output: "text" } );
                     message.set( "Success" );
             } } );
             form.addField( { 
-                input: { name: "datetime", type: "datetime" },
+                input: { name: "datetime", type: "datetime", value: t2.formats.datetime( new Date() ) },
                 cell: { css: {}, display: 10 },
-                format: [],
+                format: [ "datetime" ]/*,
                 update: ( input ) => 
                 {
                     function set()
@@ -115,7 +126,7 @@ const Deposits = function( module )
                     }
 
                     setInterval( set, 1000 );
-                } } );
+                }*/ } );
             form.addField( { 
                 input: { name: "amount", type: "number", min: 0, step: 0.01, required: "" }, 
                 cell: { css: {}, display: 4 },

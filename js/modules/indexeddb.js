@@ -232,7 +232,7 @@ const IndexedDB = function()
         params.persists = await navigator.storage.persist();
         t2.db.persists = params.persists;
         t2.db.version = params.version;
-        console.log( `%c IndexedDB: ${ params.name } version: ${ params.version }`, "background: green;" );  
+        console.log( `%c IndexedDB: ${ params.name } version: ${ params.version }`, "background: purple;" );  
     }
     
     this.open = async function( params )

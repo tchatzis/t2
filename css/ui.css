@@ -1,3 +1,17 @@
+.jpmorganchase
+{
+    border-color: #0B6EFD !important;
+}
+
+.robinhood
+{
+    border-color: #B00024 !important;
+}
+
+.tdameritrade
+{
+    border-color: #00B624 !important;
+}
 
 .active
 {
@@ -15,7 +29,7 @@
     font-weight: bold;
 }
 
-.buy
+.buy, .open
 {
     color: lightgreen !important;
 }
@@ -239,8 +253,25 @@
 
 .nomatch
 {
-    background-color: #300;
-    transition: background-color 1000ms linear;
+    background-color: #600;
+
+	animation-name: changeColor;
+	animation-iteration-count: 1;
+	animation-timing-function: ease-out;
+	animation-duration: 5s;
+    animation-fill-mode: forwards;
+}
+
+@keyframes changeColor
+{
+	0% 
+    {
+		background-color: #600;
+	}
+	100% 
+    {
+		background-color: transparent;
+	}
 }
 
 .number
@@ -342,6 +373,11 @@
     border-left: 10px solid #ccc
 }
 
+.scaled
+{
+    transform: scale( 0.75 );
+}
+
 .section
 {
     color: violet;
@@ -349,7 +385,7 @@
     text-transform: uppercase;
 }
 
-.sell
+.sell, .closed
 {
     color: red !important;
 }

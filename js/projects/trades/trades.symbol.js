@@ -1,32 +1,34 @@
-import { aggregate, reset, total } from "./trades.aggregate.js";
-import totals from "./trades.totals.js";
+import totals from "./trades.calculate.totals.js";
 
 const Symbol = function( module )
 {
-    let panels;
-    
-    this.init = async function()
+    this.run = async function()
     {
-        await layout();
-        
+        Object.assign( module, this );
+
         if ( !module.symbol )
             return;
+        
+        await this.refresh();  
+    };
 
-        let records = module.data.all.filter( record => record.symbol == module.symbol );
-        reset();
-        aggregate( module.symbol, records )
-        totals( total );
-
-        await container();
+    this.refresh = async function()
+    {
+        delete module.date;
+        module.symbol = module._symbol;
+        
+        await module.queries(); 
+        await layout();
+        await module.transaction();
     };
 
     async function layout()
     {
-        let symbols = t2.ui.children.get( "menu.symbols" );
-            symbols.show();
-
         let date = t2.ui.children.get( "submenu.date" );
             date.hide();
+
+        await container();
+        await summary();
     }
 
     async function container()
@@ -34,6 +36,7 @@ const Symbol = function( module )
         let breadcrumbs = t2.ui.children.get( "footer.breadcrumbs" );
         
         let content = t2.ui.children.get( "content" );
+            content.clear();
 
         let details = await content.addContainer( { id: "details", type: "panels", format: "block", output: "vertical" } );
             // set breadcrumbs
@@ -54,6 +57,63 @@ const Symbol = function( module )
         let array = Array.from( details.panels.keys() );
 
         tabs.activate( array[ 0 ] );
+    }
+
+    async function summary()
+    {
+        if ( !module.symbol )
+            return;
+        
+        let result = await totals( module );
+        
+        let margin = t2.ui.children.get( "margin" );
+            margin.clear();
+
+        let matrix = await margin.addComponent( { id: "matrix", type: "matrix", format: "table-body" } );
+            matrix.addRow( { 
+                input: { name: "status", type: "text" }, 
+                cell: { css: { value: "status" }, display: 4, modes: [ "read" ] },
+                format: [ "uppercase" ] 
+            } );
+            matrix.addRow( { 
+                input: { name: "buy qty", type: "number" }, 
+                cell: { css: {}, display: 4, modes: [ "read" ] },
+                format: [ "number" ] } );
+            matrix.addRow( { 
+                input: { name: "div qty", type: "number" }, 
+                cell: { css: {}, display: 4, modes: [ "read" ] },
+                format: [ "number" ] } );
+            matrix.addRow( { 
+                input: { name: "sell qty", type: "number" }, 
+                cell: { css: {}, display: 4, modes: [ "read" ] },
+                format: [ "number" ] } );
+            matrix.addRow( { 
+                input: { name: "position", type: "number" }, 
+                cell: { css: {}, display: 4, modes: [ "read" ] },
+                format: [ "number"  ] 
+            } );            
+            matrix.addRow( { 
+                input: { name: "break even", type: "number" }, 
+                cell: { css: {}, display: 4, modes: [ "read", "edit" ] },
+                format: [ "number" ] 
+            } );
+            matrix.addRow( { 
+                input: { name: "gain", type: "number" }, 
+                cell: { css: {}, display: 4, modes: [ "read" ] },
+                format: [ "number" ]
+            } );
+            matrix.addRow( { 
+                input: { name: "percent", type: "number" }, 
+                cell: { css: {}, display: 4, modes: [ "read" ] },
+                format: [ "number" ]
+            } );            
+            matrix.populate(
+            { 
+                data: result, 
+                primaryKey: "id",
+                column: { name: "brokerage" },
+                row: { name: "data" }
+            } );
     }
 };
 

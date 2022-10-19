@@ -1,82 +1,54 @@
-import { aggregate, reset, total } from "./trades.aggregate.js";
-import totals from "./trades.totals.js";
 import Data from "./trades.data.js";
 
 const Day = function( module )
 {
     let self = this;
-    let breadcrumbs;
+    let table;
+    let today = t2.formats.isoDate( new Date() );
 
-    this.clear = () => t2.common.clear( [ "content", "submenu" ] );
-
-    this.init = async function()
+    this.run = async function()
     {
-        reset();
-        self.clear();
+        Object.assign( module, this );
 
-        let max = Math.max.apply( null, module.data.all.map( record => new Date( record.datetime ) ) );
-        let date = t2.formats.isoDate( new Date( max ) );
-
-        await layout( date );
-        await dates( date );
-
-        this.setDate( { date: date } );
+        await this.refresh();  
     };
 
-    this.setDate = function( data )
+    this.refresh = async function()
     {
-        self.date = data.date;
+        module.date = module.date || today;
         
-        breadcrumbs.set.path( 2, data.date );
-
-        filter();
+        await module.queries(); 
+        await layout();   
     };
 
     async function layout()
     {
-        breadcrumbs = await t2.ui.children.get( "footer.breadcrumbs" );
-
-        let submenu = t2.ui.children.get( "submenu" );
-            submenu.show();
-
-        await filter();
+        await date();
+        brokerages();
     }
 
-    async function dates( date )
+    async function date()
     {
         let submenu = t2.ui.children.get( "submenu" );
-        
+            submenu.clear();
+
         let dates = await submenu.addComponent( { id: "date", type: "form", format: "flex" } );
-            dates.addListener( { type: "submit", handler: async ( data ) => self.setDate( data ) } );
+            dates.addListener( { type: "submit", handler: async ( data ) => module.setDate( data.date ) } );
             dates.addField( { 
-                input: { name: "date", type: "date", value: date, max: date, required: "" }, 
+                input: { name: "date", type: "date", value: module.date, max: today, required: "" }, 
                 cell: { css: {}, display: 7 },
                 format: [ "date" ] } );
             dates.addField( { 
                 input: { type: "submit", value: "SET" }, 
                 cell: { css: {}, display: 3 },
-                format: [] } );
+                format: [] } )
     }
 
-    function display()
+    function brokerages()
     {
-        module.data.symbol.forEach( symbol => 
-        {
-            let records = module.data.all.filter( record => record.symbol == symbol && t2.formats.isoDate( record.datetime ) == self.date );
-
-            aggregate( symbol, records );
-        } );
-
-        totals( total );
-    }
-
-    function filter()
-    {
-        t2.common.clear( [ "content" ] );
-
         module.data.brokerage.forEach( async ( brokerage ) =>
         {
-            let array = module.data.all.filter( record => ( t2.formats.isoDate( record.datetime ) == self.date ) && record.brokerage == brokerage );
+            let array = module.data.filtered.filter( record => ( t2.formats.isoDate( record.datetime ) == module.date ) && record.brokerage == brokerage );
 
             await transactions( array, brokerage );
         } );
@@ -85,11 +57,12 @@ const Day = function( module )
     async function transactions( array, brokerage )
     {
         let content = t2.ui.children.get( "content" );
+            content.clear();
         let container = await content.addContainer( { id: brokerage.toLowerCase(), type: "box", format: "inline-block" } );
         let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
-            title.set( `${ brokerage } \u00BB ${ self.date }` );
+            title.set( `${ brokerage } \u00BB ${ module.date }` );
 
-        let table = await container.addComponent( { id: "transactions", type: "table" } );
+        let table = await container.addComponent( { id: brokerage.toLowerCase(), type: "table" } );
             table.addRowListener( { type: "contextmenu", handler: table.edit } );
             table.addSubmitListener( { type: "submit", handler: async function ( data )
             { 
@@ -97,13 +70,17 @@ const Day = function( module )
 
                 let record = await t2.db.tx.update( module.table, Number( data.id ), new Data( data ) );
 
-                let records = await t2.db.tx.filter( module.table, [ { key: "brokerage", operator: "==", value: brokerage }, { key: "datetime", operator: "==", value: self.date } ] );
+                let records = await t2.db.tx.filter( module.table, [ { key: "brokerage", operator: "==", value: brokerage }, { key: "datetime", operator: "==", value: module.date } ] );
 
                 table.populate( { array: records.data, orderBy: "datetime" } );
+                table.highlight( data.id );
                 table.setTotals();
 
                 let message = await container.addComponent( { id: "message", type: "message", format: "block", output: "text" } );
                     message.set( `Updated ${ data.id }` );   
+
+                let popup = t2.ui.children.get( "subcontent.popup" );
+                    popup.element?.remove();
             } } );
             table.addColumn( { 
                 input: { name: "id", type: "hidden" }, 
@@ -177,6 +154,8 @@ const Day = function( module )
             table.setColumns( module.mode );
             table.populate( { array: array, orderBy: "datetime" } );
             table.setTotals();
+
+        module[ brokerage ] = table;
     };
 };
 

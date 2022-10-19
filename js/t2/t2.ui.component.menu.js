@@ -9,15 +9,13 @@ const Component = function()
 
     this.activate = function( name )
     {
-        let link = self.element.querySelector( `[ data-link = "${ name.toLowerCase() }" ]` );
-
-        self.setActive( link );
+        let link = self.element.querySelector( `[ data-link = "${ name }" ]` );
+            link?.click();
     };   
     
     this.addListener = function( listener )
     {
-        listeners.set( listener, null );
-        listen();
+        listeners.set( listener.type, listener );
     };
 
     this.disable = function( array )
@@ -25,7 +23,7 @@ const Component = function()
         array.forEach( name =>
         {
             let link = self.element.querySelector( `[ data-link = "${ name }" ]` );
-                link.classList.add( "disabled" );
+                link?.classList.add( "disabled" );
         } );
     };
 
@@ -36,6 +34,7 @@ const Component = function()
         this.element.style.display = params.format;
 
         this.update( params.array );
+        this.listen();
 
         Object.assign( this, params );
 
@@ -51,7 +50,8 @@ const Component = function()
 
         if ( active.curr && active.curr !== link )
         {
-            active.curr.classList.remove( "active" );      
+            active.curr.classList.remove( "active" );   
+            active.curr.classList.remove( "inactive" );    
         }
 
         active.curr = link;  
@@ -67,14 +67,24 @@ const Component = function()
                 element.classList.add( "link" );
                 element.textContent = link;
                 element.dataset.link = link.toLowerCase();
-            
-            map.set( element, new Map() );
-        } );
+                element.addEventListener( "click", ( e ) => 
+                {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    this.setActive( element );
 
-        listen();
+                    for ( let [ type, listener ] of listeners )
+                    {
+                        f( e, listener, active );
+                    };
+                } );
+
+            map.set( element, new Map() );        
+        } ); 
     };
     
-    function listen()
+    this.listen = function()
     {
         Array.from( map.keys() ).forEach( element =>
         {
@@ -90,10 +100,6 @@ const Component = function()
     {
         e.preventDefault();
         e.stopPropagation();
-
-        let link = arguments[ 0 ].target;
-            
-        self.activate( link.textContent.toLowerCase() );
 
         listener.handler( ...arguments );
     } 

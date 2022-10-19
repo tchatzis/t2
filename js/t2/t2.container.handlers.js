@@ -6,6 +6,7 @@ const Handlers = function()
     {
         let module    = await import( `../t2/t2.ui.component.${ params.type }.js` );
         let component = await new module.default();
+            component.id = params.id;
             component.parent = this;
             component.path = new Map();
             component.path.set( params.id, this.path.get( this.id ).concat( params.id ) );
@@ -23,6 +24,7 @@ const Handlers = function()
     {
         let module    = await import( `../t2/t2.ui.container.${ params.type }.js` );
         let container = await new module.default();
+            container.id = params.id;
             container.parent = this;
             container.path = new Map();
             container.path.set( params.id, this.path.get( this.id ).concat( params.id ) );
@@ -33,6 +35,8 @@ const Handlers = function()
         
         this.children.set( params.id, container );
 
+        Object.assign( container, params );
+
         return container;
     };
 
@@ -40,6 +44,7 @@ const Handlers = function()
     {
         let module    = await import( params.config.src );
         let object = await new module.default( ...params.config.arguments );
+            object.id = params.id;
             object.parent = this;
             object.path = new Map();
             object.path.set( params.id, this.path.get( this.id ).concat( params.id ) );
@@ -55,7 +60,10 @@ const Handlers = function()
         return object;
     };
 
-    this.clear = () => Array.from( this.element.children ).forEach( child => child.remove() );
+    this.clear = () => Array.from( this.element.children ).forEach( child => 
+    {
+        child.remove();     
+    } );
 
     this.children = new Map();
 

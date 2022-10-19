@@ -1,35 +1,49 @@
-const IDBOpen = function( module )
+import Common from "../../t2/t2.common.handlers.js";
+
+const Open = function()
 {
     let listeners = [];
+    let panel;
+    
+    this.init = async function( parent, params )
+    {
+        panel = await parent.addContainer( { id: "panel", type: "panel", format: "flex-left" } );
+
+        this.element = panel.element;
+        this.type = panel.type;
+
+        Object.assign( this, params );
+        Common.call( this ); 
+    };
 
     this.addListener = function( listener )
     {
         listeners.push( listener );
     };
     
-    this.init = async function()
-    {
-        let container = await t2.ui.addComponent( { id: "export", title: "DB Status", component: "container", parent: t2.ui.elements.get( "content" ), module: module } );
-
-        let form = t2.common.el( "form", container.element );
+    this.run = async function()
+    {;
+        panel.clear();
+        
+        let form = t2.common.el( "form", panel.element );
             form.id = "open";
             form.addEventListener( "submit", openDB );
-        let name = t2.common.el( "input", container.element );
+        let name = t2.common.el( "input", panel.element );
             name.name = "name";
             name.placeholder = "db name";
             name.value = t2.db.name;
             name.setAttribute( "Form", form.id );
-        let version = t2.common.el( "input", container.element );
+        let version = t2.common.el( "input", panel.element );
             version.name = "version";
             version.type = "number";
             version.value = t2.db.version;
             version.placeholder = "version name";
             version.setAttribute( "Form", form.id );
-        let submit = t2.common.el( "input", container.element );
+        let submit = t2.common.el( "input", panel.element );
             submit.value = "Open";
             submit.type = "submit";
             submit.setAttribute( "Form", form.id ); 
-        let close = t2.common.el( "input", container.element );
+        let close = t2.common.el( "input", panel.element );
             close.value = "Close";
             close.type = "submit";
             close.addEventListener( "click", closeDB );
@@ -63,4 +77,4 @@ const IDBOpen = function( module )
     }
 };
 
-export default IDBOpen;
+export default Open;

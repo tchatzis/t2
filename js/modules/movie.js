@@ -13,6 +13,13 @@ const Movie = function()
         return scene;
     };
 
+    this.changeScene = async function( name )
+    {
+        let scene = t2.movie.scenes.get( name );
+
+        await scene.start();
+    };
+
     this.editScene = function( name, config )
     {
         let scene = self.scenes.get( name );
@@ -21,7 +28,12 @@ const Movie = function()
             scene[ key ] = config[ key ];
     };
 
-    this.next = function( name )
+    this.resetScene = function()
+    {
+        t2.common.clear( Array.from( t2.ui.children.keys() ) );
+    };
+
+    this.nextScene = function( name )
     {
         let scene = self.scenes.get( name );
         

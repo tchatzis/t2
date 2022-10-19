@@ -58,13 +58,20 @@
 
 #margin
 {
-    background-color: transparent;
+    background-color: rgba( 0, 0, 0, 0.9 );
     border-left: 1px solid #222;
     height: 100%;
     position: absolute;
     right: 0;
     top: 0;
     width: 15vw;
+
+    transition: width 2s;
+}
+
+#margin:hover
+{
+    width: 30vw;
 }
 
 #menu

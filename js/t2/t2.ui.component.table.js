@@ -238,6 +238,14 @@ const Table = function()
         this.element.innerHTML = null;
     };
 
+    this.update = function( key, data )
+    {
+        let row = this.array.find( item => item[ key ] == data[ key ] );
+            row = data;
+
+        this.hightlight( data[ key ] );
+    };
+
     function css( cell, column, record )
     {
         let css = "data";

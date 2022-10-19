@@ -63,7 +63,7 @@ const Scripts = function( module )
             {
                 let scene = this;
 
-                async function openDB()
+                /*async function openDB()
                 {
                     let tables = Array.from( t2.db.db.objectStoreNames );
 
@@ -78,11 +78,19 @@ const Scripts = function( module )
                                 console.log( data );
                         } 
                     } ); 
-                } 
+                } */
 
                 scene.pre = async () =>
                 {
-                    await scene.addElement( { id: "menu", parent: "wrapper" } );
+                    await t2.ui.addElement( { id: "menu", parent: t2.ui.children.get( "wrapper" ).element } );
+                    await t2.ui.addElement( { id: "submenu", parent: t2.ui.children.get( "menu" ).element, ignore: "clear" } );
+                    await t2.ui.addElement( { id: "middle", parent: t2.ui.children.get( "wrapper" ).element } );
+                    await t2.ui.addElement( { id: "content", parent: t2.ui.children.get( "middle" ).element } );
+
+                    await scene.addUnload( { namespace: "this", execute: "reset", arguments: [] } ); 
+
+                    await scene.addModule( { default: "default", invoke: "init", path: "../projects/databases/databases", namespace: "databases" } );
+                    /*await scene.addElement( { id: "menu", parent: "wrapper" } );
                     let submenu = await scene.addElement( { id: "submenu", parent: "menu", ignore: "clear" } );
                     await scene.addElement( { id: "middle", parent: "wrapper" } );
                     let content = await scene.addElement( { id: "content", parent: "middle" } );
@@ -93,19 +101,19 @@ const Scripts = function( module )
                     submenu.textContent = t2.db.version ? dbv : "CLOSED";
 
                     if ( t2.db.version )
-                        openDB();
+                        openDB();*/
                 };
 
                 scene.post = async () =>
                 {
-                    let open = await scene.addModule( { default: "default", invoke: "init", path: "../projects/databases/idb.form.open", namespace: "idb.open" } );
+                    /*let open = await scene.addModule( { default: "default", invoke: "init", path: "../projects/databases/idb.form.open", namespace: "idb.open" } );
                         open.addListener( { type: "", handler: openDB } );
 
                     await scene.addModule( { default: "default", invoke: "init", path: "../projects/databases/idb.form.table", namespace: "idb.table" } );
 
                     await scene.addModule( { default: "default", invoke: "init", path: "../projects/databases/idb.form.export", namespace: "idb.export" } );
 
-                    await scene.addModule( { default: "default", invoke: "init", path: "../projects/databases/idb.form.import", namespace: "idb.import" } );
+                    await scene.addModule( { default: "default", invoke: "init", path: "../projects/databases/idb.form.import", namespace: "idb.import" } );*/
                 };
 
                 return scene;   

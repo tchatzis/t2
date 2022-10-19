@@ -1,144 +1,51 @@
+import Common from "../../modules/navigation.js";
 import Data from "./trades.data.js";
 
 const Trades = function()
 {
     const self = this;
-    let breadcrumbs;
-    let views;
 
     this.init = async function()
     {
-        this.mode = "read";
-        this.view = "day";
-        this.views = [ "Day", "Summary", "Symbol", "Fix", "Deposits" ];
+        navigation.call( this );
 
-        breadcrumbs = t2.ui.children.get( "footer.breadcrumbs" );
+        await this.queries();
 
-        await this.refresh();
+        let max = Math.max.apply( null, this.data.all.map( record => new Date( record.datetime ) ) );
+
+        this.date = t2.formats.isoDate( new Date( max ) );
 
         layout();
     };
 
-    async function layout()
+    function navigation()
     {
-        let footer = await t2.ui.children.get( "footer" );
+        Common.call( this );
 
-        views = await footer.addComponent( { id: "views", type: "menu", array: self.views, format: "flex" } );
-        views.addListener( { type: "click", handler: function() 
-        { 
-            self.handlers.change( ...arguments );
-        } } );  
-        views.activate( self.view );
+        this.navigation.scenes.clear = [ "menu", "submenu", "content", "subcontent", "margin", "submargin" ];
+        this.navigation.scenes.component.addListener( { type: "click", handler: function()
+        {
+            self.navigation.set.call( self.navigation.scenes, ...arguments );
+        } } );
+        this.navigation.scenes.component.update( this.navigation.scenes.component.array );
+        this.navigation.activate.call( this.navigation.scenes, this.info.namespace );
 
-        let menu = t2.ui.children.get( "menu" );
+        this.navigation.view.array = [ "Day", "Summary", "Dividends", "Symbol", "Search", "Fix", "Deposits" ];
+        this.navigation.view.default = this.navigation.view.array[ 0 ].toLowerCase();
+        this.navigation.view.clear = [ "content" ];
+        this.navigation.view.component.addListener( { type: "click", handler: function()
+        {
+            self.navigation.set.call( self.navigation.view, ...arguments );
+        } } );
+        this.navigation.view.component.update( this.navigation.view.array );
+        this.navigation.click.call( this.navigation.view, this.navigation.view.default );
+    }   
 
-        let symbols = await menu.addComponent( { id: "symbols", type: "menu", array: [], format: "block" } );
-            symbols.update( self.data.symbol );
-            symbols.hide();
-            symbols.addListener( { type: "click", handler: function() 
-            { 
-                self.handlers.clicked( ...arguments );
-                breadcrumbs.set.path( 2, arguments[ 2 ].curr.textContent );
-            } } );
+    function layout()
+    {
+        symbols();
+        self.transaction();
     }
-
-    function activate( args )
-    {
-        let e = args[ 0 ];
-            e.preventDefault();
-            e.stopPropagation();
-
-        // activate / deactivate links
-        let element = e.target;
-            element.classList.add( "active" );
-
-        let active = args[ 2 ];
-            active.link?.classList.remove( "active" );
-            active.link = element;
-    }
-
-    this.clear = () => t2.common.clear( [ "content", "margin", "subcontent", "submargin" ] );
-
-    this.handlers = 
-    {
-        change: async function()
-        {
-            activate( arguments );
-
-            let element = arguments[ 0 ].target;
-            let view = element.getAttribute( "data-link" ).toLowerCase();
-
-            await self.setView( view );
-            //await transaction();
-        },
-        
-        clicked: async function()
-        {
-            activate( arguments );
-            
-            let element = arguments[ 0 ].target;
-            let symbol = element.getAttribute( "data-link" ).toUpperCase();
-
-            await self.setSymbol( symbol ); 
-            await self.setView( self.view );
-        },
-
-
-        
-         /*create: async ( e ) => 
-        { 
-            e.preventDefault(); 
-
-            let form = e.target; 
-            //let date = new Date();
-            let data = {};
-                data.action = e.submitter.value;
-                //data.date = date.toLocaleDateString();
-                //data.time = date.toLocaleTimeString();
-            let formdata = new FormData( form );    
-            let array = Array.from( formdata.entries() );
-                array.forEach( input => data[ input[ 0 ] ] = input[ 1 ] );
-
-            let record = await t2.db.tx.create( this.table, new Data( data ) );
-
-            this.setSymbol( data.symbol );
-            this.refresh( record );
-        
-            form.elements.qty.value = null
-            form.elements.price.value = null;
-        },
-
-        edit: async ( e, record ) =>
-        {
-            if ( e.target.parentNode.tagName == "TR" )
-            {
-                self.setSymbol( record.symbol );
-                await self.setView( "edit" );
-                self.highlight( record );
-            }
-        },
-
-        row: ( e, record ) =>
-        {
-            if ( e.target.parentNode.tagName == "TR" )
-                e.target.parentNode.classList.toggle( "pairing" );
-        },
-
-        update: async ( e ) => 
-        { 
-            e.preventDefault(); 
-
-            let form = e.target; 
-            let formdata = new FormData( form );
-            let data = {};   
-            let array = Array.from( formdata.entries() );
-                array.forEach( input => data[ input[ 0 ] ] = input[ 1 ] );
-
-            let record = await t2.db.tx.update( this.table, data.id, new Data( data ) );
-
-            this.refresh( record );
-        }*/
-    };
 
     this.filter = function()
     {
@@ -201,87 +108,25 @@ const Trades = function()
         } ); 
     };
 
-    this.refresh = async function()
+    this.setDate = async function( date )
     {
-        await this.queries();
-        await this.setView( this.view );
-
-        transaction();
-    };
-
-    /*this.setDate = async function()
-    {
-        this.date = t2.formats.isoDate( record.datetime );
-
-        breadcrumbs.set.path( 2, this.date );
+        this.date = date;
 
         await this.refresh();
-    };*/
-
-    /*this.setDates = async function( e )
-    {
-        e.preventDefault();
-
-        let form = e.target; 
-        let formdata = new FormData( form );
-
-        Array.from( formdata.entries() ).forEach( field => self[ field[ 0 ] ] = field[ 1 ] );
-
-        await self.setView( "date" );
-        await self.setForm();
-    };*/
-
-    // add trade form
-
-
-    /*async function range()
-    {
-        let max = t2.formats.isoDate( Date.now() );
-        let min = t2.formats.isoDate( this.data.datetime[ 0 ] );
-
-        let dates = await t2.ui.addComponent( { id: "range", component: "form", parent: t2.ui.elements.get( "subcontent" ), module: this, horizontal: true } );
-            dates.form.addEventListener( "submit", this.setDates );
-            dates.addField( { 
-                input: { name: "from", type: "date", value: this.from || min, min: min, max: max, required: "" }, 
-                cell: { css: {}, display: 8 },
-                format: [ "date" ] } );
-            dates.addField( { 
-                input: { name: "to", type: "date", value: this.to || max, min: min, max: max, required: "" }, 
-                cell: { css: {}, display: 8 },
-                format: [ "date" ] } );
-            dates.addField( { 
-                input: { type: "submit", value: "FILTER" }, 
-                cell: { css: {}, display: 4 },
-                format: [] } );
-    };*/
-
-    this.setDate = function( data )
-    {
-        self.date = data.date;
-        
-        breadcrumbs.set.path( 2, data.date );
-
-        this.refresh();
     };
     
-    this.setSymbol = function( symbol )
+    this.setSymbol = async function( symbol )
     {
         this.symbol = symbol;
+
+        await this.refresh();
     };
 
-    this.setView = async function( view )
+    this.unsetSymbol = async function( symbol )
     {
-        this.clear();
-        
-        this.view = view;
+        delete this.symbol;
 
-        let module = await import( `./trades.${ this.view }.js` );
-
-        this.module = await new module.default( this );
-
-        await this.module.init();
-
-        breadcrumbs.set.path( 1, this.view );
+        await this.refresh();
     };
 
     this.sort =
@@ -291,9 +136,12 @@ const Trades = function()
     };
 
     // transaction entry form
-    async function transaction()
+    this.transaction = async function()
     {
+        let content = t2.ui.children.get( "content" );
+        
         let subcontent = t2.ui.children.get( "subcontent" );
+            subcontent.clear();
         
         let form = await subcontent.addComponent( { id: "transaction", type: "form", format: "flex" } );
             form.addListener( { type: "submit", handler: async function ( data )
@@ -302,14 +150,28 @@ const Trades = function()
 
                 let record = await t2.db.tx.create( self.table, new Data( data ) );
 
-                self.setDate( record.data );
+                let records = await t2.db.tx.filter( self.table, [ { key: "datetime", operator: "==", value: self.date } ] );
+
+                let table = self[ data.brokerage ];
+                    table.populate( { array: records.data } );
+                    table.highlight( record.data.id );
+                    table.setTotals();
+
+                form.form.datetime.value = t2.formats.datetime( new Date() );
+                form.form.symbol.value = "";
+                form.form.qty.value = "";
+                form.form.price.value = "";
+                form.form.notes.value = "";
+
+                let message = await content.addComponent( { id: "message", type: "message", format: "block", output: "text" } );
+                    message.set( `Added ${ record.data.id }` );
             } } );
             form.addField( { 
                 input: { name: "datetime", type: "datetime", value: t2.formats.datetime( new Date() ) },
                 cell: { css: {}, display: 10 },
                 format: [] } );
             form.addField( { 
-                input: { name: "symbol", type: "datalist", value: self.symbol || "" }, 
+                input: { name: "symbol", type: "datalist", value: self._symbol || "" }, 
                 cell: { css: {}, display: 4 },
                 format: [ "uppercase" ],
                 options: self.data.symbol } );
@@ -343,6 +205,34 @@ const Trades = function()
                 cell: { css: {}, display: 3 },
                 format: [] } );   
     };
+
+    // symbols menu
+    async function symbols()
+    {
+        let menu = t2.ui.children.get( "menu" );
+
+        let symbols = await menu.addComponent( { id: "symbols", type: "menu", array: self.data.symbol, format: "block" } );
+            symbols.addListener( { type: "click", handler: function() 
+            { 
+                let link = arguments[ 2 ].curr;
+                let symbol = link.textContent;
+
+                self._symbol = symbol;
+
+                if ( self.symbol )
+                {
+                    link.classList.remove( "inactive" );
+                    
+                    self.unsetSymbol( symbol );
+                }
+                else
+                {
+                    link.classList.add( "inactive" );
+                    
+                    self.setSymbol( symbol );
+                }
+            } } );       
+    }
 };
 
 export default Trades;

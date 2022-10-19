@@ -3,8 +3,7 @@ import Handlers from "./t2.component.handlers.js";
 const Component = function()
 {
     let self = this;
-    let path = [];
-    
+
     this.init = function( params )
     {
         this.element = t2.common.el( "div", this.parent.element );
@@ -14,19 +13,7 @@ const Component = function()
         Object.assign( this, params );
 
         Handlers.call( this );
-
-        this.set.path = function( index, value )
-        {
-            path[ index ] = value;
-            self.element.textContent = path.join( "/" );
-        };
     }; 
-
-    this.unset = function( index )
-    {
-        path.splice( index, 1 );
-        self.element.textContent = path.join( "/" );
-    };
 };
 
 export default Component;

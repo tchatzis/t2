@@ -1,10 +1,25 @@
-const IDBTable = function( module )
-{
-    this.init = async function()
-    {
-        let container = await t2.ui.addComponent( { id: "dump", title: "Add Table", component: "container", parent: t2.ui.elements.get( "content" ), module: module } );
+import Common from "../../t2/t2.common.handlers.js";
 
-        let form = t2.common.el( "form", container.element );
+const Table = function()
+{
+    let panel;
+    
+    this.init = async function( parent, params )
+    {
+        panel = await parent.addContainer( { id: "panel", type: "panel", format: "flex-left" } );
+
+        this.element = panel.element;
+        this.type = panel.type;
+
+        Object.assign( this, params );
+        Common.call( this ); 
+    };
+    
+    this.run = async function()
+    {
+        panel.clear();
+
+        let form = t2.common.el( "form", panel.element );
             form.id = "table";
             form.addEventListener( "submit", async ( e ) =>
             {
@@ -22,28 +37,28 @@ const IDBTable = function( module )
                 version.value = ( t2.db.version || 1 ) + 1;
                 table.value = null;
             } );
-        let name = t2.common.el( "input", container.element );
+        let name = t2.common.el( "input", panel.element );
             name.name = "name";
             name.placeholder = "name";
             name.value = t2.db.name;
             name.type = "text";
             name.setAttribute( "Form", form.id );
-        let version = t2.common.el( "input", container.element );
+        let version = t2.common.el( "input", panel.element );
             version.name = "version";
             version.type = "number";
             version.value = t2.db.version + 1;
             version.placeholder = "version";
             version.setAttribute( "Form", form.id );
-        let table = t2.common.el( "input", container.element );
+        let table = t2.common.el( "input", panel.element );
             table.name = "table";
             table.placeholder = "table";
             table.setAttribute( "Form", form.id );
             table.setAttribute( "required", "" );
-        let submit = t2.common.el( "input", container.element );
+        let submit = t2.common.el( "input", panel.element );
             submit.value = "Add";
             submit.type = "submit";
             submit.setAttribute( "Form", form.id ); 
     };
 };
 
-export default IDBTable;
+export default Table;

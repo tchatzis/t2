@@ -1,6 +1,7 @@
 const Common = function()
 {
     let self = this;
+    let ignored = [];
 
     this.addTime = ( _date, time ) =>
     {
@@ -33,8 +34,12 @@ const Common = function()
                     {   
                         let predicate = this.ignored( "clear", child );
 
-                        if ( !predicate )
-                            el.removeChild( child );
+                        if ( predicate )
+                        {
+                            return;
+                        }
+
+                        el.removeChild( child );
                     } );
             }
         } );

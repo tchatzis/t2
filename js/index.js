@@ -21,7 +21,7 @@ async function init( namespace )
 
     // story board
     //scenes.login       = t2.movie.addScene( { duration: 2000, name: "login", next: "database", script: scripts.login } );
-    scenes.database      = t2.movie.addScene( { duration: Infinity, name: "database", next: "imports", script: scripts.databases } );
+    scenes.databases     = t2.movie.addScene( { duration: Infinity, name: "databases", next: "imports", script: scripts.databases } );
     //scenes.imports     = t2.movie.addScene( { duration: Infinity, name: "imports", next: "trades", script: scripts.imports } );
     scenes.trades        = t2.movie.addScene( { duration: Infinity, name: "trades", next: "2D", script: scripts.trades } );
     //scenes.svg           = t2.movie.addScene( { duration: Infinity, name: "svg", next: "2D", script: scripts.svg } );
@@ -31,18 +31,13 @@ async function init( namespace )
     // header menu
     let header = await t2.ui.root( t2.ui.children.get( "header" ).element );
     let menu = await header.addComponent( { id: "scenes", type: "menu", array: Array.from( t2.movie.scenes.keys() ), format: "flex" } );
-        menu.element.dataset.ignore = "clear";
-        menu.addListener( { type: "click", handler: ( e, listener, active ) => 
-        { 
-            breadcrumbs.set.path( 0, active.curr.textContent ); 
-            scenes.end.change( e, listener, active );
-        } } );
-        menu.activate( scene );
 
-    // footer breadcrumbs
     let footer = await t2.ui.root( t2.ui.children.get( "footer" ).element );
-    let breadcrumbs = await footer.addComponent( { id: "breadcrumbs", type: "path", format: "block" } );
-        breadcrumbs.set.path( 0, scene );
+
+    let view = await footer.addComponent( { id: "view", type: "menu", array: [], format: "flex" } );  
+
+    let breadcrumbs = await footer.addComponent( { id: "breadcrumbs", type: "path", format: "block", output: "path" } );
+        breadcrumbs.set( 0, scene );
 
     await scenes[ scene ].start();
 };

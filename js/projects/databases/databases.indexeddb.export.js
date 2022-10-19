@@ -1,13 +1,28 @@
-const IDBExport = function( module )
+import Common from "../../t2/t2.common.handlers.js";
+
+const Export = function()
 {
-    this.init = async function()
+    let panel;
+    
+    this.init = async function( parent, params )
     {
-        let container = await t2.ui.addComponent( { id: "export", title: "Export Data", component: "container", parent: t2.ui.elements.get( "content" ), module: module } );
-     
-        let form = t2.common.el( "form", container.element );
+        panel = await parent.addContainer( { id: "panel", type: "panel", format: "flex" } );
+
+        this.element = panel.element;
+        this.type = panel.type;
+
+        Object.assign( this, params );
+        Common.call( this ); 
+    };
+    
+    this.run = async function()
+    {
+        panel.clear();
+
+        let form = t2.common.el( "form", panel.element );
             form.id = "export";
             form.addEventListener( "submit", ( e ) => data( e ) );
-        let submit = t2.common.el( "input", container.element );
+        let submit = t2.common.el( "input", panel.element );
             submit.value = "Export";
             submit.type = "submit";
             submit.setAttribute( "Form", form.id ); 
@@ -47,4 +62,4 @@ const IDBExport = function( module )
     }
 };
 
-export default IDBExport;
+export default Export;

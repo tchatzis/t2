@@ -2,12 +2,20 @@ import Common from "./t2.common.handlers.js";
 
 const Handlers = function()
 {
-    this.set = function( content )
+    const path = [];
+    
+    this.set = function()
     {
         if ( !this.output )
-            console.error( this.id )
+            console.error( this.id, "output is not defined in component paramaters" );
 
-        format[ this.output ].call( this, content );
+        format[ this.output ].call( this, ...arguments );
+    };
+
+    this.unset = function( index )
+    {
+        path.splice( index, 1 );
+        this.element.textContent = path.join( "/" );
     };
 
     const format =
@@ -47,6 +55,12 @@ const Handlers = function()
                         parent.classList.add( type );
                 }
             }
+        },
+
+        path: function( index, value )
+        {
+            path[ index ] = value;
+            this.element.textContent = path.join( "/" );
         },
     
         text: function( content )

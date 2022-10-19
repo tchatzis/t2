@@ -54,7 +54,7 @@ tbody, tfoot, thead
 
 tbody
 {
-    max-height: 60vh;
+    max-height: 55vh;
     overflow-y: auto;
 }
 

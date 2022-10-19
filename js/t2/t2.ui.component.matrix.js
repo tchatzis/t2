@@ -181,6 +181,7 @@ const Matrix = function()
                 
                 let td = t2.common.el( "td", row );
                     td.classList.add( "data" );
+                    td.classList.add( css( config.cell, column, data.data ) );
                     td.classList.add( ...config.format );
                     td.textContent = value;
             } );
@@ -223,15 +224,40 @@ const Matrix = function()
         } );
     };
 
-    function show( params )
+    function css( cell, column, record )
     {
-        let conditions = [];
-            conditions.push( params.input.type !== "hidden" );
-            conditions.push( params.cell.modes.find( mode => mode == "read" ) );
-            conditions.push( params.cell.display );
+        let css = "data";
 
-        return conditions.every( bool => bool );
-    };
+        console.log( cell, column, record );
+        
+        if ( cell.css )
+        {
+            let option = Object.keys( cell.css )[ 0 ];
+
+            switch( option )
+            {
+                case "class":
+                    css = cell.css.class;
+                break;
+                
+                case "column":
+                    css = column.toLowerCase();
+                break;
+
+                case "predicate":
+                    let predicate = cell.css.predicate.conditions.every( condition => eval( `${ record[ condition.name ] } ${ condition.operator } ${ condition.value }` ) );
+
+                    css = cell.css.predicate.options[ 1 - predicate ];
+                break;
+                
+                case "value":
+                    css = record[ cell.css.value || column ]?.toLowerCase();
+                break;
+            } 
+        }
+
+        return css;
+    }
 };
 
 export default Matrix;

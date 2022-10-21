@@ -7,8 +7,8 @@ const Panel = function( module )
     let arrays = {};
     let limit = 1.2;
     let comparator = ( a, b ) => { return { 
-        BUY:  a.qty == b.qty && a.price <= b.price && a.price * limit > b.price && a.brokerage == b.brokerage, 
-        SELL: a.qty == b.qty && a.price >= b.price && a.price < b.price * limit && a.brokerage == b.brokerage  
+        BUY:  a.qty == b.qty && a.price <= b.price && a.price * limit > b.price,/* && a.brokerage == b.brokerage,*/ 
+        SELL: a.qty == b.qty && a.price >= b.price && a.price < b.price * limit,/* && a.brokerage == b.brokerage */
     } };
     let match;
     let panel;

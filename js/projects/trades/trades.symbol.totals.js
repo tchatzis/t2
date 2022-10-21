@@ -21,11 +21,17 @@ const Panel = function( module )
     {
         panel.clear();
 
+        await details()
+        await summary();
+    };
+
+    async function details()
+    {
         let result = await totals( module );
 
         let container = await panel.addContainer( { id: "matrix", type: "box", format: "inline-block" } );
         let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
-            title.set( `${ module.symbol } Totals` );
+            title.set( `${ module.symbol } Details` );
 
         let matrix = await container.addComponent( { id: "matrix", type: "matrix", format: "table-body" } );
             //matrix.addColumnListener( { type: "click", handler: matrix.edit } );
@@ -149,7 +155,66 @@ const Panel = function( module )
                 column: { name: "brokerage" },
                 row: { name: "data" }
             } );
-    };
+    }
+
+    async function summary()
+    {
+        let sum = ( a, b ) => a + b;
+        let round = ( value ) => Math.round( value * 10000 ) / 10000;
+
+        let result = [];
+        let totals = { symbol: module.symbol, qty: 0, value: 0 };
+
+        [ "BUY", "SELL" ].forEach( action =>
+        {
+            let object = {};
+            let data = {};      
+            let filtered = module.data.filtered.filter( record => record.action == action );
+
+            [ "qty", "value" ].forEach( prop =>
+            {
+                let reduced = filtered.map( record => record[ prop ] * record.sign ).reduce( sum, 0 );
+
+                data.symbol = module.symbol;
+                data[ prop ] = round( reduced );
+
+                totals[ prop ] += data[ prop ];
+            } );
+
+            object.column = action;
+            object.data = data;
+
+            result.push( object );
+        } );
+
+        let object = { column: "\u0394", data: totals }; 
+
+        result.push( object );
+
+        let container = await panel.addContainer( { id: "summary", type: "box", format: "inline-block" } );
+        let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
+            title.set( `${ module.symbol } Summary` );
+
+        let matrix = await container.addComponent( { id: "matrix", type: "matrix", format: "table-body" } );
+            matrix.addRow( { 
+                input: { name: "qty", type: "number" }, 
+                cell: { css: {}, display: 4, modes: [ "read" ] },
+                format: [ "number" ] 
+            } );
+            matrix.addRow( { 
+                input: { name: "value", type: "number" }, 
+                cell: { css: {}, display: 4, modes: [ "read" ] },
+                format: [ "number" ] 
+            } );
+            matrix.populate(
+            { 
+                data: result, 
+                primaryKey: "symbol",
+                column: { name: "column" },
+                row: { name: "data" },
+                label: module.symbol
+            } );
+    }
 };
 
 export default Panel;

@@ -5,6 +5,7 @@ const Day = function( module )
     let self = this;
     let table;
     let today = t2.formats.isoDate( new Date() );
+    let content = t2.ui.children.get( "content" );
 
     this.run = async function()
     {
@@ -17,6 +18,8 @@ const Day = function( module )
     {
         module.date = module.date || today;
         
+        content.clear();
+        
         await module.queries(); 
         await layout();   
     };
@@ -25,6 +28,7 @@ const Day = function( module )
     {
         await date();
         brokerages();
+        await week();
     }
 
     async function date()
@@ -56,8 +60,6 @@ const Day = function( module )
 
     async function transactions( array, brokerage )
     {
-        let content = t2.ui.children.get( "content" );
-            content.clear();
         let container = await content.addContainer( { id: brokerage.toLowerCase(), type: "box", format: "inline-block" } );
         let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
             title.set( `${ brokerage } \u00BB ${ module.date }` );
@@ -94,13 +96,7 @@ const Day = function( module )
                 input: { name: "symbol", type: "select" }, 
                 cell: { css: {}, display: 4, modes: [ "read", "edit" ] },
                 format: [ "uppercase" ],
-                options: module.data.symbol
-                /*handler: async ( cell, record ) => 
-                {
-                    module.setSymbol( cell.textContent );
-                    module.view = "edit"
-                    await module.refresh( record );
-                }*/ } );
+                options: module.data.symbol } );
             table.addColumn( { 
                 input: { name: "action", type: "text" }, 
                 cell: { css: { value: null }, display: 3, modes: [ "read", "edit" ] },
@@ -157,6 +153,29 @@ const Day = function( module )
 
         module[ brokerage ] = table;
     };
+
+    async function week()
+    {
+        let container = await content.addContainer( { id: "week", type: "box", format: "inline-block" } );
+        let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
+            title.set( `Week at a Glance` );
+        
+        let qty = { predicate: { conditions: [ { name: "qty", operator: ">=", value: 0 } ], options: [ "buy", "sell" ] } };
+        let week = await container.addComponent( { id: "week", type: "week", format: "table-body" } );
+            week.populate(
+            { 
+                data: module.data.all, 
+                date: module.date ? new Date( module.date) : new Date(),
+                primaryKey: "id",
+                column: { name: "datetime" },
+                row: { name: "symbol", array: module.data.symbol },
+                cell: { 
+                    input: { name: "qty", type: "number" }, 
+                    cell: { css: qty, display: 4, modes: [ "read" ] },
+                    format: [ "negate", "number" ] 
+                }
+            } );
+    }
 };
 
 export default Day;

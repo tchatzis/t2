@@ -22,7 +22,7 @@ const Trades = function()
     {
         Common.call( this );
 
-        this.navigation.scenes.clear = [ "menu", "submenu", "content", "subcontent", "margin", "submargin" ];
+        this.navigation.scenes.clear = [ "submenu", "content", "subcontent", "margin", "submargin" ];
         this.navigation.scenes.component.addListener( { type: "click", handler: function()
         {
             self.navigation.set.call( self.navigation.scenes, ...arguments );
@@ -41,10 +41,10 @@ const Trades = function()
         this.navigation.click.call( this.navigation.view, this.navigation.view.default );
     }   
 
-    function layout()
+    async function layout()
     {
-        symbols();
-        self.transaction();
+        await symbols();
+        await self.transaction();
     }
 
     this.filter = function()

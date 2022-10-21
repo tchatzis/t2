@@ -2,7 +2,7 @@
 import formats from "./t2.formats.js";
 import Handlers from "./t2.component.handlers.js";
 
-const Matrix = function()
+const Axes = function()
 {
     let self = this;
     let columns = new Map();
@@ -128,16 +128,28 @@ const Matrix = function()
 
     this.setObject = function( params )
     {
-        Object.assign( this, params );
+        let t = params.date.getDay();
+        let today = params.date.getDate();
 
-        params.data.forEach( item => columns.set( item[ params.column.name ], params.column ) );
+        for ( let i = 1; i <= 5; i++ )
+        {
+            let date = new Date();
+                date.setDate( today + ( i - t ) );
+
+            columns.set( t2.formats.isoDate( date ), params.column );
+        }
+        
+        Object.assign( this, params );
 
         this.columns = Array.from( columns.keys() );
     };
 
     this.setRows = function()
     {
-        this.rows = Array.from( rows.keys() );
+        this.rows = this.row.array;
+
+        let config = this.cell;
+            console.warn( config )
         
         this.rows.forEach( key =>
         {
@@ -170,21 +182,26 @@ const Matrix = function()
                 th.classList.add( "tr" );
             } );
 
-            let config = rows.get( key );
+            let display = [];
 
             this.columns.forEach( column => 
             {
-                let data = this.data.find( item => item[ this.column.name ] == column );
-                let value = data?.[ this.row.name ]?.[ key ];
+                let data = this.data.filter( item => t2.formats.isoDate( item[ this.column.name ] ) == column && item[ this.row.name ] == key );
+                let value = data.map( record => record[ config.input.name ] * record.sign ).reduce( ( a, b ) => a + b, 0 );
+                
+                config.format.forEach( f => value = t2.formats[ f ]( value ) );
 
-                config.format.forEach( f => value = t2.formats[ f ]( value ) ); 
+                display.push( !!value );
                 
                 let td = t2.common.el( "td", row );
                     td.classList.add( "data" );
-                    td.classList.add( css( config.cell, column, data.data ) );
+                    td.classList.add( css( config.cell, column, { [ config.input.name ]: value } ) );
                     td.classList.add( ...config.format );
                     td.textContent = value;
             } );
+
+            if ( !display.some( bool => bool ) )
+                row.classList.add( "hidden" );
         } );
     };
 
@@ -193,7 +210,7 @@ const Matrix = function()
         let row = t2.common.el( "tr", this.element );
         
         let th = t2.common.el( "th", row );
-            th.textContent = this.label || this.column.name;
+            th.textContent = this.cell.input.name;
             th.classList.add( "header" );
 
         this.columns.forEach( column => 
@@ -258,4 +275,4 @@ const Matrix = function()
     }
 };
 
-export default Matrix;
+export default Axes;

@@ -213,7 +213,7 @@ const Table = function()
                     { 
                         e.preventDefault(); 
 
-                        listener.handler( record, columns ); 
+                        listener.handler( record, columns, row ); 
 
                         self.normal( active.highlight?.getAttribute( "data-id" ) );
 

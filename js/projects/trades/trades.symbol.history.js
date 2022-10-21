@@ -15,18 +15,30 @@ const Panel = function( module )
 
         Object.assign( this, params );
         Common.call( this ); 
+
+        
     };
 
     this.run = async function()
     {
         panel.clear();
         
+        await history();
+        await week();        
+    };
+
+    async function history()
+    {
         await module.queries();
 
         let records = module.data.filtered;
         
         let table = await panel.addComponent( { id: "transactions", type: "table" } );
             table.addRowListener( { type: "contextmenu", handler: table.edit } );
+            table.addRowListener( { type: "click", handler: ( data, config, row ) => 
+            { 
+                row.classList.toggle( "pairing" ); 
+            } } );
             table.addSubmitListener( { type: "submit", handler: async function ( data )
             { 
                 let form = this;
@@ -96,7 +108,26 @@ const Panel = function( module )
             table.setColumns( module.mode );
             table.populate( { array: records, orderBy: "datetime" } );
             table.setTotals();
-    };
+    }
+
+    async function week()
+    {
+        let qty = { predicate: { conditions: [ { name: "qty", operator: ">=", value: 0 } ], options: [ "buy", "sell" ] } };
+        let week = await panel.addComponent( { id: "week", type: "week", format: "table-body" } );
+            week.populate(
+            { 
+                data: module.data.filtered, 
+                date: module.date ? new Date( module.date) : new Date(),
+                primaryKey: "id",
+                column: { name: "datetime" },
+                row: { name: "symbol", array: module.data.symbol },
+                cell: { 
+                    input: { name: "qty", type: "number" }, 
+                    cell: { css: qty, display: 4, modes: [ "read" ] },
+                    format: [ "negate", "number" ] 
+                }
+            } );
+    }
 };
 
 export default Panel;

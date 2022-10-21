@@ -30,10 +30,11 @@ async function totals( module )
             
             object.data[ action ] = {};
             object.data[ action ].records   = records.filter( record => ( record.action == action && record.brokerage == brokerage ) );
+           
             object.data[ action ].transactions = object.data[ action ].records.length;
-            object.data[ action ].qty       = round( object.data[ action ].records.map( record => record.qty * record.sign * div ).reduce( sum, 0 ) );
-            object.data[ action ].price     = round( object.data[ action ].records.map( record => record.price ).reduce( sum, 0 ) / object.data[ action ].transactions ) || 0;
-            object.data[ action ].value     = round( object.data[ action ].qty * object.data[ action ].price );
+            object.data[ action ].qty   = round( object.data[ action ].records.map( record => record.qty * record.sign * div ).reduce( sum, 0 ) );
+            object.data[ action ].value = round( object.data[ action ].records.map( record => record.value * record.sign * div ).reduce( sum, 0 ) );
+            object.data[ action ].price = round( object.data[ action ].value / object.data[ action ].qty );
 
             if ( action !== "DIV" )
             {
@@ -61,7 +62,7 @@ async function totals( module )
         output.data[ "dividend" ] = object.data.DIV.value;
         output.data[ "deposits" ] = object.data.DIV.transactions; 
 
-        output.data.position = object.data.TOTAL.qty + object.data.DIV.qty;
+        output.data.position = round( object.data.TOTAL.qty + object.data.DIV.qty );
 
         if ( object.data.TOTAL.qty ) 
         {

@@ -72,12 +72,12 @@ const Dividends = function( module )
             table.addColumn( { 
                 input: { name: "price", type: "number", step: 0.001 }, 
                 cell: { css: { class: "buy" }, display: 4, modes: [ "read", "edit" ] },
-                format: [ "precision" ],
+                format: [ "negate", "precision" ],
                 formula: ( args ) => args.value * -1 } );
             table.addColumn( { 
                 input: { name: "value", type: "number", readonly: "" }, 
                 cell: { css: { class: "value" }, display: 6, modes: [ "read" ] },
-                format: [ "precision" ], 
+                format: [ "negate", "precision" ], 
                 formula: ( args ) => 
                 {
                     args.totals.price = 0;

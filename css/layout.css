@@ -134,6 +134,7 @@
     border-left: 10px solid #660;
     /*justify-content: start;*/
     /*overflow-y: auto;*/
+    z-index: 10;
 }
 
 #submenu

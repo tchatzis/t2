@@ -149,7 +149,6 @@ const Axes = function()
         this.rows = this.row.array;
 
         let config = this.cell;
-            console.warn( config )
         
         this.rows.forEach( key =>
         {
@@ -186,18 +185,19 @@ const Axes = function()
 
             this.columns.forEach( column => 
             {
+                let td = t2.common.el( "td", row );
                 let data = this.data.filter( item => t2.formats.isoDate( item[ this.column.name ] ) == column && item[ this.row.name ] == key );
-                let value = data.map( record => record[ config.input.name ] * record.sign ).reduce( ( a, b ) => a + b, 0 );
+                let value = config.cell.value( data, config, td );
+                let predicate = !!data.length;
                 
                 config.format.forEach( f => value = t2.formats[ f ]( value ) );
 
                 display.push( !!value );
-                
-                let td = t2.common.el( "td", row );
-                    td.classList.add( "data" );
-                    td.classList.add( css( config.cell, column, { [ config.input.name ]: value } ) );
-                    td.classList.add( ...config.format );
-                    td.textContent = value;
+
+                td.classList.add( "data" );
+                td.classList.add( css( config.cell, column, { [ config.input.name ]: value } ) );
+                td.classList.add( ...config.format );
+                td.textContent = predicate ? value : "";
             } );
 
             if ( !display.some( bool => bool ) )

@@ -181,6 +181,8 @@ const Panel = function( module )
                 totals[ prop ] += data[ prop ];
             } );
 
+            [ "qty", "value" ].forEach( prop => totals[ prop ] = round( totals[ prop ] ) );
+
             object.column = action;
             object.data = data;
 

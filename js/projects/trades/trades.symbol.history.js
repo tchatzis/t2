@@ -1,5 +1,6 @@
 import Common from "../../t2/t2.common.handlers.js";
 import Data from "./trades.data.js";
+import tooltip from "./trades.tooltip.js";
 
 const Panel = function( module )
 {
@@ -23,8 +24,8 @@ const Panel = function( module )
     {
         panel.clear();
         
-        await history();
-        await week();        
+        await week();   
+        await history();       
     };
 
     async function history()
@@ -123,7 +124,7 @@ const Panel = function( module )
                 row: { name: "symbol", array: module.data.symbol },
                 cell: { 
                     input: { name: "qty", type: "number" }, 
-                    cell: { css: qty, display: 4, modes: [ "read" ] },
+                    cell: { css: qty, display: 4, modes: [ "read" ], value: tooltip },
                     format: [ "negate", "number" ] 
                 }
             } );

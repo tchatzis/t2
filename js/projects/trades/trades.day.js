@@ -1,4 +1,5 @@
 import Data from "./trades.data.js";
+import tooltip from "./trades.tooltip.js";
 
 const Day = function( module )
 {
@@ -171,7 +172,7 @@ const Day = function( module )
                 row: { name: "symbol", array: module.data.symbol },
                 cell: { 
                     input: { name: "qty", type: "number" }, 
-                    cell: { css: qty, display: 4, modes: [ "read" ] },
+                    cell: { css: qty, display: 4, modes: [ "read" ], value: tooltip },
                     format: [ "negate", "number" ] 
                 }
             } );

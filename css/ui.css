@@ -120,7 +120,7 @@
 
 .handler:hover
 {
-    background-color: #660;
+    background-color: #066;
 }
 
 .header
@@ -461,6 +461,20 @@
     display: flex;
     justify-content: start;
     width: calc( 100% - 10px );
+}
+
+.tooltip:hover:after
+{
+    content: attr( data-details );
+    position: absolute;
+    padding: 5px;
+    border: 1px solid #333;
+    border-radius: 10px;
+    background: #222;
+    font-family: monospace;
+    color: silver;
+    white-space: pre;
+    z-index: 100;
 }
 
 .tr:hover

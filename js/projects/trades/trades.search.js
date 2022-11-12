@@ -18,3 +18,28 @@
                 cell: { css: {}, display: 4 },
                 format: [] } );
     };*/
+
+const Search = function( module )
+{
+    let self = this;
+
+    this.run = async function()
+    {
+        Object.assign( module, this );
+
+        await this.refresh();  
+    };
+
+    this.refresh = async function()
+    {
+        await module.queries(); 
+        await layout();   
+    };
+
+    async function layout()
+    {
+
+    }
+};
+
+export default Search;

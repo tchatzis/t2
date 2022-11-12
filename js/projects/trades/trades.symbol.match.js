@@ -96,11 +96,11 @@ const Panel = function( module )
             transactions.addRowListener( { type: "click", handler: select } );
             transactions.addColumn( { 
                 input: { name: "action", type: "text" }, 
-                cell: { css: { value: "brokerage" }, display: 3, modes: [ "read" ] },
+                cell: { css: { value: "action" }, display: 3, modes: [ "read" ] },
                 format: [ "uppercase" ] } );
             transactions.addColumn( { 
                 input: { name: "notes", type: "text" }, 
-                cell: { css: { value: "action" }, display: 3, modes: [ "read" ] },
+                cell: { css: { value: "brokerage" }, display: 3, modes: [ "read" ] },
                 format: [ "uppercase" ] } );
             transactions.addColumn( { 
                 input: { name: "qty", type: "number", step: 1 }, 
@@ -231,11 +231,11 @@ const Panel = function( module )
         let transactions = await outline.addComponent( { id: "grouped", type: "table" } );
             transactions.addColumn( { 
                 input: { name: "action", type: "text" }, 
-                cell: { css: { value: "brokerage" }, display: 3, modes: [ "read" ] },
+                cell: { css: { value: "action" }, display: 3, modes: [ "read" ] },
                 format: [ "uppercase" ] } );
             transactions.addColumn( { 
                 input: { name: "notes", type: "text" }, 
-                cell: { css: { value: "action" }, display: 3, modes: [ "read" ] },
+                cell: { css: { value: "brokerage" }, display: 3, modes: [ "read" ] },
                 format: [ "uppercase" ] } );
             transactions.addColumn( { 
                 input: { name: "qty", type: "number", step: 1 }, 
@@ -281,7 +281,6 @@ const Panel = function( module )
                 cell: { css: { class: "value" }, display: 0, modes: [ "read" ] },
                 format: [] } );
             transactions.setColumns( module.mode );
-            //transactions.populate( { array: array, orderBy: "price" } );
 
         tables.grouped = transactions;
 

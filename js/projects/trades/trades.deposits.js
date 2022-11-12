@@ -1,6 +1,7 @@
 const Deposits = function( module )
 {
     const self = this;
+    
     const Data = function( data )
     {
         Object.assign( this, data );
@@ -25,9 +26,6 @@ const Deposits = function( module )
 
     async function layout()
     {
-        let date = t2.ui.children.get( "submenu.date" );
-            date.hide();
-
         await history();
         await transaction();
     }

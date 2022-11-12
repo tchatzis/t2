@@ -21,9 +21,6 @@ const Dividends = function( module )
     async function layout()
     {
         await dividends();
-
-        let date = t2.ui.children.get( "submenu.date" );
-            date.hide();
     }
 
     // dividends

@@ -66,7 +66,7 @@ const Panel = function( module )
                 options: module.data.symbol } );
             table.addColumn( { 
                 input: { name: "action", type: "text" }, 
-                cell: { css: { value: null }, display: 3, modes: [ "read", "edit" ] },
+                cell: { css: { value: "brokerage" }, display: 3, modes: [ "read", "edit" ] },
                 format: [ "uppercase" ] } );
             table.addColumn( { 
                 input: { name: "notes", type: "text" }, 
@@ -96,10 +96,18 @@ const Panel = function( module )
             table.addColumn( { 
                 input: { name: "value", type: "number", readonly: "" }, 
                 cell: { css: { class: "value" }, display: 6, modes: [ "read" ] },
-                format: [ "negate", "precision" ] } );
+                format: [ "precision" ],
+                formula: ( args ) =>
+                {
+                    let value = args.record[ args.column ] * args.record.sign;
+                    
+                    args.totals[ args.column ] += value;
+
+                    return value;
+                } } );
             table.addColumn( { 
                 input: { name: "brokerage", type: "select" }, 
-                cell: { css: {}, display: 8, modes: [ "read", "edit" ] },
+                cell: { css: {}, display: 0, modes: [ "read", "edit" ] },
                 format: [],
                 options: [ "TDAmeritrade", "JPMorganChase", "Robinhood" ] } );         
             table.addColumn( { 

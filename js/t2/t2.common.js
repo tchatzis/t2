@@ -23,7 +23,7 @@ const Common = function()
     };
     
     this.clear = ( ids ) => 
-    {
+    { 
         ids.forEach( id => 
         {              
             let el = t2.ui.children.get( id ).element;
@@ -127,6 +127,32 @@ const Common = function()
         {              
             let el = t2.ui.elements.get( id );
                 el.remove();
+        } );
+    };
+
+    this.reset = ( ids ) => 
+    { 
+        ids.forEach( id => 
+        {              
+            let component = t2.ui.children.get( id );
+            let el = component.element;
+            if ( el )
+            {
+                let children = Array.from( el.children );
+                    children.forEach( child =>
+                    {   
+                        let predicate = this.ignored( "clear", child );
+
+                        if ( predicate )
+                        {
+                            component.hide();
+                            
+                            return;
+                        }
+                        
+                        el.removeChild( child );
+                    } );
+            }
         } );
     };
 

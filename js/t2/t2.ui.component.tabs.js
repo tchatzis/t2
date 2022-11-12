@@ -29,7 +29,7 @@ const Component = function()
         active.curr = tab;
         active.id = id;
         active.panel = panel;
-
+        
         listeners.forEach( listener => listener.handler( active ) );
     };
 

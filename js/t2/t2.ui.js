@@ -11,28 +11,6 @@ const UI = function()
         this.type = "element";
         this.path = new Map();
     };
-    
-    /*this.addComponent = async function( componentParams )
-    {
-        let module    = await import( `../t2/t2.ui.${ componentParams.component }.js` );
-        let component = await new module.default( componentParams.module );
-            component.init( componentParams );
-        
-        this.components.set( componentParams.id, component );
-
-        return component;
-    };
-
-    this.addContainer = async function( params )
-    {
-        let module    = await import( `../t2/t2.ui.${ params.type }.js` );
-        let container = await new module.default();
-            container.init( params );
-        
-        this.containers.set( params.id, container );
-
-        return container;
-    };*/
 
     this.root = async function( element )
     {
@@ -52,6 +30,9 @@ const UI = function()
 
     this.addElement = async function( params )
     {
+        if ( t2.ui.children.get( params.id ) )
+            return;
+        
         let element = t2.common.el( "div", params.parent );
             element.id = params.id;
         if ( params.ignore )
@@ -65,6 +46,14 @@ const UI = function()
     };
 
     this.children = new Map();
+
+    this.clear = ( array ) => array.forEach( id => 
+    {
+        let child = t2.ui.children.get( id );
+            child.clear();
+        
+        //t2.ui.children.delete( id );
+    } );
 
     this.init = function( elArray )
     {

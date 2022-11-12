@@ -9,9 +9,17 @@ const Component = function()
 
     this.activate = function( name )
     {
-        let link = self.element.querySelector( `[ data-link = "${ name }" ]` );
+        let link = self.getLink( name );
             link?.click();
-    };   
+    };  
+    
+    this.active = function( name )
+    {
+        let link = self.getLink( name );
+
+        if ( link )
+            this.setActive( link );
+    };
     
     this.addListener = function( listener )
     {
@@ -25,6 +33,11 @@ const Component = function()
             let link = self.element.querySelector( `[ data-link = "${ name }" ]` );
                 link?.classList.add( "disabled" );
         } );
+    };
+
+    this.getLink = function( name )
+    {
+        return self.element.querySelector( `[ data-link = "${ name.toLowerCase() }" ]` );
     };
 
     this.init = async function( params )

@@ -21,9 +21,6 @@ const Summary = function( module )
     async function layout( array )
     {
         await summary( array );
-
-        let date = t2.ui.children.get( "submenu.date" );
-            date.hide();
     }
 
     function preamble()

@@ -1,4 +1,4 @@
-import Common from "../../modules/navigation.js";
+import navigation from "../../t2/t2.ui.navigation.js";
 import Data from "./trades.data.js";
 
 const Trades = function()
@@ -7,7 +7,7 @@ const Trades = function()
 
     this.init = async function()
     {
-        navigation.call( this );
+        nav.call( this );
 
         await this.queries();
 
@@ -15,36 +15,22 @@ const Trades = function()
 
         this.date = t2.formats.isoDate( new Date( max ) );
 
-        layout();
+        await layout();
     };
 
-    function navigation()
+    function nav()
     {
-        Common.call( this );
-
-        this.navigation.scenes.clear = [ "submenu", "content", "subcontent", "margin", "submargin" ];
-        this.navigation.scenes.component.addListener( { type: "click", handler: function()
-        {
-            self.navigation.set.call( self.navigation.scenes, ...arguments );
-        } } );
-        this.navigation.scenes.component.update( this.navigation.scenes.component.array );
-        this.navigation.activate.call( this.navigation.scenes, this.info.namespace );
-
-        this.navigation.view.array = [ "Day", "Summary", "Dividends", "Symbol", "Search", "Fix", "Deposits" ];
-        this.navigation.view.default = this.navigation.view.array[ 0 ].toLowerCase();
-        this.navigation.view.clear = [ "content" ];
-        this.navigation.view.component.addListener( { type: "click", handler: function()
-        {
-            self.navigation.set.call( self.navigation.view, ...arguments );
-        } } );
-        this.navigation.view.component.update( this.navigation.view.array );
-        this.navigation.click.call( this.navigation.view, this.navigation.view.default );
-    }   
+        navigation.call( this, 
+        { 
+            init: { layout: "all", ignore: [ "header" ] }, 
+            menu: { activate: self.info.namespace, array: Array.from( t2.movie.scenes.keys() ), ignore: [ "header", "footer" ] }, 
+            view: { activate: "Day", array: [ "Day", "Summary", "Dividends", "Symbol", "Search", "Fix", "Deposits" ], ignore: [ "header", "footer" ] } 
+        } );
+    }
 
     async function layout()
     {
-        await symbols();
-        await self.transaction();
+        
     }
 
     this.filter = function()
@@ -112,7 +98,7 @@ const Trades = function()
     {
         this.date = date;
 
-        await this.refresh();
+        nav.call( this );
     };
     
     this.setSymbol = async function( symbol )
@@ -205,34 +191,6 @@ const Trades = function()
                 cell: { css: {}, display: 3 },
                 format: [] } );   
     };
-
-    // symbols menu
-    async function symbols()
-    {
-        let menu = t2.ui.children.get( "menu" );
-
-        let symbols = await menu.addComponent( { id: "symbols", type: "menu", array: self.data.symbol, format: "block" } );
-            symbols.addListener( { type: "click", handler: function() 
-            { 
-                let link = arguments[ 2 ].curr;
-                let symbol = link.textContent;
-
-                self._symbol = symbol;
-
-                if ( self.symbol )
-                {
-                    link.classList.remove( "inactive" );
-                    
-                    self.unsetSymbol( symbol );
-                }
-                else
-                {
-                    link.classList.add( "inactive" );
-                    
-                    self.setSymbol( symbol );
-                }
-            } } );       
-    }
 };
 
 export default Trades;

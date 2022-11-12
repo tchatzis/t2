@@ -7,7 +7,10 @@ const Handlers = function()
     this.set = function()
     {
         if ( !this.output )
+        {
             console.error( this.id, "output is not defined in component paramaters" );
+            return;
+        }
 
         format[ this.output ].call( this, ...arguments );
     };

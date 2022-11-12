@@ -1,43 +1,22 @@
 import T2 from "./t2/t2.js";
+import navigation from "./t2/t2.ui.navigation.js";
 
 async function init( namespace )
 {
     let t2 = new T2();
     await t2.init( namespace );
-    await t2.ui.init( 
-        [ 
-            { id: "header",  ignore: "clear", parent: document.body }, 
-            { id: "wrapper", ignore: "clear", parent: document.body },
-            { id: "footer",  ignore: "clear", parent: document.body },
-            { id: "context", ignore: "clear", parent: document.body }
-        ] );
 
-    // import the movie scripts
-    let module      = await import( "./index.scripts.js" );
-    let script      = new module.default();
-    let scripts     = await script.init();
     let scenes      = {};
-    let scene       = "trades";
+    let scene       = "design";
 
     // story board
-    //scenes.login       = t2.movie.addScene( { duration: 2000, name: "login", next: "database", script: scripts.login } );
-    scenes.databases     = t2.movie.addScene( { duration: Infinity, name: "databases", next: "imports", script: scripts.databases } );
-    //scenes.imports     = t2.movie.addScene( { duration: Infinity, name: "imports", next: "trades", script: scripts.imports } );
-    scenes.trades        = t2.movie.addScene( { duration: Infinity, name: "trades", next: "2D", script: scripts.trades } );
-    //scenes.svg           = t2.movie.addScene( { duration: Infinity, name: "svg", next: "2D", script: scripts.svg } );
-    scenes[ "2D" ]       = t2.movie.addScene( { duration: Infinity, name: "2D", next: "end", script: scripts[ "2D" ] } );
-    scenes.end           = t2.movie.addScene( { duration: Infinity, name: "end", next: null, script: null } );
-
-    // header menu
-    let header = await t2.ui.root( t2.ui.children.get( "header" ).element );
-    let menu = await header.addComponent( { id: "scenes", type: "menu", array: Array.from( t2.movie.scenes.keys() ), format: "flex" } );
-
-    let footer = await t2.ui.root( t2.ui.children.get( "footer" ).element );
-
-    let view = await footer.addComponent( { id: "view", type: "menu", array: [], format: "flex" } );  
-
-    let breadcrumbs = await footer.addComponent( { id: "breadcrumbs", type: "path", format: "block", output: "path" } );
-        breadcrumbs.set( 0, scene );
+    //scenes.login       = t2.movie.addScene( { duration: 2000, name: "login", next: "database" } );
+    scenes.databases     = t2.movie.addScene( { duration: Infinity, name: "databases", next: "imports" } );
+    //scenes.imports     = t2.movie.addScene( { duration: Infinity, name: "imports", next: "trades" } );
+    scenes.trades        = t2.movie.addScene( { duration: Infinity, name: "trades", next: "design" } );
+    //scenes.svg           = t2.movie.addScene( { duration: Infinity, name: "svg", next: "2D" } );
+    scenes.design        = t2.movie.addScene( { duration: Infinity, name: "design", next: "end" } );
+    scenes.end           = t2.movie.addScene( { duration: Infinity, name: "end", next: null } );
 
     await scenes[ scene ].start();
 };

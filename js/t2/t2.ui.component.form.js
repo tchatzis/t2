@@ -132,7 +132,7 @@ const Component = function()
 
         input.style.width = ( params.cell.display + 1 ) + "em"; 
         input.setAttribute( "Form", fid );
-
+        
         params.listeners?.forEach( listener => 
         {
             input.addEventListener( listener.type, () => listener.handler( this.form, input ) );

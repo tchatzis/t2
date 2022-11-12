@@ -178,7 +178,7 @@ const IndexedDB = function()
                     data.id = id;
 
                     const request = cursor.update( data );
-                        request.onsuccess = () => {};  
+                        request.onsuccess = () => console.log( "overwrite:", data );  
                 }
                 else
                     cursor.continue();

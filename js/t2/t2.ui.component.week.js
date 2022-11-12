@@ -189,10 +189,10 @@ const Axes = function()
                 let data = this.data.filter( item => t2.formats.isoDate( item[ this.column.name ] ) == column && item[ this.row.name ] == key );
                 let value = config.cell.value( data, config, td );
                 let predicate = !!data.length;
-                
+ 
                 config.format.forEach( f => value = t2.formats[ f ]( value ) );
 
-                display.push( !!value );
+                display.push( !!predicate );
 
                 td.classList.add( "data" );
                 td.classList.add( css( config.cell, column, { [ config.input.name ]: value } ) );

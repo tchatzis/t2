@@ -3,7 +3,7 @@ const IndexedDB = function( module )
     this.run = async function()
     {
         Object.assign( module, this );
-        
+
         await this.refresh();
     };
 
@@ -16,23 +16,23 @@ const IndexedDB = function( module )
     {
         await container();
 
-        let submenu = t2.ui.children.get( "submenu" );
+        //let submenu = t2.ui.children.get( "submenu" );
 
-        submenu.element.textContent = `${ t2.db.name } v${ t2.db.version }`;
+        //submenu.element.textContent = `${ t2.db.name } v${ t2.db.version }`;
     }
 
     async function container()
     {
-        let breadcrumbs = t2.ui.children.get( "footer.breadcrumbs" );
+        //let breadcrumbs = t2.ui.children.get( "footer.breadcrumbs" );
         
-        let content = t2.ui.children.get( "content" );
-            content.clear();
+        let wrapper = t2.ui.children.get( "wrapper" );
+            //wrapper.clear();
 
-        let details = await content.addContainer( { id: "details", type: "panels", format: "block", output: "vertical" } );
+        let details = await wrapper.addContainer( { id: "details", type: "panels", format: "block", output: "vertical" } );
             // set breadcrumbs
             details.addListener( { type: "click", handler: ( active ) => 
             {
-                breadcrumbs.set.path( 2, active.panel?.label || "" );
+                //breadcrumbs.set.path( 2, active.panel?.label || "" );
             } } );
         let title = await details.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
             title.set( "IndexedDB Tools" );

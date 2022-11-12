@@ -7,6 +7,7 @@ const Day = function( module )
     let table;
     let today = t2.formats.isoDate( new Date() );
     let content = t2.ui.children.get( "content" );
+    let margin = t2.ui.children.get( "margin" );
 
     this.run = async function()
     {
@@ -18,9 +19,7 @@ const Day = function( module )
     this.refresh = async function()
     {
         module.date = module.date || today;
-        
-        content.clear();
-        
+
         await module.queries(); 
         await layout();   
     };
@@ -30,6 +29,7 @@ const Day = function( module )
         await date();
         brokerages();
         await week();
+        await module.transaction();
     }
 
     async function date()
@@ -157,7 +157,7 @@ const Day = function( module )
 
     async function week()
     {
-        let container = await content.addContainer( { id: "week", type: "box", format: "inline-block" } );
+        let container = await margin.addContainer( { id: "week", type: "box", format: "inline-block" } );
         let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
             title.set( `Week at a Glance` );
         

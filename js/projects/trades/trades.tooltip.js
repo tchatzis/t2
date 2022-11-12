@@ -6,7 +6,7 @@ const tooltip = ( data, config, element ) =>
 
         data.forEach( record => 
         {
-            tooltip.push( `${ t2.formats.isoTime( record.datetime ) } ${ record.action.padEnd( 4, " " ) }\t${ String( record.qty ).padStart( 4, " " ) } @ ${ record.price.toFixed( 2 ) }` );
+            tooltip.push( `${ t2.formats.isoTime( record.datetime ) } ${ record.action.padEnd( 4, " " ) } ${ String( record.qty ).padStart( 4, " " ) } @ ${ record.price.toFixed( 2 ) }` );
         } );
 
         let total = data.map( record => record.value * record.sign ).reduce( ( a, b ) => a + b, 0 );

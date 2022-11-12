@@ -1,81 +1,49 @@
+
+
 const Main = function( args )
 {
     let self = this;
     let draw;
     
-    this.init = async function()
+    this.run = function()
     {
-        let middle = await t2.ui.root( t2.ui.elements.get( "middle" ).element );
 
-        this.data = {}
+    };
+    
+    /*this.init = async function()
+    {
+        let middle = await t2.ui.root( t2.ui.children.get( "middle" ).element );
 
-        this.grid = await middle.addComponent( { id: "grid", type: "canvas" } );
-        this.grid.hide();
+        this.data = {};
+        this.table = "projects";
+
+        //this.grid = await middle.addComponent( { id: "grid", type: "canvas" } );
+        //this.grid.hide();
 
         this.popup = await middle.addContainer( { id: "popup", type: "popup" } );
         this.popup.show();
 
         draw = await args.scene.addModule( { default: "default", invoke: "init", path: "../modules/draw", namespace: "draw" } );
 
-        routine.select.project();
-    };
+        routine.project.select();
+    };*/
 
     let routine = {};
-        routine.set = {};
-        routine.select = {};
-        routine.show = {};
+        routine.grid = {};
+        routine.project = {};
 
-    routine.select.project = async () =>
+
+
+    routine.grid.set = async () =>
     {
-        let table = "projects";
-
         this.popup.clear();
 
-        let records = await t2.db.tx.retrieve( table );
-
-        let footer = t2.ui.elements.get( "footer" );
-        let breadcrumbs = footer.children.get( "breadcrumbs" );
-
-        let title = await this.popup.addComponent( { id: "title", type: "title", format: "text" }  );
-            title.set( "Select Project" );
-
-        let box1 = await this.popup.addContainer( { id: "settings", type: "box", format: "block" } );
-
-        let project = await box1.addComponent( { id: "project", type: "form", format: "flex" } );
-            project.addListener( { type: "submit", handler: async ( data ) => 
-            {
-                // set project data
-                let record = await project.save( table, data, "project" );
-
-                this.data[ table ] = record.data.find( r => r.project = data.project );
-
-                breadcrumbs.set.path( 1, data.project );
-            
-                routine.set.grid();
-            } } );
-            project.addField( { 
-                input: { label: "project", name: "project", type: "datalist", value: "", required: true }, 
-                cell: { css: {}, display: 10 },
-                format: [], 
-                options: records.data.map( record => record.project ) } );
-            project.addField( { 
-                input: { type: "submit", value: "SELECT" }, 
-                cell: { css: {}, display: 4 },
-                format: [] } );
-    };
-
-    routine.set.grid = async () =>
-    {
-        let table = "projects";
-        
-        this.popup.clear();
-
-        let data = this.data[ table ];
+        let data = this.data[ this.table ];
         let array = [ "precision", "x", "y", "unit" ];
-        let next = routine.show.grid;
+        let next = routine.grid.show;
 
         let title = await this.popup.addComponent( { id: "title", type: "title", format: "text" }  );
-            title.set( `${ data.project } \u00BB Grid Settings` );
+            title.set( ` \u00BB Grid Settings` );/*${ data.project }*/
 
         let box1 = await this.popup.addContainer( { id: "settings", type: "box", format: "block" } );
 
@@ -120,7 +88,7 @@ const Main = function( args )
         proceed( table, array, next );
     };
 
-    routine.show.grid = async () =>
+    routine.grid.show = async () =>
     {
         let table = "projects";
         let data = self.data[ table ];
@@ -149,7 +117,7 @@ const Main = function( args )
     };
     
     // not implemented
-    routine.set.projects = async () =>
+    routine.project.set = async () =>
     {
         let table = "projects";
 

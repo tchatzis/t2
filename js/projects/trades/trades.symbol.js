@@ -2,9 +2,13 @@ import totals from "./trades.calculate.totals.js";
 
 const Symbol = function( module )
 {
+    let breadcrumbs = t2.ui.children.get( "footer.breadcrumbs" );
+    
     this.run = async function()
     {
         Object.assign( module, this );
+
+        await symbols();
 
         if ( !module.symbol )
             return;
@@ -19,22 +23,16 @@ const Symbol = function( module )
         
         await module.queries(); 
         await layout();
-        await module.transaction();
     };
 
     async function layout()
     {
-        let date = t2.ui.children.get( "submenu.date" );
-            date.hide();
-
         await container();
-        await summary();
+        await summary(); 
     }
 
     async function container()
     {
-        let breadcrumbs = t2.ui.children.get( "footer.breadcrumbs" );
-        
         let content = t2.ui.children.get( "content" );
             content.clear();
 
@@ -49,9 +47,15 @@ const Symbol = function( module )
             await details.setModule( { id: "history", label: "history", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.history.js" } } );
             await details.setModule( { id: "match", label: "match", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.match.js" } } );
             await details.setModule( { id: "totals", label: "totals", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.totals.js" } } );
+            await details.setModule( { id: "timeline", label: "timeline", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.timeline.js" } } );
+            await details.setModule( { id: "gain", label: "gain", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.gain.js" } } );
 
         let tabs = await details.setComponent( { id: "tabs", type: "tabs", format: "flex-left", output: "horizontal" } );
             tabs.addListener( { type: "click", handler: ( active ) => title.set( `${ module.symbol } ${ active.id }` ) } );
+            tabs.addListener( { type: "click", handler: ( active ) => 
+            {
+                breadcrumbs.set( 3, active.panel?.label || "" ); 
+            } } );  
             tabs.update( details.panels );
 
         let array = Array.from( details.panels.keys() );
@@ -114,6 +118,40 @@ const Symbol = function( module )
                 column: { name: "brokerage" },
                 row: { name: "data" }
             } );
+    }
+
+    // symbols menu
+    async function symbols()
+    {
+        let menu = t2.ui.children.get( "menu" );
+            menu.show();
+
+        let symbols = await menu.addComponent( { id: "symbols", type: "menu", array: module.data.symbol, format: "block" } );
+            symbols.addListener( { type: "click", handler: function() 
+            { 
+                let link = arguments[ 2 ].curr;
+                let symbol = link.textContent;
+
+                module._symbol = symbol;
+
+                breadcrumbs.set( 2, symbol ); 
+
+                if ( module.symbol )
+                {
+                    link.classList.remove( "inactive" );
+                    
+                    module.unsetSymbol( symbol );
+                }
+                else
+                {
+                    link.classList.add( "inactive" );
+                    
+                    module.setSymbol( symbol );
+                }
+            } } );   
+
+        if ( module.symbol )
+            symbols.activate( module.symbol );
     }
 };
 

@@ -1,16 +1,16 @@
 .jpmorganchase
 {
-    border-color: #0B6EFD !important;
+    border-left: 4px solid #0B6EFD;
 }
 
 .robinhood
 {
-    border-color: #B00024 !important;
+    border-left: 4px solid #B00024;
 }
 
 .tdameritrade
 {
-    border-color: #00B624 !important;
+    border-left: 4px solid #00B624;
 }
 
 .active
@@ -71,7 +71,7 @@
     border-right: 1px solid #222;
     border-bottom: 1px solid #222;
     color: silver;
-    font-size: 11px;
+    font-size: 10px;
     min-width: 4em;
     padding: 2px 5px 2px 5px;
 }
@@ -81,6 +81,7 @@
     color: #999;
     font-family: courier;
     min-width: 8em !important;
+    white-space: nowrap;
 }
 
 .disabled
@@ -126,6 +127,7 @@
 .header
 {
     padding: 2px 5px 2px 5px;
+    white-space: nowrap;
 }
 
 .highlight
@@ -331,8 +333,9 @@
     border-top-right-radius: 10px;
     display: flex;
     justify-content: space-between;
-    height: calc( 100% - 10px );
-    width: calc( 100% - 10px );
+    height: calc( 100% - 30px );
+    margin: 10px;
+    width: calc( 100% - 30px );
 }
 
 .path

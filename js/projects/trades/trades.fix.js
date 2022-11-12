@@ -1,40 +1,32 @@
 const Fix = function( module )
 {
-    let self = this;
-    let breadcrumbs;
-    let content;
-    let panels;
-
-    this.init = async function()
+    this.run = async function()
     {
-        breadcrumbs = t2.ui.children.get( "footer.breadcrumbs" );
-        breadcrumbs.unset( 2 );
+        Object.assign( module, this );
 
-        content = t2.ui.children.get( "content" );
-        
-        await layout();
-        await container();
+        await this.refresh();  
     };
 
-    function layout()
+    this.refresh = async function()
     {
-        let symbol = t2.ui.children.get( "menu.symbols" );
-            symbol.hide();
+        await module.queries(); 
+        await layout();
+        await module.transaction();
+    };
 
-        let date = t2.ui.children.get( "submenu.date" );
-            date.hide();
-
-        content.clear();
+    async function layout()
+    {
+        await container();
     }
 
     async function container()
     {
-        let details = await content.addContainer( { id: "fix", type: "panels", format: "flex", output: "vertical" } );
-            // set breadcrumbs
-            details.addListener( { type: "click", handler: ( active ) => 
-            {
-                breadcrumbs.set.path( 2, active.panel?.label || "" );
-            } } );
+        let wrapper = t2.ui.children.get( "wrapper" );
+            wrapper.clear();
+
+        let breadcrumbs = t2.ui.children.get( "footer.breadcrumbs" );
+        
+        let details = await wrapper.addContainer( { id: "fix", type: "panels", format: "flex", output: "vertical" } );
             // add panels
             let title = await details.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
                 title.set( "Data Tools" );
@@ -45,7 +37,12 @@ const Fix = function( module )
                 message.set( "//TODO: Overwrite Record Schema" );
             
             let tabs = await details.setComponent( { id: "tabs", type: "tabs", format: "flex-left", output: "horizontal" } );
-                tabs.update( details.panels );  
+                tabs.addListener( { type: "click", handler: ( active ) => 
+                {
+                    breadcrumbs.set( 2, active.panel?.label || "" ); 
+                    breadcrumbs.unset( 3 );
+                } } );    
+            tabs.update( details.panels );  
     }
 };
 

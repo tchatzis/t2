@@ -1,17 +1,25 @@
-import { aggregate, reset, total } from "./trades.aggregate.js";
-import totals from "./trades.totals.js";
+import Common from "../../t2/t2.common.handlers.js";
 
-const Timeline = function( module )
+const Panel = function( module )
 {
     let self = this;
+    let panel;
 
-    this.init = async function()
+    this.init = async function( parent, params )
     {
-        if ( !module.symbol )
-            return;
+        panel = await parent.addContainer( { id: "panel", type: "panel", format: "block" } );
 
-        t2.ui.breadcrumbs[ 2 ] = module.symbol;
+        this.element = panel.element;
+        this.type = panel.type;
 
+        Object.assign( this, params );
+        Common.call( this ); 
+
+        await this.plot();
+    };
+
+    this.plot = async function()
+    {
         // filter by symbol and no dividends
         this.array = module.data.all.filter( record => ( record.symbol == module.symbol ) );
         // sort by date asc
@@ -31,13 +39,13 @@ const Timeline = function( module )
             position += record.value;
             record.position = position;
 
-            qty += record.qty;
+            qty -= record.qty * record.sign;
 
             record.quantity = qty;
             record.average = qty ? record.position / qty : 0;
         } );
 
-        let timeline = await t2.ui.addComponent( { id: "timeline", component: "chart", parent: t2.ui.elements.get( "content" ), module: module } );
+        let timeline = await panel.addComponent( { id: "timeline", type: "chart", format: "flex" } );
             timeline.setData( this.array );
             timeline.addLayer( { color: "rgba( 0, 255, 255, 0.3 )", font: "12px sans-serif", type: "step",
                 axes:
@@ -50,10 +58,6 @@ const Timeline = function( module )
                     "0": { axis: "date", settings: { format: "date", step: day, mod: mondays } },
                     "1": { axis: "position", settings: { mod: ( p ) => !( p % 10 ) } } } } );*/
 
-        reset();
-        aggregate( module.symbol, this.array );
-        totals( total );
-
         function mondays( p, chart )
         {
             let date = new Date( chart.min );
@@ -64,4 +68,4 @@ const Timeline = function( module )
     };
 };
 
-export default Timeline; 
+export default Panel; 

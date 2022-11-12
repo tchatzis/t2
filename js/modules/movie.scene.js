@@ -1,10 +1,8 @@
 const Scene = function( sceneParams )
 {
     let self = this;
-    let contents = [];
     let unloads = [];
 
-    //this.components = new Map();
     this.name = sceneParams.name;
 
     this.addModule = async ( params ) => await importModule( params );
@@ -21,35 +19,15 @@ const Scene = function( sceneParams )
         delete this.timeout;
     };
     
-    /*this.removeComponents = function( array )
-    {
-        array.forEach( id =>
-        {
-            let component = t2.ui.components.get( id );
-                component.element.remove();
-        } );
-    };
-
-    this.removeElement = function( element )
-    {
-        element.remove();
-    };*/
-
     this.start = async function()
     {
         console.log( `%c scene: ${ self.parameters.name } ${ self.parameters.duration }`, "background: green;" );
-        
+
         // excute the script
         if ( self.parameters.script )
             await self.parameters.script.call( self );
 
-        if ( self.pre )
-            await self.pre();
-
-        await load();
-
-        if ( self.post )
-            await self.post();
+        await self.addModule( { default: "default", invoke: "init", path: `../projects/${ self.parameters.name }/index`, namespace: self.parameters.name } );
 
         if ( self.parameters.duration < Infinity )
             self.timeout = setTimeout( 
@@ -77,16 +55,11 @@ const Scene = function( sceneParams )
             let f = object[ unloadParams.execute ];
 
             if ( f )
-                f( unloadParams.arguments );
+                f.apply( object, unloadParams.arguments );
         } );
     };
     
     Object.assign( this.parameters, sceneParams );
-    
-    async function load() 
-    {
-        return await Promise.all( contents.map( async ( params ) => await importModule( params ) ) );
-    }
 
     // load the module, save to self.modules.get( namespace ) and invoke it
     async function importModule( params )

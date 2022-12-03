@@ -29,7 +29,7 @@ async function totals( module )
             let div = action == "DIV" ? 1 : -1;
             
             object.data[ action ] = {};
-            object.data[ action ].records   = records.filter( record => ( record.action == action && record.brokerage == brokerage ) );
+            object.data[ action ].records = records.filter( record => ( record.action == action && record.brokerage == brokerage ) );
            
             object.data[ action ].transactions = object.data[ action ].records.length;
             object.data[ action ].qty   = round( object.data[ action ].records.map( record => record.qty * record.sign * div ).reduce( sum, 0 ) );
@@ -77,6 +77,7 @@ async function totals( module )
 
         output.data.gain = object.data.TOTAL.gain;
         output.data[ "percent" ] = round( ( object.data.TOTAL.gain / object.data.BUY.value ) * 100 );
+        output.data[ "cost" ] = round( object.data.TOTAL.gain + object.data.TOTAL.value );
 
         result.push( output ); 
     } );

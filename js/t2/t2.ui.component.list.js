@@ -1,7 +1,7 @@
 import formats from "./t2.formats.js";
 import Handlers from "./t2.component.handlers.js";
 
-const Table = function()
+const List = function()
 {
     let self = this;
     let el = t2.common.el;
@@ -164,8 +164,6 @@ const Table = function()
                 tf.style.display = display;
         } );
 
-        console.log( columns );
-
         this.populate( { array: [ null ] } );
     };
 
@@ -294,41 +292,36 @@ const Table = function()
         self.columns.forEach( ( column, index ) => 
         {
             let config = columns.get( column );
-            let attributes = config.input;
             let cell = config.cell;
-            //let handler = config.handler;
-            let format = config.format || [];
-            if ( attributes.type == "number" )
-                format.unshift( "number" );
             let value = record[ column ];
+            let attributes = config.input; 
+            let format = config.format;
             let th = self.header.children[ index + 1 ];
             let tf = self.footer.children[ index + 1 ];
             let display = show( column );
 
-            // columns values and totals
             switch ( attributes.type )
             {
                 case "number":
-                    if ( config.formula )
-                    {
-                        value = config.formula( { column: column, record: record, totals: self.totals, value: Number( value ) } );         
-                    }  
-                    else
-                    {
-                        self.totals[ column ] += Number( value ); 
-                    }
+                    value = Number( value || 0 );
                 break;
             };
 
             format?.forEach( f => value = formats[ f ]( value, column, record ) );
+
+            attributes.value = attributes.value || value;
 
             let td = el( "td", row );
                 td.classList.add( "data" );
                 td.style.width = cell.display + "em";
                 td.classList.add( css( cell, column, record ) );
                 td.style.display = display;
-                td.textContent = value;
 
+            let input = t2.common.el( "input", td );
+
+            for ( let attr in attributes )
+                input.setAttribute( attr, attributes[ attr ] ); 
+  
             // set header / footer column widths
             th.style.width = td.offsetWidth + "px";
             tf.style.width = td.offsetWidth + "px";
@@ -341,7 +334,7 @@ const Table = function()
         let params = columns.get( column );
         let conditions = [];
             conditions.push( params.input.type !== "hidden" );
-            conditions.push( params.cell.modes.find( mode => mode == "read" ) );
+            conditions.push( params.cell.modes.find( mode => mode == "edit" ) );
             conditions.push( params.cell.display );
 
         if ( conditions.every( bool => bool ) )
@@ -351,4 +344,4 @@ const Table = function()
     };
 };
 
-export default Table;
+export default List;

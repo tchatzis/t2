@@ -4,7 +4,6 @@ import tooltip from "./trades.tooltip.js";
 const Day = function( module )
 {
     let self = this;
-    let table;
     let today = t2.formats.isoDate( new Date() );
     let content = t2.ui.children.get( "content" );
     let margin = t2.ui.children.get( "margin" );
@@ -18,6 +17,7 @@ const Day = function( module )
 
     this.refresh = async function()
     {
+        delete module.symbol;
         module.date = module.date || today;
 
         await module.queries(); 
@@ -26,10 +26,12 @@ const Day = function( module )
 
     async function layout()
     {
+        margin.clear();
+
+        await module.transaction( handler );
         await date();
         brokerages();
-        await week();
-        await module.transaction();
+        await week();   
     }
 
     async function date()
@@ -83,7 +85,7 @@ const Day = function( module )
                     message.set( `Updated ${ data.id }` );   
 
                 let popup = t2.ui.children.get( "subcontent.popup" );
-                    popup.element?.remove();
+                    popup?.element?.remove();
             } } );
             table.addColumn( { 
                 input: { name: "id", type: "hidden" }, 
@@ -108,7 +110,7 @@ const Day = function( module )
             table.addColumn( { 
                 input: { name: "qty", type: "number", step: 0.0001 }, 
                 cell: { css: { class: "info" }, display: 3, modes: [ "read", "edit" ] },
-                format: [ "precision" ],
+                format: [ "auto" ],
                 formula: ( args ) =>
                 {
                     let value = args.record[ args.column ] * -args.record.sign;
@@ -120,7 +122,7 @@ const Day = function( module )
             table.addColumn( { 
                 input: { name: "price", type: "number", step: 0.0001 }, 
                 cell: { css: { class: "value" }, display: 4, modes: [ "read", "edit" ] },
-                format: [ "precision" ],
+                format: [ "dollar" ],
                 formula: ( args ) => 
                 {
                     args.totals[ args.column ] = 0; 
@@ -130,7 +132,7 @@ const Day = function( module )
             table.addColumn( { 
                 input: { name: "value", type: "number", readonly: "" }, 
                 cell: { css: { class: "value" }, display: 6, modes: [ "read" ] },
-                format: [ "precision" ],
+                format: [ "dollar" ],
                 formula: ( args ) =>
                 {
                     let value = args.record[ args.column ] * args.record.sign;
@@ -141,7 +143,7 @@ const Day = function( module )
                 } } );
             table.addColumn( { 
                 input: { name: "brokerage", type: "select", value: brokerage }, 
-                cell: { css: {}, display: 8, modes: [ "edit" ] },
+                cell: { css: {}, display: 9, modes: [ "edit" ] },
                 format: [],
                 options: [ "TDAmeritrade", "JPMorganChase", "Robinhood" ] } );         
             table.addColumn( { 
@@ -152,7 +154,7 @@ const Day = function( module )
             table.populate( { array: array, orderBy: "datetime" } );
             table.setTotals();
 
-        module[ brokerage ] = table;
+        self[ brokerage ] = table;
     };
 
     async function week()
@@ -173,10 +175,41 @@ const Day = function( module )
                 cell: { 
                     input: { name: "qty", type: "number" }, 
                     cell: { css: qty, display: 4, modes: [ "read" ], value: tooltip },
-                    format: [ "negate", "number" ] 
+                    format: [ "negate", "auto" ] 
                 }
             } );
     }
+
+    async function handler( data )
+    {
+        let event = this;
+        let form = event.target;
+        let submit = event.submitter;
+            submit.setAttribute( "disabled", "" );
+
+        data.action = submit.value;
+
+        let record = await t2.db.tx.create( module.table, new Data( data ) );
+
+        let records = await t2.db.tx.filter( module.table, [ { key: "datetime", operator: "==", value: self.date } ] );
+
+        let table = self[ data.brokerage ];
+            table.populate( { array: records.data } );
+            table.highlight( record.data.id );
+            table.setTotals();
+
+        form.datetime.value = t2.formats.datetime( new Date() );
+        form.symbol.value = "";
+        form.qty.value = "";
+        form.price.value = "";
+        form.notes.value = "";
+        submit.removeAttribute( "disabled" );
+
+        let message = await table.parent.addComponent( { id: "message", type: "message", format: "block", output: "text" } );
+            message.set( `Added ${ record.data.id }` );
+
+        self.refresh();
+    };
 };
 
 export default Day;

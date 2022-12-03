@@ -74,6 +74,7 @@
     font-size: 10px;
     min-width: 4em;
     padding: 2px 5px 2px 5px;
+    white-space: nowrap;
 }
 
 .date, .datetime

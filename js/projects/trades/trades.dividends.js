@@ -14,6 +14,8 @@ const Dividends = function( module )
     this.refresh = async function()
     {
         delete module.date;
+        delete module.symbol;
+        
         await module.queries(); 
         await layout();
     };

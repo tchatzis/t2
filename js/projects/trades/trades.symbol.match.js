@@ -5,18 +5,20 @@ const Panel = function( module )
     let self = this;
     let actions = [ "BUY", "SELL" ];
     let arrays = {};
-    let limit = 1.2;
+    let limit = 1.2001;
     let comparator = ( a, b ) => { return { 
         BUY:  a.qty == b.qty && a.price <= b.price && a.price * limit > b.price,/* && a.brokerage == b.brokerage,*/ 
         SELL: a.qty == b.qty && a.price >= b.price && a.price < b.price * limit,/* && a.brokerage == b.brokerage */
     } };
     let match;
     let panel;
+    let subcontent;
     let tables = {};
 
     this.init = async function( parent, params )
     {
         panel = await parent.addContainer( { id: "panel", type: "panel", format: "flex-left" } );
+        subcontent = t2.ui.children.get( "subcontent" );
 
         this.element = panel.element;
         this.type = panel.type;
@@ -28,6 +30,7 @@ const Panel = function( module )
     this.run = async function()
     {
         panel.clear();
+        subcontent.clear();
         
         await module.queries();
 
@@ -40,26 +43,26 @@ const Panel = function( module )
 
         let results = await sort( records );
             results.forEach( result => 
-                {
-                    tables[ result.action ].populate( { array: result.array, orderBy: "price" } );
-                    tables[ result.action ].setTotals();
-                } ); 
+            {
+                tables[ result.action ].populate( { array: result.array, orderBy: "price" } );
+                tables[ result.action ].setTotals();
+            } ); 
 
         //await t2.common.delay( alert, 2000, "Ready?" );
 
         let { accepted, rejected } = await scan( "BUY", "highlight", 100 );
 
         execute( accepted );
-    }
+    };
 
     // start the matching scripts
     async function execute( accepted )
     {
         let array = group( accepted );
 
-        let result = await grouped( array );
+        await grouped();
 
-        tables.grouped.populate( { array: result } );
+        tables.grouped.populate( { array: array } );
         tables.grouped.setTotals();
     }
 
@@ -112,8 +115,8 @@ const Panel = function( module )
                 format: [ "precision" ] } );
             transactions.addColumn( { 
                 input: { name: "value", type: "number", step: 0.001 }, 
-                cell: { css: { class: "number" }, display: 4, modes: [ "read" ] },
-                format: [ "precision" ],
+                cell: { css: { class: "number" }, display: 5, modes: [ "read" ] },
+                format: [ "dollar" ],
                 formula: ( args ) => 
                 {
                     args.totals.value += args.value;
@@ -224,7 +227,7 @@ const Panel = function( module )
     }
 
     // automated matched transactions - display element
-    async function grouped( array )
+    async function grouped()
     {
         let outline = await panel.addContainer( { id: "grouped", type: "box", format: "block" } );
         
@@ -263,7 +266,7 @@ const Panel = function( module )
             transactions.addColumn( { 
                 input: { name: "value", type: "number", readonly: "" }, 
                 cell: { css: { class: "number" }, display: 4, modes: [ "read" ] },
-                format: [ "precision" ],
+                format: [ "dollar" ],
                 formula: ( args ) => 
                 {
                     if ( args.record.action == "GAIN" )
@@ -283,8 +286,6 @@ const Panel = function( module )
             transactions.setColumns( module.mode );
 
         tables.grouped = transactions;
-
-        return array;
     }
 
     // tr selector
@@ -298,7 +299,7 @@ const Panel = function( module )
         let tr = table.querySelector( `[ data-id = "${ data.id }" ]` );
 
         if ( css )
-            tr.classList.add( css );
+            tr?.classList.add( css );
 
         return tr;
     }
@@ -446,8 +447,10 @@ const Panel = function( module )
                     console.error( "Not a match", qty, value );
 
                 tr.classList.add( "nomatch" );
-                
+
                 matched.delete( record.id );
+
+                await t2.common.delay( () => tr.classList.remove( "nomatch" ), 5000 );
             }
         } 
     }

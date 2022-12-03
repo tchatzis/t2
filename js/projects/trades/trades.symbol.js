@@ -20,6 +20,9 @@ const Symbol = function( module )
     {
         delete module.date;
         module.symbol = module._symbol;
+
+        let subcontent = t2.ui.children.get( "subcontent" );
+            subcontent.clear();
         
         await module.queries(); 
         await layout();
@@ -47,20 +50,23 @@ const Symbol = function( module )
             await details.setModule( { id: "history", label: "history", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.history.js" } } );
             await details.setModule( { id: "match", label: "match", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.match.js" } } );
             await details.setModule( { id: "totals", label: "totals", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.totals.js" } } );
+            await details.setModule( { id: "price", label: "price", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.price.js" } } );
             await details.setModule( { id: "timeline", label: "timeline", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.timeline.js" } } );
             await details.setModule( { id: "gain", label: "gain", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.gain.js" } } );
-
-        let tabs = await details.setComponent( { id: "tabs", type: "tabs", format: "flex-left", output: "horizontal" } );
-            tabs.addListener( { type: "click", handler: ( active ) => title.set( `${ module.symbol } ${ active.id }` ) } );
-            tabs.addListener( { type: "click", handler: ( active ) => 
-            {
-                breadcrumbs.set( 3, active.panel?.label || "" ); 
-            } } );  
-            tabs.update( details.panels );
-
+        
         let array = Array.from( details.panels.keys() );
-
-        tabs.activate( array[ 0 ] );
+        
+        let tabs = await details.setComponent( { id: "tabs", type: "tabs", format: "flex-left", output: "horizontal" } );
+        tabs.addListener( { type: "click", handler: ( active ) => 
+        {
+            module.tab = array.findIndex( id => id == active.id );
+            
+            title.set( `${ module.symbol } ${ active.id }` );
+            
+            breadcrumbs.set( 3, active.panel?.label || "" ); 
+        } } );  
+        tabs.update( details.panels );
+        tabs.activate( array[ module.tab ] );
     }
 
     async function summary()
@@ -103,6 +109,11 @@ const Symbol = function( module )
             } );
             matrix.addRow( { 
                 input: { name: "gain", type: "number" }, 
+                cell: { css: {}, display: 4, modes: [ "read" ] },
+                format: [ "number" ]
+            } );
+            matrix.addRow( { 
+                input: { name: "cost", type: "number" }, 
                 cell: { css: {}, display: 4, modes: [ "read" ] },
                 format: [ "number" ]
             } );

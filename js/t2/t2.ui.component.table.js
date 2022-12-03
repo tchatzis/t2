@@ -8,6 +8,7 @@ const Table = function()
     let columns = new Map();
     let listeners = { row: [], column: [], submit: [] };
     let active = { highlight: null };
+    let loading;
 
     this.totals = {};
 
@@ -37,6 +38,25 @@ const Table = function()
             this.totals[ input.name ] = 0;
 
         columns.set( input.name, params );
+    };
+
+    this.addRow = function( record, index )
+    {
+        let row = el( "tr", self.element );
+            row.setAttribute( "data-id", record.id );
+            row.setAttribute( "data-index", index );
+            row.setAttribute( "data-count", this.array.length );
+
+        listen( row, record );
+        display( row, record, index );
+
+        if ( record.disabled )
+            row.classList.add( "disabled" );
+    };
+
+    this.removeRow = function( record )
+    {
+
     };
 
     this.addRowListener = function( listener )
@@ -188,48 +208,19 @@ const Table = function()
     this.populate = function( args )
     {
         this.reset();
-        
+
         let use = args.orderBy ? t2.common.sort( args.array, args.orderBy ) : args.array;
 
-            if ( !use.length )
-            {
-                this.parent.hide();
-
-                return;
-            }
-            
-            use.forEach( ( record, index ) => 
-            {             
-                //let mode = args.mode || "read";
-
-                let row = el( "tr", self.element );
-                    row.setAttribute( "data-id", record.id );
-                    row.setAttribute( "data-index", index );
-                    row.setAttribute( "data-count", use.length );
-
-                listeners.row.forEach( listener =>
-                {
-                    row.addEventListener( listener.type, ( e ) => 
-                    { 
-                        e.preventDefault(); 
-
-                        listener.handler( record, columns, row ); 
-
-                        self.normal( active.highlight?.getAttribute( "data-id" ) );
-
-                        active.highlight = row;
-                    } );
-
-                    row.classList.add( "tr" );
-                } );
-
-                if ( record.disabled )
-                    row.classList.add( "disabled" );
-
-                display( row, record, index );
-            } );
-
         this.array = use;
+
+        if ( !use.length )
+        {
+            this.parent.hide();
+
+            return;
+        }
+
+        use.forEach( ( record, index ) => this.addRow( record, index ) );
     };
 
     this.reset = function()
@@ -330,6 +321,25 @@ const Table = function()
             tf.style.width = td.offsetWidth + "px";
         } );
     }
+
+    function listen( row, record )
+    {
+        listeners.row.forEach( ( listener ) =>
+        {
+            row.addEventListener( listener.type, ( e ) => 
+            { 
+                e.preventDefault(); 
+
+                listener.handler( record, columns, row ); 
+
+                self.normal( active.highlight?.getAttribute( "data-id" ) );
+
+                active.highlight = row;
+            } );
+
+            row.classList.add( "tr" );
+        } );
+    };
 
     function show( column )
     {

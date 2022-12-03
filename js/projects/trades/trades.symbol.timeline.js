@@ -4,17 +4,25 @@ const Panel = function( module )
 {
     let self = this;
     let panel;
+    let subcontent;
 
     this.init = async function( parent, params )
     {
         panel = await parent.addContainer( { id: "panel", type: "panel", format: "block" } );
+        subcontent = t2.ui.children.get( "subcontent" );
 
         this.element = panel.element;
         this.type = panel.type;
 
         Object.assign( this, params );
         Common.call( this ); 
+    };
 
+    this.run = async function()
+    {
+        panel.clear();
+        subcontent.clear();
+        
         await this.plot();
     };
 
@@ -46,17 +54,13 @@ const Panel = function( module )
         } );
 
         let timeline = await panel.addComponent( { id: "timeline", type: "chart", format: "flex" } );
-            timeline.setData( this.array );
-            timeline.addLayer( { color: "rgba( 0, 255, 255, 0.3 )", font: "12px sans-serif", type: "step",
+            timeline.addLayer( { color: "rgba( 0, 255, 255, 1 )", font: "12px sans-serif", type: "step",
+                data: this.array,
                 axes:
                 { 
-                    "0": { axis: "date", settings: { format: "date", step: day, mod: mondays } },
-                    "1": { axis: "quantity", settings: { mod: ( p ) => !( p % 10 ) } } } } );
-            /*timeline.addLayer( { color: "rgba( 0, 255, 0, 0.3 )", font: "12px sans-serif", type: "step",
-                axes:
-                { 
-                    "0": { axis: "date", settings: { format: "date", step: day, mod: mondays } },
-                    "1": { axis: "position", settings: { mod: ( p ) => !( p % 10 ) } } } } );*/
+                    "0": { axis: "date", settings: { format: "date", step: day, mod: mondays, axis: true } },
+                    "1": { axis: "quantity", settings: { mod: ( p ) => !( p % 10 ), axis: true } } 
+                } } );
 
         function mondays( p, chart )
         {

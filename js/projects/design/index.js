@@ -165,9 +165,9 @@ const Index = function()
         breadcrumbs.set( 3, "select" );
         
         let menu = t2.ui.children.get( "menu" );
-        
-        let root = new Layer( { name: "layer1", visible: true, disabled: false, color: "blue", element: menu.element } );
-            root.addListener( { type: "click", handler: self.routine.layers.settings } );
+
+        let root = new Layer( { name: self.data.project, visible: true, disabled: false, color: "blue", element: menu.element } );
+            root.addListener( { type: "contextmenu", handler: self.routine.layers.settings } );
             root.init();
         /*
         let s = l.addSegment( { name: "segment", type: "wall" } );
@@ -186,12 +186,20 @@ const Index = function()
             e.stopPropagation();
 
         let layer = arguments[ 1 ];
-
         let link = e.target;
-        let name = link.textContent;
+        let name;
 
-        breadcrumbs.set( 3, "settings" );
-        breadcrumbs.set( 4, name );
+        function label( n )
+        {
+            name = n;
+
+            link.textContent = name;
+
+            breadcrumbs.set( 3, "settings" );
+            breadcrumbs.set( 4, name );
+        }
+
+        label( link.textContent );
         
         popup.clear();
         popup.show();
@@ -199,9 +207,23 @@ const Index = function()
         let table = "projects";
 
         let title = await popup.addComponent( { id: "title", type: "title", format: "text", output: "text" }  );
-            title.set( `${ self.data.project } \u00BB ${ name }` );
+            title.set( `${ name } \u00BB` );
 
         let box1 = await popup.addContainer( { id: "add", type: "box", format: "block" } );
+
+        let rename = await box1.addComponent( { id: "rename", type: "form", format: "flex" } );
+            rename.addListener( { type: "submit", handler: async ( data ) => 
+            {
+                label( data.name );
+            } } );
+            rename.addField( { 
+                input: { label: "rename", name: "name", type: "text", required: true, value: link.textContent }, 
+                cell: { css: {}, display: 8 },
+                format: [] } );
+            rename.addField( { 
+                input: { type: "submit", value: "RENAME" }, 
+                cell: { css: {}, display: 4 },
+                format: [] } );  
 
         let child = await box1.addComponent( { id: "child", type: "form", format: "flex" } );
             child.addListener( { type: "submit", handler: async ( data ) => 

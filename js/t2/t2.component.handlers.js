@@ -108,6 +108,17 @@ const Handlers = function()
 
     this.hide = () => this.element.classList.add( "hidden" );
 
+    this.loading = function()
+    {
+        let loading = new Image();
+            loading.src = "/images/loading.gif";
+            loading.style.width = "50%";
+
+        this.element.appendChild( loading );
+
+        return loading;
+    };
+
     this.remove = () => this.element.remove();
 
     this.show = () => this.element.classList.remove( "hidden" );

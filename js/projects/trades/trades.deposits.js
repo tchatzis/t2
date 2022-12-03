@@ -1,6 +1,10 @@
 const Deposits = function( module )
 {
     const self = this;
+    const day = 1000 * 60 * 60 * 24;
+    const content = t2.ui.children.get( "content" );
+    const margin = t2.ui.children.get( "margin" );
+    const subcontent = t2.ui.children.get( "subcontent" );
     
     const Data = function( data )
     {
@@ -20,24 +24,40 @@ const Deposits = function( module )
 
     this.refresh = async function()
     {
-        await module.queries(); 
+        content.clear();
+        margin.clear();
+        subcontent.clear();
+
+        let records = await t2.db.tx.retrieve( self.table );
+
+        this.data = records.data;
+        this.data.forEach( record => record.date = Math.round( new Date( record.datetime ).getTime() * day ) / day );
+
         await layout();
     };
 
     async function layout()
     {
+        await chart();
         await history();
         await transaction();
     }
 
+    async function chart()
+    { 
+        let chart = await content.addComponent( { id: "deposits", type: "chart", format: "flex" } );
+            chart.addLayer( { color: "green", font: "12px sans-serif", type: "bar",
+                data: self.data,
+                axes:
+                { 
+                    "0": { axis: "date", settings: { format: "date", step: day, mod: mondays, axis: true } },
+                    "1": { axis: "amount", settings: { mod: ( p ) => !( p % 10 ), axis: true } } 
+                } } );
+    }
+
     async function history()
     {
-        let records = await t2.db.tx.retrieve( self.table );
-        let array = records.data;
-        
-        let content = t2.ui.children.get( "content" );
-            content.clear();
-        let container = await content.addContainer( { id: "day", type: "box", format: "inline-block" } );
+        let container = await margin.addContainer( { id: "history", type: "box", format: "inline-block" } );
         let title = await container.addComponent( { id: "title", type: "title", format:"block", output: "text" } );
             title.set( "Deposit History" );
 
@@ -51,7 +71,7 @@ const Deposits = function( module )
 
                 let record = await t2.db.tx.update( self.table, d.id, d );
 
-                let message = await content.addComponent( { id: "message", type: "message", format: "block", output: "text" } );
+                let message = await container.addComponent( { id: "message", type: "message", format: "block", output: "text" } );
                     message.set( `Updated ${ data.action }` );   
 
                 self.refresh();
@@ -62,11 +82,11 @@ const Deposits = function( module )
                 format: [] } );
             table.addColumn( { 
                 input: { name: "datetime", type: "datetime", step: 0.01, min: 0 }, 
-                cell: { css: {}, display: 10, modes: [ "read", "edit" ] },
+                cell: { css: { value: "brokerage" }, display: 10, modes: [ "read", "edit" ] },
                 format: [ "date&time" ] } );
             table.addColumn( { 
                 input: { name: "action", type: "select" }, 
-                cell: { css: { value: "action" }, display: 3, modes: [ "read", "edit" ] },
+                cell: { css: {}, display: 3, modes: [ "read", "edit" ] },
                 format: [],
                 options: [ "DEP", "WD" ] } );
             table.addColumn( { 
@@ -75,7 +95,7 @@ const Deposits = function( module )
                 format: [ "precision" ] } );
             table.addColumn( { 
                 input: { name: "notes", type: "text" }, 
-                cell: { css: { value: "action" }, display: 10, modes: [ "read", "edit" ] },
+                cell: { css: {}, display: 10, modes: [ "edit" ] },
                 format: [] } );
             table.addColumn( { 
                 input: { name: "source", type: "select" }, 
@@ -83,21 +103,22 @@ const Deposits = function( module )
                 format: [],
                 options: module.data.source } ); 
             table.addColumn( { 
+                input: { name: "brokerage", type: "select" }, 
+                cell: { css: {}, display: 9, modes: [ "read", "edit" ] },
+                format: [],
+                options: module.data.brokerage } ); 
+            table.addColumn( { 
                 input: { type: "submit", value: "SUBMIT" }, 
                 cell: { css: {}, display: 4, modes: [ "edit" ] },
                 format: [] } );
             table.setColumns( module.mode );
-            table.populate( { array: array, orderBy: "datetime" } );
+            table.populate( { array: self.data, orderBy: "datetime" } );
             table.setTotals();
     }
 
     // transaction entry form
     async function transaction()
     {
-        let content = t2.ui.children.get( "content" );
-        let subcontent = t2.ui.children.get( "subcontent" );
-            subcontent.clear();
-        
         let form = await subcontent.addComponent( { id: "deposits", type: "form", format: "flex" } );
             form.addListener( { type: "submit", handler: async function ( data )
             {
@@ -139,6 +160,11 @@ const Deposits = function( module )
                 format: [],
                 options: module.data.source } );  
             form.addField( { 
+                input: { name: "brokerage", type: "select" }, 
+                cell: { css: {}, display: 9 },
+                format: [],
+                options: module.data.brokerage } ); 
+            form.addField( { 
                 input: { type: "submit", value: "DEP" }, 
                 cell: { css: {}, display: 3 },
                 format: [] } );
@@ -147,6 +173,14 @@ const Deposits = function( module )
                 cell: { css: {}, display: 3 },
                 format: [] } ); 
     };
+
+    function mondays( p, chart )
+    {
+        let date = new Date( chart.min );
+            date.setDate( date.getDate() + p );
+
+        return !date.getDay() || !p || p == chart.divisions; 
+    }
 };
 
 export default Deposits;

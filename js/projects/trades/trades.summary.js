@@ -3,6 +3,7 @@ import { aggregate, reset, total } from "./trades.aggregate.js";
 const Summary = function( module )
 {
     let self = this;
+    let sum = ( a, b ) => a + b;
     
     this.run = async function()
     {
@@ -21,6 +22,7 @@ const Summary = function( module )
     async function layout( array )
     {
         await summary( array );
+        await plot();
     }
 
     function preamble()
@@ -42,9 +44,9 @@ const Summary = function( module )
     // summary
     async function summary( array )
     {
-        let content = t2.ui.children.get( "content" );
-            content.clear();
-        let container = await content.addContainer( { id: "day", type: "box", format: "block" } );
+        let margin = t2.ui.children.get( "margin" );
+            margin.clear();
+        let container = await margin.addContainer( { id: "day", type: "box", format: "block" } );
         let title = await container.addComponent( { id: "title", type: "title", format:"block", output: "text" } );
             title.set( "Summary" );
 
@@ -107,6 +109,86 @@ const Summary = function( module )
             table.setTotals();
             table.highlight( module.symbol );
     }
+
+    async function plot()
+    {
+        let records = await t2.db.tx.retrieve( "deposits" );
+        let deposits = records.data;
+        let previous = { date: null, amount: null };
+
+        // filter by symbol and no dividends
+        let array = module.data.all;
+            array.sort( ( a, b ) => a.date < b.date ? 1 : -1 );
+
+        // format and calculate data
+        let day = 1000 * 60 * 60 * 24;
+
+        // sort by date desc
+        let total = {};
+            total.DIV =  { qty: 0, value: 0, average: 0 };
+            total.BUY =  { qty: 0, value: 0, average: 0 };
+            total.SELL = { qty: 0, value: 0, average: 0 };
+            total.SUB = { deposits: 0 };
+
+        array.sort( ( a, b ) => a.datetime > b.datetime ? 1 : -1 );
+        array.forEach( record => 
+        { 
+            record.date = Math.round( new Date( record.datetime ).getTime() * day ) / day;
+
+            let date = t2.formats.isoDate( record.date );
+
+            if ( date !== previous.date )
+            {
+                let amount = deposits.filter( deposit => t2.formats.isoDate( new Date( deposit.datetime ) ) == date ).map( d => Number( d.amount ) ).reduce( sum, 0 );
+                
+                total.SUB.deposits += amount;
+
+                if ( previous.amount !== amount )
+                    record.deposits = total.SUB.deposits;
+
+                previous.amount = amount;
+            }
+            
+            total[ record.action ].qty += record.qty;
+            total[ record.action ].price = record.price;
+            total[ record.action ].value += record.value;
+            total[ record.action ].average = total[ record.action ].value / total[ record.action ].qty;
+
+            total.SUB.qty = total.SELL.qty - total.BUY.qty;
+            total.SUB.delta = total.SELL.average - total.BUY.average;
+            total.SUB.gain = total.SUB.delta * total.SELL.qty;
+
+            record.gain = total.SUB.gain - previous.amount;
+  
+            previous.date = date;
+        } );
+
+        let content = t2.ui.children.get( "content" );
+
+        let chart = await content.addComponent( { id: "timeline", type: "chart", format: "flex" } );
+            chart.addLayer( { color: "green", font: "12px sans-serif", type: "line",
+                data: array,
+                axes:
+                { 
+                    "0": { axis: "date", settings: { format: "date", step: day, mod: mondays, axis: true } },
+                    "1": { axis: "gain", settings: { mod: ( p ) => !( p % 10 ), axis: true } } 
+                } } );
+            chart.addLayer( { color: "blue", font: "12px sans-serif", type: "step",
+                data: array,
+                axes:
+                { 
+                    "0": { axis: "date", settings: { format: "date", step: day, axis: false } },
+                    "1": { axis: "deposits", settings: { axis: false } } 
+                } } );
+
+        function mondays( p, chart )
+        {
+            let date = new Date( chart.min );
+                date.setDate( date.getDate() + p );
+
+            return !date.getDay() || !p || p == chart.divisions; 
+        }
+    };
 };
 
 export default Summary;

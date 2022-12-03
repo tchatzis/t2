@@ -1,5 +1,4 @@
 import navigation from "../../t2/t2.ui.navigation.js";
-import Data from "./trades.data.js";
 
 const Trades = function()
 {
@@ -14,6 +13,8 @@ const Trades = function()
         let max = Math.max.apply( null, this.data.all.map( record => new Date( record.datetime ) ) );
 
         this.date = t2.formats.isoDate( new Date( max ) );
+
+        this.tab = 5;
 
         await layout();
     };
@@ -121,43 +122,20 @@ const Trades = function()
         desc: ( a, b ) => ( a < b ) ? 1 : -1
     };
 
-    // transaction entry form
-    this.transaction = async function()
+    // common transaction entry form
+    this.transaction = async function( handler )
     {
-        let content = t2.ui.children.get( "content" );
-        
         let subcontent = t2.ui.children.get( "subcontent" );
             subcontent.clear();
         
         let form = await subcontent.addComponent( { id: "transaction", type: "form", format: "flex" } );
-            form.addListener( { type: "submit", handler: async function ( data )
-            {
-                data.action = this.submitter.value;
-
-                let record = await t2.db.tx.create( self.table, new Data( data ) );
-
-                let records = await t2.db.tx.filter( self.table, [ { key: "datetime", operator: "==", value: self.date } ] );
-
-                let table = self[ data.brokerage ];
-                    table.populate( { array: records.data } );
-                    table.highlight( record.data.id );
-                    table.setTotals();
-
-                form.form.datetime.value = t2.formats.datetime( new Date() );
-                form.form.symbol.value = "";
-                form.form.qty.value = "";
-                form.form.price.value = "";
-                form.form.notes.value = "";
-
-                let message = await content.addComponent( { id: "message", type: "message", format: "block", output: "text" } );
-                    message.set( `Added ${ record.data.id }` );
-            } } );
+            form.addListener( { type: "submit", handler: handler } );
             form.addField( { 
                 input: { name: "datetime", type: "datetime", value: t2.formats.datetime( new Date() ) },
                 cell: { css: {}, display: 10 },
                 format: [] } );
             form.addField( { 
-                input: { name: "symbol", type: "datalist", value: self._symbol || "" }, 
+                input: { name: "symbol", type: "datalist", value: self.symbol || "" }, 
                 cell: { css: {}, display: 4 },
                 format: [ "uppercase" ],
                 options: self.data.symbol } );

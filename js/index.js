@@ -1,5 +1,4 @@
 import T2 from "./t2/t2.js";
-import navigation from "./t2/t2.ui.navigation.js";
 
 async function init( namespace )
 {
@@ -7,15 +6,16 @@ async function init( namespace )
     await t2.init( namespace );
 
     let scenes      = {};
-    let scene       = "design";
+    let scene       = "trades";
 
     // story board
     //scenes.login       = t2.movie.addScene( { duration: 2000, name: "login", next: "database" } );
-    scenes.databases     = t2.movie.addScene( { duration: Infinity, name: "databases", next: "imports" } );
+    scenes.sandbox       = t2.movie.addScene( { duration: Infinity, name: "sandbox", next: null } );
+    scenes.databases     = t2.movie.addScene( { duration: Infinity, name: "databases", next: null } );
     //scenes.imports     = t2.movie.addScene( { duration: Infinity, name: "imports", next: "trades" } );
-    scenes.trades        = t2.movie.addScene( { duration: Infinity, name: "trades", next: "design" } );
+    scenes.trades        = t2.movie.addScene( { duration: Infinity, name: "trades", next: null } );
     //scenes.svg           = t2.movie.addScene( { duration: Infinity, name: "svg", next: "2D" } );
-    scenes.design        = t2.movie.addScene( { duration: Infinity, name: "design", next: "end" } );
+    scenes.design        = t2.movie.addScene( { duration: Infinity, name: "design", next: null } );
     scenes.end           = t2.movie.addScene( { duration: Infinity, name: "end", next: null } );
 
     await scenes[ scene ].start();

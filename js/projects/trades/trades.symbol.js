@@ -101,9 +101,24 @@ const Symbol = function( module )
                 input: { name: "position", type: "number" }, 
                 cell: { css: {}, display: 4, modes: [ "read" ] },
                 format: [ "number"  ] 
-            } );            
+            } );   
+            matrix.addRow( { 
+                input: { name: "average", type: "number" }, 
+                cell: { css: {}, display: 4, modes: [ "read", "edit" ] },
+                format: [ "number" ] 
+            } );         
             matrix.addRow( { 
                 input: { name: "break even", type: "number" }, 
+                cell: { css: {}, display: 4, modes: [ "read", "edit" ] },
+                format: [ "number" ] 
+            } );
+            matrix.addRow( { 
+                input: { name: "last price", type: "number" }, 
+                cell: { css: {}, display: 4, modes: [ "read", "edit" ] },
+                format: [ "number" ] 
+            } );
+            matrix.addRow( { 
+                input: { name: "potential", type: "number" }, 
                 cell: { css: {}, display: 4, modes: [ "read", "edit" ] },
                 format: [ "number" ] 
             } );

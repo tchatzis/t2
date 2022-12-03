@@ -1,52 +1,57 @@
+import Common from "../../t2/t2.common.handlers.js";
 import Data from "./trades.data.js";
 
-const Dividends = function( module )
+const Panel = function( module )
 {
     let self = this;
-    
+    let panel;
+    let sum = ( a, b ) => a + b;
+
+    this.init = async function( parent, params )
+    {
+        panel = await parent.addContainer( { id: "panel", type: "panel", format: "flex" } );
+ 
+        this.element = panel.element;
+        this.type = panel.type;
+
+        Object.assign( this, params );
+        Common.call( this );
+    };
+
     this.run = async function()
     {
-        Object.assign( module, this );
-
-        await this.refresh();  
-    };
-
-    this.refresh = async function()
-    {
-        delete module.date;
-        delete module.symbol;
+        panel.clear();
         
         await module.queries(); 
-        await layout();
-    };
+        await output();   
+    };    
 
-    async function layout()
-    {
-        await dividends();
-    }
-
-    // dividends
-    async function dividends()
+    async function output()
     {
         let array = module.data.filtered.filter( record => ( record.action == "DIV") );
 
-        let content = t2.ui.children.get( "content" );
-            content.clear();
-        let container = await content.addContainer( { id: "day", type: "box", format: "block" } );
-        let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
-            title.set( "Dividends" );
-
-        let table = await container.addComponent( { id: "dividends", type: "table" } );
+        let table = await panel.addComponent( { id: "dividends", type: "table" } );
             table.addRowListener( { type: "contextmenu", handler: table.edit } );
             table.addSubmitListener( { type: "submit", handler: async function ( data )
             { 
                 let form = this;
 
+                table.highlight( data.id );
+
                 let record = await t2.db.tx.update( module.table, Number( data.id ), new Data( data ) );
 
-                form.parent.remove();
+                let records = await t2.db.tx.filter( module.table, [ { key: "action", operator: "==", value: "DIV" } ] );
 
-                table.normal( record.id );
+                table.populate( { array: records.data, orderBy: "symbol" } );
+                table.setTotals();
+
+                let message = await panel.addComponent( { id: "message", type: "message", format: "block", output: "text" } );
+                    message.set( `Updated ${ data.id }` );   
+
+                let popup = t2.ui.children.get( "subcontent.popup" );
+                    popup?.element?.remove();
+
+                table.normal( data.id );
             } } );
             table.addColumn( { 
                 input: { name: "id", type: "hidden" }, 
@@ -101,4 +106,4 @@ const Dividends = function( module )
     };
 };
 
-export default Dividends;
+export default Panel;

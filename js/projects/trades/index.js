@@ -25,7 +25,7 @@ const Trades = function()
         { 
             init: { layout: "all", ignore: [ "header" ] }, 
             menu: { activate: self.info.namespace, array: Array.from( t2.movie.scenes.keys() ), ignore: [ "header", "footer" ] }, 
-            view: { activate: "Day", array: [ "Day", "Summary", "Dividends", "Symbol", "Search", "Fix", "Deposits" ], ignore: [ "header", "footer" ] } 
+            view: { activate: "Day", array: [ "Day", "Symbol", "Summary", "Search", "Fix", "Deposits" ], ignore: [ "header", "footer" ] } 
         } );
     }
 

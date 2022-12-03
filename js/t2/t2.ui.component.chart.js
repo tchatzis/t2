@@ -5,7 +5,9 @@ const Component = function( module )
     let self = this;
     let x = 0;
     let y = 1;
+    let last;
     let plot = {};
+    let texts = [ "uppercase" ];
 
     this.init = function( params )
     {
@@ -94,13 +96,12 @@ const Component = function( module )
             {
                 let offset = ( p * chart.pixels ) + config.origin[ x ];
                 let mod = chart.settings?.mod ? chart.settings.mod( p, chart ) : false;
+                let value = label( chart, p );
 
                 if ( mod )
                 {    
-                    let value = chart.settings?.format ? t2.formats[ chart.settings.format ]( chart.min + chart.step * p ) : chart.min + chart.step * p;
-                    
                     self.ctx.save();
-                    self.ctx.translate( offset, config.origin[ y ] + 10 );
+                    self.ctx.translate( offset - chart.pixels / 2, config.origin[ y ] + 10 );
                     self.ctx.textAlign = 'left';
                     self.ctx.rotate( Math.PI / 4 );
                     self.ctx.fillText( value, 0, 0 );
@@ -115,7 +116,6 @@ const Component = function( module )
                 }
                 else
                 {
-
                     self.ctx.beginPath();
                     self.ctx.strokeStyle = "#666";
                     self.ctx.strokeWidth = 1;
@@ -150,11 +150,11 @@ const Component = function( module )
             {
                 let offset = -( ( p * chart.pixels ) - config.origin[ y ] );
                 let mod = chart.settings?.mod ? chart.settings.mod( p, chart ) : false;
-                let value = chart.settings?.format ? t2.formats[ chart.settings.format ]( chart.min + chart.step * p ) : chart.min + chart.step * p;
+                let value = label( chart, p );
 
                 if ( mod )
                 {
-                    self.ctx.fillText( value.toFixed( chart.precision ), 0, offset );
+                    self.ctx.fillText( value.toFixed( chart.precision ), 0, offset + 5 );
 
                     self.ctx.beginPath();
                     self.ctx.strokeStyle = "#222";
@@ -182,13 +182,6 @@ const Component = function( module )
     {
         let chart = self.axes.chart;
         let config = self.axes.chart;
-        let normalized = {};
-        let bounds = 
-        {
-            [ x ]: config.origin[ x ],
-            [ y ]: config.limit[ y ]
-        };
-        let last = config.origin;
         let current;
 
         self.ctx.beginPath();
@@ -196,13 +189,7 @@ const Component = function( module )
 
         data.forEach( ( record, r ) => 
         {
-            let pixels = {};
-            
-            [ x, y ].forEach( axis =>
-            {
-                normalized[ axis ] = chart[ axis ].range ? ( record[ chart[ axis ].key ] - chart[ axis ].min ) / chart[ axis ].range : chart[ axis ].range;
-                pixels[ axis ] = chart[ axis ].size * ( axis - normalized[ axis ] ) * ( axis * 2 - 1 ) + bounds[ axis ];
-            } );
+            let { offset, pixels, valid } = configuration( chart, record, r );
 
             current = [ pixels[ x ], pixels[ y ] ];
 
@@ -220,12 +207,6 @@ const Component = function( module )
     plot.bar = function( data )
     {
         let chart = self.axes.chart;
-        let normalized = {};
-        let bounds = 
-        {
-            [ x ]: chart.origin[ x ],
-            [ y ]: chart.limit[ y ]
-        };
         let size = chart[ x ].config.axes[ x ].size || Math.floor( chart[ x ].pixels / 2 ) - 1;
 
         self.ctx.fillStyle = chart[ x ].config.color;
@@ -233,21 +214,13 @@ const Component = function( module )
 
         data.forEach( ( record, r ) => 
         {
-            let pixels = {};
-            
-            [ x, y ].forEach( axis =>
-            {
-                let value = Number( record[ chart[ axis ].key ] );
-
-                normalized[ axis ] = chart[ axis ].range ? ( value - chart[ axis ].min ) / chart[ axis ].range : chart[ axis ].range;
-                pixels[ axis ] = chart[ axis ].size * ( axis - normalized[ axis ] ) * ( axis * 2 - 1 ) + bounds[ axis ];
-            } );
+            let { offset, pixels, valid } = configuration( chart, record, r );
 
             let coords = [];
                 coords.push( pixels[ x ] - size );
                 coords.push( pixels[ y ] );
                 coords.push( size * 2 );
-                coords.push( chart.origin[ y ] - pixels[ y ] );
+                coords.push( offset[ y ] - pixels[ y ] );
 
             self.ctx.beginPath();
             self.ctx.rect( ...coords );
@@ -257,24 +230,10 @@ const Component = function( module )
     plot.dot = function( data )
     {
         let chart = self.axes.chart;
-        let normalized = {};
-        let bounds = 
-        {
-            [ x ]: chart.origin[ x ],
-            [ y ]: chart.limit[ y ]
-        };
 
         data.forEach( record => 
         {
-            let pixels = {};
-
-            [ x, y ].forEach( axis =>
-            {
-                let value = Number( record[ chart[ axis ].key ] );
-                
-                normalized[ axis ] = chart[ axis ].range ? ( value - chart[ axis ].min ) / chart[ axis ].range : chart[ axis ].range;
-                pixels[ axis ] = chart[ axis ].size * ( axis - normalized[ axis ] ) * ( axis * 2 - 1 ) + bounds[ axis ];
-            } );
+            let { offset, pixels, valid } = configuration( chart, record, r );
 
             self.ctx.beginPath();
             self.ctx.fillStyle = chart[ x ].config.color;
@@ -285,13 +244,6 @@ const Component = function( module )
     plot.line = function( data )
     {
         let chart = self.axes.chart;
-        let config = self.axes.chart;
-        let normalized = {};
-        let bounds = 
-        {
-            [ x ]: config.origin[ x ],
-            [ y ]: config.limit[ y ]
-        };
 
         self.ctx.beginPath();
         self.ctx.strokeStyle = chart[ x ].config.color;
@@ -299,13 +251,7 @@ const Component = function( module )
 
         data.forEach( ( record, r ) => 
         {
-            let pixels = {};
-            
-            [ x, y ].forEach( axis =>
-            {
-                normalized[ axis ] = chart[ axis ].range ? ( record[ chart[ axis ].key ] - chart[ axis ].min ) / chart[ axis ].range : chart[ axis ].range;
-                pixels[ axis ] = chart[ axis ].size * ( axis - normalized[ axis ] ) * ( axis * 2 - 1 ) + bounds[ axis ];
-            } );
+            let { offset, pixels, valid } = configuration( chart, record, r );
 
             ( !r ) ? self.ctx.moveTo( pixels[ x ], pixels[ y ] ) : self.ctx.lineTo( pixels[ x ], pixels[ y ] );
         } );
@@ -315,12 +261,6 @@ const Component = function( module )
     plot.step = function( data )
     {
         let chart = self.axes.chart;
-        let normalized = {};
-        let bounds = 
-        {
-            [ x ]: chart.origin[ x ],
-            [ y ]: chart.limit[ y ]
-        };
         let last = chart.origin;
 
         self.ctx.beginPath();
@@ -330,24 +270,7 @@ const Component = function( module )
 
         data.forEach( ( record, r ) => 
         {
-            let pixels = {};
-            let valid = {};
-
-            [ x, y ].forEach( axis =>
-            {
-                valid[ axis ] = record[ chart[ axis ].key ] !== undefined;
-
-                let value = Number( record[ chart[ axis ].key ] );
-                
-                if ( chart[ axis ]?.settings?.formula )
-                    chart[ axis ].settings.formula( r, record );
-
-                if ( valid[ axis ] )
-                {
-                    normalized[ axis ] = valid[ axis ] ? ( value - chart[ axis ].min ) / chart[ axis ].range : 0;
-                    pixels[ axis ] = chart[ axis ].size * ( axis - normalized[ axis ] ) * ( axis * 2 - 1 ) + bounds[ axis ]; 
-                }
-            } );
+            let { offset, pixels, valid } = configuration( chart, record, r );
 
             let current = [ pixels[ x ], pixels[ y ] ];
 
@@ -359,20 +282,67 @@ const Component = function( module )
         } );
 
         self.ctx.stroke();
-    };     
+    };  
+
+    function configuration( chart, record, r )
+    {
+        let normalized = {};
+        let offset = {};
+        let pixels = {};
+        let valid = {};
+        let bounds = 
+        {
+            [ x ]: chart.origin[ x ],
+            [ y ]: chart.limit[ y ]
+        };
+
+        [ x, y ].forEach( axis =>
+        {
+            offset[ axis ] = chart[ axis ].zero * chart[ axis ].pixels + bounds[ axis ];
+            valid[ axis ] = record[ chart[ axis ].key ] !== undefined;
+            
+            let value = !isNaN( Number( record[ chart[ axis ].key ] ) ) ? Number( record[ chart[ axis ].key ] ) : r;
+
+            if ( chart[ axis ]?.settings?.formula )
+                chart[ axis ].settings.formula( r, record );
+
+            if ( valid[ axis ] )
+            {
+                normalized[ axis ] = valid[ axis ] ? ( value - chart[ axis ].min ) / chart[ axis ].range : chart[ axis ].range;
+                pixels[ axis ] = chart[ axis ].size * ( axis - normalized[ axis ] ) * ( axis * 2 - 1 ) + bounds[ axis ]; 
+            }
+        } );
+
+        return { offset, pixels, valid };
+    }
+    
+    function label( chart, p )
+    {
+        let predicate = texts.find( format => chart.settings.format == format );
+        let value;
+
+        if( predicate )
+            value = t2.formats[ chart.settings.format ]( chart.data[ p ] || "" );
+        else
+            value = chart.settings?.format ? t2.formats[ chart.settings.format ]( chart.min + chart.step * p ) : chart.min + chart.step * p;
+
+        return value;
+    }
 
     function scale( data, config )
     { 
         let array = data.map( item => item[ config.axis ] ).filter( value => value !== undefined );
-        let min = Math.floor( Math.min.apply( null, array ) );
-        let max = Math.ceil( Math.max.apply( null, array ) );
+        let values = [ ...array ].map( ( value, index ) => !isNaN( value ) ? Number( value ) : index );
+        let min = Math.floor( Math.min.apply( null, values ) );
+        let max = Math.ceil( Math.max.apply( null, values ) );
         let range = max - min;
 
         let params = {};
             params.key = config.axis;
-            params.array = array;
+            params.array = values;
+            params.data = array;
             params.log = Math.floor( Math.log10( range ) ); 
-        let rounder = Math.pow( 10, params.log );
+        let rounder = Math.pow( 10, params.log - 1 );
         let conditions = [];
             conditions.push( params.key !== "date" );
         let predicate = conditions.every( condition => condition );
@@ -395,7 +365,7 @@ const Component = function( module )
         if ( chart.zero < chart.max )
         {
             self.ctx.beginPath();
-            self.ctx.strokeStyle = "red";
+            self.ctx.strokeStyle = "silver";
             self.ctx.strokeWidth = 1;
             self.ctx.moveTo( config.origin[ x ] - 10, offset );
             self.ctx.lineTo( config.limit[ x ], offset );

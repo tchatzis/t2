@@ -36,6 +36,11 @@ async function totals( module )
             object.data[ action ].value = round( object.data[ action ].records.map( record => record.value * record.sign * div ).reduce( sum, 0 ) );
             object.data[ action ].price = round( object.data[ action ].value / object.data[ action ].qty );
 
+            let last = object.data[ action ].records[ object.data[ action ].records.length - 1 ];
+
+            if ( last )
+                output.data[ "last price" ] = round( last.price );
+
             if ( action !== "DIV" )
             {
                 [ "qty", "value" ].forEach( prop => object.data.TOTAL[ prop ] += object.data[ action ][ prop ] );  
@@ -43,8 +48,8 @@ async function totals( module )
             }
         } );
 
-        object.data.TOTAL.average = round( !object.data.TOTAL.qty ? object.data.BUY.price : object.data.SELL.price );
-        object.data.TOTAL.gain = round( object.data.TOTAL.average * object.data.TOTAL.qty - object.data.TOTAL.value );
+        object.data.TOTAL[ "average" ] = object.data.BUY.price;//round( !object.data.TOTAL.qty ? object.data.BUY.price : object.data.SELL.price );object.data.TOTAL.value / object.data.TOTAL.qty
+        object.data.TOTAL[ "gain" ] = round( object.data.TOTAL.average * object.data.TOTAL.qty - object.data.TOTAL.value );
         
         data.push( object );
 
@@ -67,17 +72,21 @@ async function totals( module )
         if ( object.data.TOTAL.qty ) 
         {
             output.data[ "break even" ] = round( object.data.TOTAL.value / object.data.TOTAL.qty );
-            output.data.status = "OPEN";
+            output.data[ "status" ] = "OPEN";
+            object.data.TOTAL[ "potential" ] = round( ( output.data[ "last price" ] - output.data[ "break even" ] ) * object.data.TOTAL.qty ); 
         }
         else
         {
             output.data[ "break even" ] = object.data.BUY.price;
-            output.data.status = "CLOSED";
+            output.data[ "status" ] = "CLOSED";
+            object.data.TOTAL[ "potential" ] = 0;
         }
 
-        output.data.gain = object.data.TOTAL.gain;
+        output.data[ "average" ] = object.data.TOTAL.average;
+        output.data[ "gain" ] = object.data.TOTAL.gain;
         output.data[ "percent" ] = round( ( object.data.TOTAL.gain / object.data.BUY.value ) * 100 );
         output.data[ "cost" ] = round( object.data.TOTAL.gain + object.data.TOTAL.value );
+        output.data[ "potential" ] = object.data.TOTAL.potential;
 
         result.push( output ); 
     } );

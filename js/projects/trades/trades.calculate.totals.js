@@ -48,18 +48,15 @@ async function totals( module )
             }
         } );
 
-        object.data.TOTAL[ "average" ] = object.data.BUY.price;//round( !object.data.TOTAL.qty ? object.data.BUY.price : object.data.SELL.price );object.data.TOTAL.value / object.data.TOTAL.qty
-        object.data.TOTAL[ "gain" ] = round( object.data.TOTAL.average * object.data.TOTAL.qty - object.data.TOTAL.value );
-        
         data.push( object );
 
         output.data[ "buy qty" ] = object.data.BUY.qty;
-        output.data[ "buy average price" ] = object.data.BUY.price;
-        output.data[ "buy cost" ] = object.data.BUY.value;
+        output.data[ "buy price" ] = round( object.data.BUY.value / object.data.BUY.qty );
+        output.data[ "buy value" ] = object.data.BUY.value;
         output.data[ "buy trades" ] = object.data.BUY.transactions; 
 
         output.data[ "sell qty" ] = object.data.SELL.qty;
-        output.data[ "sell average price" ] = round( object.data.SELL.value / object.data.SELL.qty );
+        output.data[ "sell price" ] = round( object.data.SELL.value / object.data.SELL.qty ) || 0;
         output.data[ "sell value" ] = -object.data.SELL.value;
         output.data[ "sell trades" ] = object.data.SELL.transactions; 
 
@@ -67,26 +64,27 @@ async function totals( module )
         output.data[ "dividend" ] = object.data.DIV.value;
         output.data[ "deposits" ] = object.data.DIV.transactions; 
 
-        output.data.position = round( object.data.TOTAL.qty + object.data.DIV.qty );
+        output.data[ "qty" ] = round( object.data.TOTAL.qty + object.data.DIV.qty );
 
         if ( object.data.TOTAL.qty ) 
         {
-            output.data[ "break even" ] = round( object.data.TOTAL.value / object.data.TOTAL.qty );
+            output.data[ "trade" ] = round( object.data.TOTAL.value / object.data.TOTAL.qty );
             output.data[ "status" ] = "OPEN";
-            object.data.TOTAL[ "potential" ] = round( ( output.data[ "last price" ] - output.data[ "break even" ] ) * object.data.TOTAL.qty ); 
+            output.data[ "spread" ] = round( object.data.BUY.price - output.data[ "trade" ] );
+            output.data[ "trend" ] = round( ( output.data[ "last price" ] - output.data[ "trade" ] ) * object.data.TOTAL.qty );  
+            output.data[ "value" ] = round( object.data.TOTAL.value );
+            output.data[ "gain" ] = round( output.data[ "spread" ] * ( output.data[ "qty" ] || output.data[ "buy qty" ] ) );
         }
         else
         {
-            output.data[ "break even" ] = object.data.BUY.price;
+            output.data[ "trade" ] = object.data.BUY.price;
             output.data[ "status" ] = "CLOSED";
-            object.data.TOTAL[ "potential" ] = 0;
+            output.data[ "spread" ] = round( object.data.SELL.price - object.data.BUY.price );
+            output.data[ "trend" ] = 0;
+            output.data[ "gain" ] = round( 0 - object.data.TOTAL.value );
         }
 
-        output.data[ "average" ] = object.data.TOTAL.average;
-        output.data[ "gain" ] = object.data.TOTAL.gain;
-        output.data[ "percent" ] = round( ( object.data.TOTAL.gain / object.data.BUY.value ) * 100 );
-        output.data[ "cost" ] = round( object.data.TOTAL.gain + object.data.TOTAL.value );
-        output.data[ "potential" ] = object.data.TOTAL.potential;
+        output.data[ "percent" ] = round( ( output.data.gain / object.data.BUY.value ) * 100 );
 
         result.push( output ); 
     } );

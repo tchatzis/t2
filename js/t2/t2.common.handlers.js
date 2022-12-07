@@ -16,6 +16,32 @@ const Common = function()
     this.remove = () => this.element.remove();
 
     this.show = () => this.element.classList.remove( "hidden" );   
+
+    this.scale = () => 
+    {
+        const scale = () => 
+        {
+            for ( let [ name, component ] of this.parent.children )
+                if ( component !== this )
+                    component.element.classList.add( "scaled" );
+        };
+        
+        this.element.classList.add( "scaled" );
+
+        this.element.addEventListener( "click", ( e ) => 
+        {
+            e.stopPropagation();
+
+            this.element.classList.toggle( "scaled" ); 
+
+            if ( this.element.classList.contains( "scaled" ) )
+                this.element.style.position = "relative";
+            else
+                this.element.style.position = "absolute";
+
+            scale();  
+        } );
+    };
 };
 
 export default Common;

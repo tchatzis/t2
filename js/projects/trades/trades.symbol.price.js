@@ -46,12 +46,13 @@ const Panel = function( module )
         } );
 
         let timeline = await panel.addComponent( { id: "timeline", type: "chart", format: "flex" } );
-            timeline.setData( this.array );
             timeline.addLayer( { color: "rgba( 255, 255, 0, 1 )", font: "12px sans-serif", type: "line",
+                data: this.array, 
                 axes:
                 { 
-                    "0": { axis: "date", settings: { format: "date", step: day, mod: mondays } },
-                    "1": { axis: "price", settings: { mod: ( p ) => !( p % 10 ) } } } } );
+                    "0": { axis: "date", settings: { format: "date", step: day, mod: mondays, axis: true } },
+                    "1": { axis: "price", settings: { mod: ( p ) => !( p % 10 ), axis: true } } 
+                } } );
 
         function mondays( p, chart )
         {

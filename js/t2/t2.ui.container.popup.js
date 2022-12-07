@@ -2,6 +2,8 @@ import Handlers from "./t2.container.handlers.js";
 
 const Container = function()
 {
+    let exits = [];
+    
     this.init = function( params )
     {
         this.element = t2.common.el( "div", this.parent.element );
@@ -15,15 +17,25 @@ const Container = function()
 
             if ( e.target == this.element )
             {
-                this.clear();
-                this.hide();
+                this.exit();
+                this.remove();
             }
         } );
 
         Object.assign( this, params );
 
         Handlers.call( this );
-    }
+    };
+
+    this.exit = () => exits.forEach( exit => exit() );
+
+    this.setExit = ( f ) => exits.push( f );
+
+    this.reset = function()
+    {
+        this.clear();
+        this.show();
+    };
 };
 
 export default Container;

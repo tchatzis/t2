@@ -5,16 +5,17 @@ const Component = function( module )
     let self = this;
     let x = 0;
     let y = 1;
-    let last;
     let plot = {};
     let texts = [ "uppercase" ];
 
     this.init = function( params )
     {
         let parent = this.parent.element;
+        let w = parent.clientWidth * 0.9;
+        let h = parent.clientHeight * 0.9;
 
-        this.width = parent.clientWidth * 0.9;
-        this.height = parent.clientHeight * 0.9;
+        this.width = Math.max( w, 600 );
+        this.height = Math.max( h, 300 );
         
         this.element = t2.common.el( "canvas", parent );
         this.element.id = params.id;
@@ -60,7 +61,7 @@ const Component = function( module )
 
             [ x, y ].forEach( axis =>
             {    
-                chart[ axis ] = scale( config.data, config.axes[ axis ] );    
+                chart[ axis ] = scale( config.data, config.axes[ axis ], axis );    
                 chart[ axis ].config = config;            
                 chart[ axis ].settings = config.axes[ axis ].settings;
 
@@ -101,9 +102,11 @@ const Component = function( module )
                 if ( mod )
                 {    
                     self.ctx.save();
-                    self.ctx.translate( offset - chart.pixels / 2, config.origin[ y ] + 10 );
+                    self.ctx.translate( offset, config.origin[ y ] + 10 );
                     self.ctx.textAlign = 'left';
                     self.ctx.rotate( Math.PI / 4 );
+                    if ( chart.settings.colored?.axis )
+                        self.ctx.fillStyle = t2.formats.hsl( value );
                     self.ctx.fillText( value, 0, 0 );
                     self.ctx.restore();
 
@@ -216,6 +219,8 @@ const Component = function( module )
         {
             let { offset, pixels, valid } = configuration( chart, record, r );
 
+            let value = record[ chart[ x ].key ];
+
             let coords = [];
                 coords.push( pixels[ x ] - size );
                 coords.push( pixels[ y ] );
@@ -224,6 +229,8 @@ const Component = function( module )
 
             self.ctx.beginPath();
             self.ctx.rect( ...coords );
+            if ( chart[ x ].settings.colored?.data )
+                self.ctx.fillStyle = t2.formats.hsl( value );
             self.ctx.fill();
         } );
     }; 
@@ -261,12 +268,11 @@ const Component = function( module )
     plot.step = function( data )
     {
         let chart = self.axes.chart;
-        let last = chart.origin;
+        let last;
 
         self.ctx.beginPath();
         self.ctx.strokeStyle = chart[ x ].config.color;
         self.ctx.strokeWidth = 1;
-        self.ctx.moveTo( ...last );
 
         data.forEach( ( record, r ) => 
         {
@@ -274,8 +280,12 @@ const Component = function( module )
 
             let current = [ pixels[ x ], pixels[ y ] ];
 
-            self.ctx.lineTo( current[ x ], last[ y ] );
-            self.ctx.lineTo( ...current );
+            if ( last )
+            {
+                self.ctx.moveTo( ...last );
+                self.ctx.lineTo( current[ x ], last[ y ] );
+                self.ctx.lineTo( ...current );
+            }
             
             if ( valid[ x ] && valid[ y ] )
                 last = current;
@@ -318,7 +328,10 @@ const Component = function( module )
     
     function label( chart, p )
     {
-        let predicate = texts.find( format => chart.settings.format == format );
+        let conditions = []
+            conditions.push( texts.find( format => chart.settings.format == format ) );
+            conditions.push( typeof chart.data[ p ] == "string" );
+        let predicate = conditions.some( bool => bool );
         let value;
 
         if( predicate )
@@ -329,7 +342,7 @@ const Component = function( module )
         return value;
     }
 
-    function scale( data, config )
+    function scale( data, config, axis )
     { 
         let array = data.map( item => item[ config.axis ] ).filter( value => value !== undefined );
         let values = [ ...array ].map( ( value, index ) => !isNaN( value ) ? Number( value ) : index );
@@ -338,6 +351,7 @@ const Component = function( module )
         let range = max - min;
 
         let params = {};
+            params.axis = axis;
             params.key = config.axis;
             params.array = values;
             params.data = array;
@@ -352,7 +366,12 @@ const Component = function( module )
             params.precision = Math.max( 4 - params.log, 0 );
             params.step = config.settings.step || Math.pow( 10, 3 - params.precision );
             params.divisions = Math.ceil( params.range / params.step );
-            params.zero = ( 1 - ( 0 - params.min ) / params.range ) * params.divisions; 
+            params.zero = ( params.axis - normalize( 0 ) ) * params.divisions;
+
+        function normalize( value )
+        {
+            return ( value - params.min ) / params.range;
+        }
 
         return params;
     }

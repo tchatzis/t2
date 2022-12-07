@@ -65,6 +65,7 @@
     right: 0;
     top: 0;
     width: 15vw;
+    z-index: 150;
 
     transition: width 2s;
     transition-delay: 1s;
@@ -112,12 +113,16 @@
     border-left: 1px solid #222;
     border-top: 1px solid #630;
     bottom: 0;
+    display: block;
     min-width: 30%;
     overflow-y: auto;
     position: absolute;
     min-height: 20vh;
     max-height: 80vh;
+    width: max-content;
+    height: max-content;
     right: 0;  
+    z-index: 200;
 }
 
 #subcontent, #submargin, #submenu

@@ -1,5 +1,3 @@
-import navigation from "../../t2/t2.ui.navigation.js";
-
 const Trades = function()
 {
     const self = this;
@@ -21,17 +19,22 @@ const Trades = function()
 
     function nav()
     {
-        navigation.call( this, 
+        t2.navigation.init( { layout: "all" } );
+
+        
+        //self.navigation = new Navigation( self );
+        /*self.navigation.init( 
         { 
             init: { layout: "all", ignore: [ "header" ] }, 
             menu: { activate: self.info.namespace, array: Array.from( t2.movie.scenes.keys() ), ignore: [ "header", "footer" ] }, 
             view: { activate: "Day", array: [ "Day", "Symbol", "Summary", "Search", "Fix", "Deposits" ], ignore: [ "header", "footer" ] } 
-        } );
+        } );*/
     }
 
     async function layout()
     {
-        
+        //let submargin = t2.ui.children.get( "submargin" );
+        //    submargin.ignore( "clear" );
     }
 
     this.filter = function()

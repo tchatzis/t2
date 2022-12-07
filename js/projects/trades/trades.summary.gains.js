@@ -30,12 +30,12 @@ const Panel = function( module )
     {
         let records = await t2.db.tx.retrieve( "deposits" );
         let deposits = records.data;
-        let previous = { date: null, amount: null };
+        let previous = { date: null, deposit: null };
         let total = {};
             total.DIV =  { qty: 0, value: 0, average: 0 };
             total.BUY =  { qty: 0, value: 0, average: 0 };
             total.SELL = { qty: 0, value: 0, average: 0 };
-            total.SUB = { deposits: 0 };       
+            total.SUB = { deposits: 0 };    
 
         let array = [ ...module.data.all ];
             array.sort( ( a, b ) => a.datetime > b.datetime ? 1 : -1 );
@@ -51,22 +51,22 @@ const Panel = function( module )
                     
                     total.SUB.deposits += amount;
 
-                    if ( previous.amount !== amount )
+                    if ( previous.deposit )
                         record.deposits = total.SUB.deposits;
 
-                    previous.amount = amount;
+                    previous.deposit = amount;
                 }
-                
+
                 total[ record.action ].qty += record.qty;
                 total[ record.action ].price = record.price;
                 total[ record.action ].value += record.value;
                 total[ record.action ].average = total[ record.action ].value / total[ record.action ].qty;
 
-                total.SUB.qty = total.SELL.qty - total.BUY.qty;
-                total.SUB.delta = total.SELL.average - total.BUY.average;
-                total.SUB.gain = total.SUB.delta * total.SELL.qty;
+                total.SUB.qty = total.BUY.qty - total.SELL.qty;
+                total.SUB.value = total.SELL.value - total.BUY.value;
+                total.SUB.gain = total.SUB.value - previous.deposit;
 
-                record.gain = total.SUB.gain - previous.amount;
+                record.gain = -total.SUB.gain;
     
                 previous.date = date;
             } );

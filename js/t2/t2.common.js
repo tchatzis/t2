@@ -74,7 +74,7 @@ const Common = function()
 
         return elParams.parent;
     };
-    
+
     this.ignored = function( f, child )
     {
         let ignore = child.dataset.ignore ? child.dataset.ignore.split( "," ) : [];

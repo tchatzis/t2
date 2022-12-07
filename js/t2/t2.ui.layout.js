@@ -1,5 +1,7 @@
 const Layout = function()
 {
+    const layout = {};
+    
     this.init = async function( params )
     {
         this.reset( params );
@@ -19,9 +21,7 @@ const Layout = function()
         }
     };
 
-    const layout = {};
-
-    layout.all = async function( params )
+    layout.all = async function()
     {
         await t2.ui.addElement( { id: "header", parent: document.body } );
         await t2.ui.addElement( { id: "wrapper", parent: document.body } );
@@ -36,14 +36,14 @@ const Layout = function()
         await t2.ui.addElement( { id: "submargin", parent: t2.ui.children.get( "margin" ).element } );
     };
 
-    layout.minimal = async function( params )
+    layout.minimal = async function()
     {
         await t2.ui.addElement( { id: "header", parent: document.body } );
         await t2.ui.addElement( { id: "wrapper", parent: document.body } );
         await t2.ui.addElement( { id: "footer", parent: document.body } );
     };
     
-    layout.modal = async function( params )
+    layout.modal = async function()
     {
         await t2.ui.addElement( { id: "modal", parent: document.body } );
     };

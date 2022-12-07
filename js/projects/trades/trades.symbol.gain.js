@@ -38,10 +38,10 @@ const Panel = function( module )
 
         // sort by date desc
         let total = {};
-            total.DIV =  { qty: 0, value: 0, average: 0 };
-            total.BUY =  { qty: 0, value: 0, average: 0 };
-            total.SELL = { qty: 0, value: 0, average: 0 };
-            total.SUB = {};
+            total.DIV =  { qty: 0, value: 0, price: 0 };
+            total.BUY =  { qty: 0, value: 0, price: 0 };
+            total.SELL = { qty: 0, value: 0, price: 0 };
+        let trade = 0;
 
         this.array.sort( ( a, b ) => a.datetime > b.datetime ? 1 : -1 );
         this.array.forEach( record => 
@@ -49,19 +49,38 @@ const Panel = function( module )
             record.date = Math.round( new Date( record.datetime ).getTime() * day ) / day;
             
             total[ record.action ].qty += record.qty;
-            total[ record.action ].price = record.price;
             total[ record.action ].value += record.value;
-            total[ record.action ].average = total[ record.action ].value / total[ record.action ].qty;
+            total[ record.action ].price = total[ record.action ].value / total[ record.action ].qty;
 
-            total.SUB.qty = total.SELL.qty - total.BUY.qty;
-            total.SUB.delta = total.SELL.average - total.BUY.average;
-            total.SUB.gain = total.SUB.delta * total.SELL.qty;
+            let qty = total.BUY.qty - total.SELL.qty;
+            let value = total.SELL.value - total.BUY.value;
 
-            record.gain = total.SUB.gain;
+            trade = qty ? -value / qty : trade;
+
+            let spread = ( record.price - trade );
+
+            let gain = spread * ( qty || record.qty );
+
+            record.gain = gain;
+            record.trade = trade;
+            record.total = value;
+            
+            return;
+            console.warn( record.id );
+            console.log( "action", record.action, record.qty );
+            console.log( "sign", record.sign );
+            console.log( "value", value );
+            console.log( "qty", qty );
+            console.log( "trade", trade );
+            console.log( "price", record.price );
+            console.log( "spread", spread );
+            console.log( "gain", gain );
+            console.dir( record );
+            console.dir( total );
         } );
 
         let timeline = await panel.addComponent( { id: "timeline", type: "chart", format: "flex" } );
-            timeline.addLayer( { color: "rgba( 0, 127, 0, 1 )", font: "12px sans-serif", type: "line",
+            timeline.addLayer( { color: "rgba( 0, 127, 127, 1 )", font: "12px sans-serif", type: "step",
                 data: this.array,
                 axes:
                 { 

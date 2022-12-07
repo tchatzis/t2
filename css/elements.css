@@ -52,6 +52,11 @@ tbody, tfoot, thead
     display: block;
 }
 
+tfoot > th
+{
+    border-bottom: none;
+}
+
 tbody
 {
     max-height: 55vh;

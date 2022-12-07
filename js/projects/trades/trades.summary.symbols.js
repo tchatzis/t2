@@ -28,10 +28,11 @@ const Panel = function( module )
     async function output()
     {
         let array = [];
+            array.push( { symbol: "\u25f9", qty: 0, value: 0 } );
 
-        [ "", ...module.data.symbol, "" ].forEach( symbol => 
+        module.data.symbol.forEach( symbol => 
         {
-            let set =  module.data.all.filter( record => record.symbol == symbol );
+            let set = module.data.all.filter( record => record.symbol == symbol );
 
             let data = {};
                 data.symbol = symbol;
@@ -41,12 +42,14 @@ const Panel = function( module )
             array.push( data );
         } );
 
+        array.push( { symbol: "\u25fa", qty: 0, value: 0 } );
+
         let chart = await panel.addComponent( { id: "symbols", type: "chart", format: "flex" } );
             chart.addLayer( { color: "gray", font: "12px sans-serif", type: "bar",
                 data: array,
                 axes:
                 { 
-                    "0": { axis: "symbol", settings: { mod: ( p ) => !( p % 1 ), axis: true, format: "uppercase" } },
+                    "0": { axis: "symbol", settings: { mod: ( p ) => !( p % 1 ), axis: true, format: "uppercase", step: 1, colored: { axis: true, data: true } } },
                     "1": { axis: "value", settings: { mod: ( p ) => !( p % 1 ), axis: true } } 
                 } } );
     }

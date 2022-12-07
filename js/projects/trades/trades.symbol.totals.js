@@ -37,49 +37,24 @@ const Panel = function( module )
             title.set( `${ module.symbol } Details` );
 
         let matrix = await container.addComponent( { id: "matrix", type: "matrix", format: "table-body" } );
-            //matrix.addColumnListener( { type: "click", handler: matrix.edit } );
-            //matrix.addRowListener( { type: "click", handler: ( a, b, c ) => console.log( a, b, c ) } );
-            /*matrix.addSubmitListener( { type: "submit", handler: async ( args ) =>
-            { 
-                console.log( args, matrix.row.name, args[ matrix.row.name ] );
-
-                let data = args[ matrix.row.name ];
-
-                // format the data
-                for ( let key in data )
-                {
-                    let config = args.config.get( key );
-                    let value = data[ key ];
-
-                    config.format.forEach( f => value = t2.formats[ f ]( value ) ); 
-                    
-                    data[ key ] = value;
-                }
-
-                let formatted = Object.assign( args.data, { [ matrix.row.name ]: data } );
-
-                console.warn( Number( args.data[ matrix.primaryKey ] ), formatted ); 
-
-                //let record = await t2.db.tx.update( "table", Number( data[ matrix.primaryKey ] ), formatted );
-
-                matrix.populate();
-
-                let message = await container.addComponent( { id: "message", type: "message", format: "block", output: "text" } );
-                    message.set( `Updated ${ args.data[ matrix.primaryKey ] }` );  
-            } } );*/
             matrix.addRow( { 
                 input: { name: "status", type: "text" }, 
                 cell: { css: {}, display: 4, modes: [ "read" ] },
                 format: [ "uppercase" ] 
             } );
             matrix.addRow( { 
-                input: { name: "position", type: "number" }, 
+                input: { name: "qty", type: "number" }, 
                 cell: { css: {}, display: 4, modes: [ "read" ] },
                 format: [ "number"  ] 
             } );            
             matrix.addRow( { 
-                input: { name: "break even", type: "number" }, 
-                cell: { css: {}, display: 4, modes: [ "read", "edit" ] },
+                input: { name: "trade", type: "number" }, 
+                cell: { css: {}, display: 4, modes: [ "read" ] },
+                format: [ "number" ] 
+            } );
+            matrix.addRow( { 
+                input: { name: "spread", type: "number" }, 
+                cell: { css: {}, display: 4, modes: [ "read"] },
                 format: [ "number" ] 
             } );
             matrix.addRow( { 
@@ -102,11 +77,11 @@ const Panel = function( module )
                 cell: { css: {}, display: 4, modes: [ "read" ] },
                 format: [ "number" ] } );
             matrix.addRow( { 
-                input: { name: "buy average price", type: "number" }, 
+                input: { name: "buy price", type: "number" }, 
                 cell: { css: {}, display: 4, modes: [ "read" ] },
                 format: [ "number" ] } );
             matrix.addRow( { 
-                input: { name: "buy cost", type: "number" }, 
+                input: { name: "buy value", type: "number" }, 
                 cell: { css: {}, display: 4, modes: [ "read" ] },
                 format: [ "number" ] } );
             matrix.addRow( { 
@@ -123,7 +98,7 @@ const Panel = function( module )
                 cell: { css: {}, display: 4, modes: [ "read" ] },
                 format: [ "number" ] } );
             matrix.addRow( { 
-                input: { name: "sell average price", type: "number" }, 
+                input: { name: "sell price", type: "number" }, 
                 cell: { css: {}, display: 4, modes: [ "read" ] },
                 format: [ "number" ] } );
             matrix.addRow( { 

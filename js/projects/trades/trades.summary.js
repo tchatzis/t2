@@ -35,6 +35,7 @@ const Summary = function( module )
             title.set( "Summary Details" );
             await details.setModule( { id: "gains", label: "gains", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.summary.gains.js" } } );
             await details.setModule( { id: "symbols", label: "symbols", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.summary.symbols.js" } } );
+            await details.setModule( { id: "closed", label: "closed", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.summary.closed.js" } } );
             await details.setModule( { id: "data", label: "data", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.summary.data.js" } } );
             await details.setModule( { id: "dividends", label: "dividends", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.summary.dividends.js" } } );
         

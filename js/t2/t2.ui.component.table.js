@@ -103,7 +103,8 @@ const Table = function()
 
         self.highlight( data.id );
 
-        let container = await parent.addContainer( { id: "edit", type: "box", format: "inline-block" } );
+        let container = await parent.addContainer( { id: "edit", type: "box", format: "block" } );
+            container.element.style.position = "relative";
         let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
             title.set( `Edit \u00BB ${ data.id }` );  
 
@@ -221,6 +222,27 @@ const Table = function()
         }
 
         use.forEach( ( record, index ) => this.addRow( record, index ) );
+
+        let index = 0;
+        
+        for ( let td of this.element.firstChild.children )
+        {
+            let padding = extract( td, "paddingLeft" );
+            let width = td.clientWidth + padding + "px";
+
+            this.header.children[ index ].style.width = width;
+            this.footer.children[ index ].style.width = width;
+
+            index++;
+        }
+
+        function extract( el, prop )
+        {
+            let style = getComputedStyle( el );
+            let array = style[ prop ].split( " " ).map( val => parseInt( val ) );
+
+            return array.reduce( ( a, b ) => a + b, 0 );
+        }
     };
 
     this.reset = function()
@@ -283,13 +305,10 @@ const Table = function()
             let config = columns.get( column );
             let attributes = config.input;
             let cell = config.cell;
-            //let handler = config.handler;
             let format = config.format || [];
             if ( attributes.type == "number" )
                 format.unshift( "number" );
             let value = record[ column ];
-            let th = self.header.children[ index + 1 ];
-            let tf = self.footer.children[ index + 1 ];
             let display = show( column );
 
             // columns values and totals
@@ -315,10 +334,6 @@ const Table = function()
                 td.classList.add( css( cell, column, record ) );
                 td.style.display = display;
                 td.textContent = value;
-
-            // set header / footer column widths
-            th.style.width = td.offsetWidth + "px";
-            tf.style.width = td.offsetWidth + "px";
         } );
     }
 

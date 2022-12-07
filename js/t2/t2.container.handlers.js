@@ -62,8 +62,19 @@ const Handlers = function()
 
     this.clear = () => Array.from( this.element.children ).forEach( child => 
     {
-        child.remove();     
+        if ( !t2.common.ignored( "clear", child ) )
+            child.remove();     
     } );
+
+    this.ignore = function( f )
+    {
+        let ignore = this.element.dataset.ignore?.split( "," ) || [];
+            ignore.push( f );
+        
+        this.element.dataset.ignore = ignore.toString();
+    };
+
+    this.remove = () => this.element.remove();
 
     this.children = new Map();
 

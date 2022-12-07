@@ -1,5 +1,3 @@
-
-import formats from "./t2.formats.js";
 import Handlers from "./t2.component.handlers.js";
 
 const Axes = function()
@@ -149,7 +147,7 @@ const Axes = function()
         this.rows = this.row.array;
 
         let config = this.cell;
-        
+
         this.rows.forEach( key =>
         {
             if ( !key )
@@ -183,21 +181,43 @@ const Axes = function()
 
             let display = [];
 
+            let _data = this.data.filter( item => item[ this.row.name ] == key );
+
             this.columns.forEach( column => 
             {
                 let td = t2.common.el( "td", row );
-                let data = this.data.filter( item => t2.formats.isoDate( item[ this.column.name ] ) == column && item[ this.row.name ] == key );
-                let value = config.cell.value( data, config, td );
+                let data = _data.filter( item => t2.formats.isoDate( item[ this.column.name ] ) == column );
                 let predicate = !!data.length;
+                let value = data.map( record => record[ config.input.name ] * record.sign ).reduce( ( a, b ) => a + b, 0 );
  
-                config.format.forEach( f => value = t2.formats[ f ]( value ) );
+                if ( config.cell.value )
+                {
+                    value = config.cell.value( data, config, td );      
+                }
 
-                display.push( !!predicate );
+                config.format.forEach( f => value = t2.formats[ f ]( value ) );  
+
+                display.push( predicate );
 
                 td.classList.add( "data" );
-                td.classList.add( css( config.cell, column, { [ config.input.name ]: value } ) );
                 td.classList.add( ...config.format );
+                td.classList.add( css( config.cell, column, { [ config.input.name ]: value } ) );
                 td.textContent = predicate ? value : "";
+
+                listeners.cell.forEach( listener =>
+                {
+                    td.addEventListener( listener.type, ( e ) => 
+                    { 
+                        e.preventDefault(); 
+                        e.stopPropagation();
+
+                        if ( predicate )
+                        {
+                            td.classList.add( "highlight" );
+                            listener.handler( td, key, column, data );
+                        }
+                    } );
+                } );
             } );
 
             if ( !display.some( bool => bool ) )

@@ -79,7 +79,7 @@ const Common = function()
     {
         let ignore = child.dataset.ignore ? child.dataset.ignore.split( "," ) : [];
         
-        return ignore.find( dataset => f == dataset );
+        return !!ignore.find( dataset => f == dataset );
     };
 
     this.log = function ()

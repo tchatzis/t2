@@ -170,25 +170,6 @@ const Component = function()
         }
     };
 
-    /*this.save = async function( table, data, key )
-    {        
-        let filtered = await t2.db.tx.filter( table, [ { key: key, operator: "==" , value: data[ key ] } ] );
-
-        if ( filtered.data.length )
-        {
-            //let record = await t2.db.tx.update( table, data );
-
-            return filtered;
-        }
-        else
-        {
-            let record = await t2.db.tx.create( table, data );
-            //console.log( "save", table, data, record );
-
-            return record;
-        }
-    };*/
-
     this.submit = function( e )
     { 
         e.preventDefault(); 
@@ -199,7 +180,7 @@ const Component = function()
 
         self.form.data = data;
  
-        listeners.forEach( async ( listener ) => await listener.handler.call( e, data ) );
+        listeners.forEach( async ( listener ) => await listener.handler( { event: e, data: data } ) );
     };
 };
 

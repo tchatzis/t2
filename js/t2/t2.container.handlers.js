@@ -4,6 +4,9 @@ const Handlers = function()
 {
     this.addComponent = async function( params )
     {
+        if ( t2.ui.children.has( params.id ) )
+            return t2.ui.children.get( params.id );
+        
         let module    = await import( `../t2/t2.ui.component.${ params.type }.js` );
         let component = await new module.default();
             component.id = params.id;
@@ -22,6 +25,9 @@ const Handlers = function()
 
     this.addContainer = async function( params )
     {
+        if ( t2.ui.children.has( params.id ) )
+            return t2.ui.children.get( params.id );
+
         let module    = await import( `../t2/t2.ui.container.${ params.type }.js` );
         let container = await new module.default();
             container.id = params.id;
@@ -65,6 +71,13 @@ const Handlers = function()
         if ( !t2.common.ignored( "clear", child ) )
             child.remove();     
     } );
+
+    this.delete = ( id ) => t2.ui.children.delete( id );
+
+    this.empty = () => Array.from( this.element.children ).forEach( child => 
+    { 
+        console.log( this.element.id, child.id ); 
+    } );  
 
     this.ignore = function( f )
     {

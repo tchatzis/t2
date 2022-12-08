@@ -1,40 +1,41 @@
+import Data from "./trades.data.js";
+
 const Trades = function()
 {
     const self = this;
 
     this.init = async function()
     {
-        nav.call( this );
-
         await this.queries();
+
+        navigation();
 
         let max = Math.max.apply( null, this.data.all.map( record => new Date( record.datetime ) ) );
 
         this.date = t2.formats.isoDate( new Date( max ) );
-
-        this.tab = 5;
-
-        await layout();
     };
 
-    function nav()
+    async function navigation()
     {
-        t2.navigation.init( { layout: "all" } );
+        let menu = t2.navigation.components.menu;
+            menu.update( Array.from( t2.movie.scenes.keys() ) );
+            menu.active( self.info.namespace );
 
-        
-        //self.navigation = new Navigation( self );
-        /*self.navigation.init( 
-        { 
-            init: { layout: "all", ignore: [ "header" ] }, 
-            menu: { activate: self.info.namespace, array: Array.from( t2.movie.scenes.keys() ), ignore: [ "header", "footer" ] }, 
-            view: { activate: "Day", array: [ "Day", "Symbol", "Summary", "Search", "Fix", "Deposits" ], ignore: [ "header", "footer" ] } 
-        } );*/
-    }
+        let view = t2.navigation.components.view;
+            view.setModule( self );
+            view.update( [ "Day", "Symbol", "Summary", "Search", "Fix", "Deposits" ] );
+            view.activate( view.array[ 0 ].toLowerCase() );
+            view.addListener( { event: "click", handler: () =>
+            {
+                [ "submenu", "subcontent", "submargin" ].forEach( id => t2.navigation.addIgnore( { id: id, ignore: [ "clear" ] } ) );
+                
+                t2.navigation.update( 
+                {
+                    clear: [ "menu", "submenu", "content", "subcontent", "margin", "submargin" ]
+                } );
+            } } );
 
-    async function layout()
-    {
-        //let submargin = t2.ui.children.get( "submargin" );
-        //    submargin.ignore( "clear" );
+        await t2.navigation.setLayout( { name: "all", ignore: [] } );
     }
 
     this.filter = function()
@@ -126,13 +127,16 @@ const Trades = function()
     };
 
     // common transaction entry form
-    this.transaction = async function( handler )
+    this.transaction = async function( source )
     {
         let subcontent = t2.ui.children.get( "subcontent" );
-            subcontent.clear();
-        
+
         let form = await subcontent.addComponent( { id: "transaction", type: "form", format: "flex" } );
-            form.addListener( { type: "submit", handler: handler } );
+            form.addListener( { type: "submit", handler: async ( e, data ) =>
+            {
+                let record = await this.addTransaction( e, data, source );
+                this.updateTable( record, source );
+            } } );
             form.addField( { 
                 input: { name: "datetime", type: "datetime", value: t2.formats.datetime( new Date() ) },
                 cell: { css: {}, display: 10 },
@@ -171,6 +175,78 @@ const Trades = function()
                 input: { type: "submit", value: "DIV" }, 
                 cell: { css: {}, display: 3 },
                 format: [] } );   
+    };
+
+    // add transaction handler
+    this.addTransaction = async function( args )
+    {
+        let event = args.event;
+        let data = args.data;
+        let form = event.target;
+        let submit = event.submitter;
+            submit.setAttribute( "disabled", "" );
+        let message = t2.ui.children.get( "message" );
+            message.output = "text";
+            message.element.classList.add( "expanded" );    
+        let messages = await message.addComponent( { id: "message", type: "message", format: "block", output: "text" } );    
+
+        data.action = submit.value;
+
+        let record = await t2.db.tx.create( self.table, new Data( data ) );
+
+        messages.set( `Added ${ record.id }` );
+        await t2.common.delay( () => message.element.classList.remove( "expanded" ), 5000 ); 
+        messages.set();
+
+        form.datetime.value = t2.formats.datetime( new Date() );
+        form.symbol.value = "";
+        form.qty.value = "";
+        form.price.value = "";
+        form.notes.value = "";
+        submit.removeAttribute( "disabled" );
+
+        source.refresh();
+
+        return record;
+    };
+
+    this.updateTransaction = async function( args )
+    { 
+        let event = args.event;
+        let data = args.data;
+        let table = args.table; 
+        let row = args.row;
+        let message = t2.ui.children.get( "message" );
+            message.output = "text";
+            message.element.classList.add( "expanded" );    
+        let messages = await message.addComponent( { id: "message", type: "message", format: "block", output: "text" } ); 
+
+        let record = await t2.db.tx.update( self.table, Number( data.id ), new Data( data ) );
+
+        table.highlight( record.id );
+        table.resetTotals();
+        table.updateRow( row, record.data, Number( row.dataset.index ) );
+        table.setTotals();
+
+        messages.set( `Updated ${ record.id }` ); 
+        await t2.common.delay( () => message.element.classList.remove( "expanded" ), 5000 ); 
+        messages.set();
+
+        let popup = t2.ui.children.get( "subcontent.popup" );
+            popup?.element?.remove();
+    }
+
+    this.updateTable = function( record, source )
+    {
+        let data = record.data;
+        
+        let table = source[ data.brokerage ];
+            table.addRow( record, table.array.length );
+            table.parent.unscale();
+            table.highlight( data.id );
+            table.setTotals();
+
+        return table;
     };
 };
 

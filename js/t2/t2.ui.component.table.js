@@ -8,7 +8,6 @@ const Table = function()
     let columns = new Map();
     let listeners = { row: [], column: [], submit: [] };
     let active = { highlight: null };
-    let loading;
 
     this.totals = {};
 
@@ -32,7 +31,6 @@ const Table = function()
     this.addColumn = function( params )
     {
         let input = params.input;
-        let cell = params.cell;
 
         if ( input.type == "number" )
             this.totals[ input.name ] = 0;
@@ -57,6 +55,11 @@ const Table = function()
     this.removeRow = function( record )
     {
 
+    };
+
+    this.updateRow = function( row, record, index )
+    {
+        display( row, record, index );
     };
 
     this.addRowListener = function( listener )
@@ -90,11 +93,10 @@ const Table = function()
         this.populate( params );
     };
 
-    this.edit = async function()
+    this.edit = async function( args )
     {
-        let data = arguments[ 0 ];
-
-        let columns = arguments[ 1 ];
+        let data = args.data;
+        let columns = args.columns;
 
         let subcontent = t2.ui.children.get( "subcontent" );
         let parent = await subcontent.addContainer( { id: "popop", type: "popup", format: "block" } );
@@ -109,11 +111,11 @@ const Table = function()
             title.set( `Edit \u00BB ${ data.id }` );  
 
         let form = await container.addComponent( { id: `${ self.id }.${ data.id }`, type: "form", format: "block" } );
-            form.addListener( { type: "submit", handler: function ( data )
+            form.addListener( { type: "submit", handler: ( arg ) =>
             {
                 listeners.submit.forEach( listener => 
                 {
-                    listener.handler.call( form, data );
+                    listener.handler( { event: arg.event, data: arg.data, table: self, row: args.row, columns: columns } );
                 } );
                 parent.hide();
             } } );
@@ -186,6 +188,19 @@ const Table = function()
         } );
     };
 
+    this.resetTotals = function()
+    {
+        this.columns.forEach( ( column ) => 
+        {
+            let params = columns.get( column );
+
+            if ( params.input.type == "number" )
+                this.totals[ column ] = 0;
+        } );
+
+        
+    };
+
     this.setTotals = function()
     {
         this.columns.forEach( ( column, index ) => 
@@ -253,10 +268,11 @@ const Table = function()
 
     this.update = function( key, data )
     {
-        let row = this.array.find( item => item[ key ] == data[ key ] );
-            row = data;
+        console.warn( key, data );
+        //let row = this.array.find( item => item[ key ] == data[ key ] );
+        //    row = data;
 
-        this.hightlight( data[ key ] );
+        //this.hightlight( data[ key ] );
     };
 
     function css( cell, column, record )
@@ -337,6 +353,7 @@ const Table = function()
         } );
     }
 
+    // row listeners
     function listen( row, record )
     {
         listeners.row.forEach( ( listener ) =>
@@ -345,7 +362,7 @@ const Table = function()
             { 
                 e.preventDefault(); 
 
-                listener.handler( record, columns, row ); 
+                listener.handler( { data: record, columns: columns, row: row } ); 
 
                 self.normal( active.highlight?.getAttribute( "data-id" ) );
 

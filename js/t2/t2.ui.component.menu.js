@@ -37,7 +37,9 @@ const Component = function()
 
     this.getLink = function( name )
     {
-        return self.element.querySelector( `[ data-link = "${ name.toLowerCase() }" ]` );
+        this.activated = name;
+        
+        return self.element.querySelector( `[ data-link = "${ name?.toLowerCase() }" ]` );
     };
 
     this.init = async function( params )
@@ -45,9 +47,6 @@ const Component = function()
         this.element = t2.common.el( "div", this.parent.element );
         this.element.id = params.id;
         this.element.style.display = params.format;
-
-        this.update( params.array );
-        this.listen();
 
         Object.assign( this, params );
 
@@ -70,9 +69,15 @@ const Component = function()
         active.curr = link;  
     };
 
+    this.setModule = function( module )
+    {
+        this.module = module;
+    };
+
     this.update = function( array )
     {
-        self.element.innerHTML = null;
+        this.array = array;
+        this.element.innerHTML = null;
         
         array.forEach( link =>
         {

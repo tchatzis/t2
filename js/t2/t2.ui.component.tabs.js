@@ -17,6 +17,8 @@ const Component = function()
         let title = get( "title" );
             title.set( tab?.textContent || this.parent.id || this.id );
 
+        console.log( id )
+
         let panel = get( id );
             panel.show();
 

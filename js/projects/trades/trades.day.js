@@ -1,5 +1,3 @@
-import Data from "./trades.data.js";
-
 const Day = function( module )
 {
     let self = this;
@@ -8,7 +6,6 @@ const Day = function( module )
     let margin = t2.ui.children.get( "margin" );
     let menu = t2.ui.children.get( "menu" );
     let submenu = t2.ui.children.get( "submenu" );
-        submenu.ignore( "clear" );
     let sum = ( a, b ) => a + b;
     let previous = { cell: null, popup: null };
 
@@ -17,6 +14,7 @@ const Day = function( module )
         Object.assign( module, this );
 
         await this.refresh();  
+        await layout();  
     };
 
     this.refresh = async function()
@@ -24,16 +22,11 @@ const Day = function( module )
         delete module.symbol;
         module.date = module.date || today;
 
-        await module.queries(); 
-        await layout();   
+        await module.queries();    
     };
 
     async function layout()
     {
-        menu.clear();
-        margin.clear();
-        content.clear();
-
         await chart();
         await symbols();
         await date();
@@ -42,7 +35,7 @@ const Day = function( module )
         await losses();
         await problems();
         await week();   
-        await module.transaction( handler );
+        await module.transaction( self );
     }
 
     // transactions data
@@ -178,7 +171,8 @@ const Day = function( module )
     {
         let array = self.symbols;
 
-        let symbols = await menu.addComponent( { id: "symbols", type: "menu", array: array, format: "block" } );
+        let symbols = await menu.addComponent( { id: "symbols", type: "menu", format: "block" } );
+            symbols.update( array );
             symbols.addListener( { type: "click", handler: function() 
             { 
                 let link = arguments[ 2 ].curr;
@@ -187,7 +181,7 @@ const Day = function( module )
                 module._symbol = symbol;
                 module.symbol = symbol;
 
-                module.navigation.location( `/symbol/${ symbol }` );
+                t2.navigation.path( `/symbol/${ symbol }` );
             } } );   
 
         if ( module.symbol )
@@ -197,9 +191,6 @@ const Day = function( module )
     // select date form
     async function date()
     {
-        let submenu = t2.ui.children.get( "submenu" );
-            submenu.clear();
-
         let dates = await submenu.addComponent( { id: "date", type: "form", format: "flex" } );
             dates.addListener( { type: "submit", handler: async ( data ) => module.setDate( data.date ) } );
             dates.addField( { 
@@ -242,7 +233,7 @@ const Day = function( module )
 
         let table = await container.addComponent( { id: brokerage.toLowerCase(), type: "table" } );
             table.addRowListener( { type: "contextmenu", handler: table.edit } );
-            table.addSubmitListener( { type: "submit", handler: ( data ) => update( table, data, brokerage ) } );
+            table.addSubmitListener( { type: "submit", handler: module.updateTransaction } );//( e, data, self, table, brokerage ) 
             table.addColumn( { 
                 input: { name: "id", type: "hidden" }, 
                 cell: { css: {}, display: 0, modes: [ "edit" ] },
@@ -506,61 +497,6 @@ const Day = function( module )
 
         previous.cell = td;
         previous.popup = popup;
-    }
-
-    // handlers
-    // add transaction handler
-    async function handler( data )
-    {
-        let event = this;
-        let form = event.target;
-        let submit = event.submitter;
-            submit.setAttribute( "disabled", "" );
-
-        data.action = submit.value;
-
-        let record = await t2.db.tx.create( module.table, new Data( data ) );
-
-        let records = await t2.db.tx.filter( module.table, [ { key: "datetime", operator: "==", value: self.date } ] );
-
-        let table = self[ data.brokerage ];
-            table.populate( { array: records.data } );
-            table.highlight( record.data.id );
-            table.setTotals();
-
-        form.datetime.value = t2.formats.datetime( new Date() );
-        form.symbol.value = "";
-        form.qty.value = "";
-        form.price.value = "";
-        form.notes.value = "";
-        submit.removeAttribute( "disabled" );
-
-        let message = await table.parent.addComponent( { id: "message", type: "message", format: "block", output: "text" } );
-            message.set( `Added ${ record.data.id }` );
-
-        self.refresh();
-    };
-
-    // update transaction handler
-    async function update( table, data, brokerage )
-    { 
-        let form = this;
-
-        let record = await t2.db.tx.update( module.table, Number( data.id ), new Data( data ) );
-
-        let records = await t2.db.tx.filter( module.table, [ { key: "brokerage", operator: "==", value: brokerage }, { key: "datetime", operator: "==", value: module.date } ] );
-
-        table.populate( { array: records.data, orderBy: "datetime" } );
-        table.highlight( data.id );
-        table.setTotals();
-
-        let container = table.parent;
-
-        let message = await container.addComponent( { id: "message", type: "message", format: "block", output: "text" } );
-            message.set( `Updated ${ data.id }` );   
-
-        let popup = t2.ui.children.get( "subcontent.popup" );
-            popup?.element?.remove();
     }
 };
 

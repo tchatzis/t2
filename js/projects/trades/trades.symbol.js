@@ -21,8 +21,8 @@ const Symbol = function( module )
         delete module.date;
         module.symbol = module._symbol;
 
-        let subcontent = t2.ui.children.get( "subcontent" );
-            subcontent.clear();
+        //let subcontent = t2.ui.children.get( "subcontent" );
+        //    subcontent.clear();
         
         await module.queries(); 
         await layout();
@@ -37,7 +37,7 @@ const Symbol = function( module )
     async function container()
     {
         let content = t2.ui.children.get( "content" );
-            content.clear();
+        //    content.clear();
 
         let details = await content.addContainer( { id: "details", type: "panels", format: "block", output: "vertical" } );
         let title = await details.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
@@ -63,7 +63,7 @@ const Symbol = function( module )
                 breadcrumbs.set( 3, active.panel?.label || "" ); 
             } } );  
             tabs.update( details.panels );
-            tabs.activate( array[ module.tab ] );
+            tabs.activate( array[ 0 ] );
     }
 
     async function summary()
@@ -163,10 +163,10 @@ const Symbol = function( module )
     async function symbols()
     {
         let menu = t2.ui.children.get( "menu" );
-            menu.clear();
-            menu.show();
 
-        let symbols = await menu.addComponent( { id: "symbols", type: "menu", array: module.data.symbol, format: "block" } );
+        let symbols = await menu.addComponent( { id: "symbols", type: "menu", format: "block" } );
+            symbols.update( module.data.symbol );
+            symbols.activate( module.symbol );
             symbols.addListener( { type: "click", handler: function() 
             { 
                 let link = arguments[ 2 ].curr;

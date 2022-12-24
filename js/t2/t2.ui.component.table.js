@@ -1,32 +1,16 @@
 import formats from "./t2.formats.js";
 import Handlers from "./t2.component.handlers.js";
 
-const Table = function()
+const Component = function()
 {
     let self = this;
     let el = t2.common.el;
     let columns = new Map();
     let listeners = { row: [], column: [], submit: [] };
     let active = { highlight: null };
+    let totals = false;
 
     this.totals = {};
-
-    this.init = function( params )
-    {
-        let table = el( "table", this.parent.element );
-            table.setAttribute( "cellpadding", 0 );
-            table.setAttribute( "cellspacing", 0 );
-
-        this.header = el( "thead", table );
-        this.element = el( "tbody", table );
-        this.footer = el( "tfoot", table );
-
-        this.format = "block";
-
-        Object.assign( this, params );
-
-        Handlers.call( this );
-    };
 
     this.addColumn = function( params )
     {
@@ -36,6 +20,8 @@ const Table = function()
             this.totals[ input.name ] = 0;
 
         columns.set( input.name, params );
+
+        this.setHeaders();
     };
 
     this.addRow = function( record, index )
@@ -46,20 +32,10 @@ const Table = function()
             row.setAttribute( "data-count", this.array.length );
 
         listen( row, record );
-        display( row, record, index );
+        this.updateRow( row, record, index );
 
         if ( record.disabled )
             row.classList.add( "disabled" );
-    };
-
-    this.removeRow = function( record )
-    {
-
-    };
-
-    this.updateRow = function( row, record, index )
-    {
-        display( row, record, index );
     };
 
     this.addRowListener = function( listener )
@@ -146,46 +122,84 @@ const Table = function()
         } );
     };
 
+    this.headerless = function()
+    {
+        this.header.classList.add( "hidden" );
+    };
+
     this.highlight = function( id )
     {
         let row = document.querySelector( `[ data-id = "${ id }" ]` );
             row?.classList.add( "highlight" );
     };
 
-    this.normal = function( id )
-    {
+    this.hsl = function( id, value )
+    { 
         let row = document.querySelector( `[ data-id = "${ id }" ]` );
-            row?.classList.remove( "highlight" );
+            row.style.backgroundColor = `hsl( ${ value }, 100%, 30% )`;
     };
 
-    this.setColumns = function( mode, hidden )
+    this.init = function( params )
     {
-        this.columns = Array.from( columns.keys() );
+        let table = el( "table", this.parent.element );
+            table.setAttribute( "cellpadding", 0 );
+            table.setAttribute( "cellspacing", 0 );
 
-        this.header.innerHTML = null;
-        if ( hidden )
-            this.header.classList.add( "hidden" );
+        this.header = el( "thead", table );
+        this.element = el( "tbody", table );
+        this.footer = el( "tfoot", table );
 
-        this.footer.innerHTML = null;
+        this.format = "block";
 
-        let th = el( "th", this.header );
-            th.style.width = "2em";
+        Object.assign( this, params );
 
-        let tf = el( "th", this.footer );
-            tf.style.width = "2em";    
+        Handlers.call( this );
+    };
 
-        this.columns.forEach( column => 
+    this.populate = function( args )
+    {
+        this.reset();
+
+        let use = args.orderBy ? t2.common.sort( args.array, args.orderBy ) : args.array;
+
+        this.array = use;
+        this.orderBy = args.orderBy;
+
+        if ( !use.length )
         {
-            let display = show( column, mode );
+            this.parent.hide();
 
-            let th = el( "th", this.header );
-                th.textContent = column;
-                th.style.display = display;
+            return;
+        }
 
-            let tf = el( "th", this.footer );
-                tf.setAttribute( "data-column", column );
-                tf.style.display = display;
-        } );
+        use.forEach( ( record, index ) => this.addRow( record, index ) );
+
+        let index = 0;
+        
+        for ( let td of this.element.firstChild.children )
+        {
+            let width = td.offsetWidth + "px";
+
+            this.header.children[ index ].style.width = width;
+            this.footer.children[ index ].style.width = width;
+
+            index++;
+        }
+    };
+
+    this.removeRow = function( record )
+    {
+        let row = this.element.querySelector( `[ data-id = "${ record.id }" ]` );
+            row.remove();
+
+        if ( totals )
+            this.removeTotal( record );
+    };
+
+    this.reset = function()
+    {
+        this.resetTotals();
+        this.element.innerHTML = null;
     };
 
     this.resetTotals = function()
@@ -197,12 +211,39 @@ const Table = function()
             if ( params.input.type == "number" )
                 this.totals[ column ] = 0;
         } );
+    };
 
-        
+    this.setHeaders = function()
+    {
+        this.columns = Array.from( columns.keys() );
+
+        this.header.innerHTML = null;
+        this.footer.innerHTML = null;
+
+        let th = el( "th", this.header );
+            th.style.width = "2em";
+
+        let tf = el( "th", this.footer );
+            tf.style.width = "2em";    
+
+        this.columns.forEach( column => 
+        {
+            let display = show( column );
+
+            let th = el( "th", this.header );
+                th.textContent = column;
+                th.style.display = display;
+
+            let tf = el( "th", this.footer );
+                tf.setAttribute( "data-column", column );
+                tf.style.display = display;
+        } );
     };
 
     this.setTotals = function()
     {
+        totals = !!this.columns.length;
+        
         this.columns.forEach( ( column, index ) => 
         {
             let params = columns.get( column );
@@ -221,60 +262,63 @@ const Table = function()
         } );
     };
 
-    this.populate = function( args )
+    this.unhighlight = function( id )
     {
-        this.reset();
+        let row = document.querySelector( `[ data-id = "${ id }" ]` );
+            row?.classList.remove( "highlight" );
+    };
 
-        let use = args.orderBy ? t2.common.sort( args.array, args.orderBy ) : args.array;
-
-        this.array = use;
-
-        if ( !use.length )
-        {
-            this.parent.hide();
-
-            return;
-        }
-
-        use.forEach( ( record, index ) => this.addRow( record, index ) );
-
-        let index = 0;
+    this.update = function( args )
+    {
+        let _args = { array: args.array || this.array, orderBy: args.orderBy || this.orderBy };
         
-        for ( let td of this.element.firstChild.children )
-        {
-            let padding = extract( td, "paddingLeft" );
-            let width = td.clientWidth + padding + "px";
-
-            this.header.children[ index ].style.width = width;
-            this.footer.children[ index ].style.width = width;
-
-            index++;
-        }
-
-        function extract( el, prop )
-        {
-            let style = getComputedStyle( el );
-            let array = style[ prop ].split( " " ).map( val => parseInt( val ) );
-
-            return array.reduce( ( a, b ) => a + b, 0 );
-        }
+        this.populate( _args );
+        
+        if ( totals )
+            this.setTotals(); 
     };
 
-    this.reset = function()
+    this.updateRow = function( row, record, index )
     {
-        this.columns.forEach( column => this.totals[ column ] = 0 );
-        this.element.innerHTML = null;
+        row.innerHTML = null;
+
+        let th = el( "th", row );
+            th.style.width = "2em";
+            th.textContent = index + 1;
+        
+        self.columns.forEach( column => 
+        {
+            let config = columns.get( column );
+            let value = formatter( config, column, record, 1 );
+
+            // display
+            let cell = config.cell;
+            let display = show( column ); 
+
+            let td = el( "td", row );
+                td.classList.add( "data" );
+                td.style.width = cell.display + "em";
+                td.classList.add( css( cell, column, record ) );
+                td.style.display = display;
+                td.textContent = value;
+        } );
+
+        if ( totals )
+            this.setTotals();
     };
 
-    this.update = function( key, data )
+    this.removeTotal = function( record )
     {
-        console.warn( key, data );
-        //let row = this.array.find( item => item[ key ] == data[ key ] );
-        //    row = data;
+        self.columns.forEach( column => 
+        {
+            let config = columns.get( column );
+            let value = formatter( config, column, record, -1 );
+        } );
 
-        //this.hightlight( data[ key ] );
+        this.setTotals();
     };
 
+    // helpers
     function css( cell, column, record )
     {
         let css = "data";
@@ -308,49 +352,24 @@ const Table = function()
         return css;
     }
 
-    function display( row, record, index )
+    function formatter( config, column, record, operator )
     {
-        row.innerHTML = null;
+        let format = config.format || [];
+        let attributes = config.input;
 
-        let th = el( "th", row );
-            th.style.width = "2em";
-            th.textContent = index + 1;
-        
-        self.columns.forEach( ( column, index ) => 
+        // numbers
+        let value = record[ column ];
+
+        // format
+        if ( attributes.type == "number" )
         {
-            let config = columns.get( column );
-            let attributes = config.input;
-            let cell = config.cell;
-            let format = config.format || [];
-            if ( attributes.type == "number" )
-                format.unshift( "number" );
-            let value = record[ column ];
-            let display = show( column );
+            value = numbers( config, column, record, operator );
+            format.unshift( "number" );
+        }
 
-            // columns values and totals
-            switch ( attributes.type )
-            {
-                case "number":
-                    if ( config.formula )
-                    {
-                        value = config.formula( { column: column, record: record, totals: self.totals, value: Number( value ) } );         
-                    }  
-                    else
-                    {
-                        self.totals[ column ] += Number( value ); 
-                    }
-                break;
-            };
+        format?.forEach( f => value = formats[ f ]( value, column, record ) );
 
-            format?.forEach( f => value = formats[ f ]( value, column, record ) );
-
-            let td = el( "td", row );
-                td.classList.add( "data" );
-                td.style.width = cell.display + "em";
-                td.classList.add( css( cell, column, record ) );
-                td.style.display = display;
-                td.textContent = value;
-        } );
+        return value;
     }
 
     // row listeners
@@ -364,7 +383,7 @@ const Table = function()
 
                 listener.handler( { data: record, columns: columns, row: row } ); 
 
-                self.normal( active.highlight?.getAttribute( "data-id" ) );
+                self.unhighlight( active.highlight?.getAttribute( "data-id" ) );
 
                 active.highlight = row;
             } );
@@ -372,6 +391,24 @@ const Table = function()
             row.classList.add( "tr" );
         } );
     };
+
+    // value modifier
+    function numbers( config, column, record, operator )
+    {
+        let value = record[ column ];
+
+        // columns values and totals
+        if ( config.formula )
+        {
+            value = config.formula( { column: column, record: record, totals: self.totals, value: Number( value ) * operator } );         
+        }  
+        else
+        {
+            self.totals[ column ] += Number( value ) * operator; 
+        }
+
+        return value;
+    }
 
     function show( column )
     {
@@ -389,4 +426,4 @@ const Table = function()
     };
 };
 
-export default Table;
+export default Component;

@@ -5,7 +5,6 @@ const Panel = function( module )
 {
     let self = this;
     let panel;
-    let sum = ( a, b ) => a + b;
 
     this.init = async function( parent, params )
     {
@@ -22,7 +21,6 @@ const Panel = function( module )
     {
         panel.clear();
         
-        await module.queries(); 
         await output();   
     };    
 
@@ -32,31 +30,16 @@ const Panel = function( module )
 
         let table = await panel.addComponent( { id: "dividends", type: "table" } );
             table.addRowListener( { type: "contextmenu", handler: table.edit } );
-            table.addSubmitListener( { type: "submit", handler: async function ( data )
+            table.addSubmitListener( { type: "submit", handler: async function ( args )
             { 
-                let form = this;
+                args.source = self;
 
-                table.highlight( data.id );
-
-                let record = await t2.db.tx.update( module.table, Number( data.id ), new Data( data ) );
-
-                let records = await t2.db.tx.filter( module.table, [ { key: "action", operator: "==", value: "DIV" } ] );
-
-                table.populate( { array: records.data, orderBy: "symbol" } );
-                table.setTotals();
-
-                let message = await panel.addComponent( { id: "message", type: "message", format: "block", output: "text" } );
-                    message.set( `Updated ${ data.id }` );   
-
-                let popup = t2.ui.children.get( "subcontent.popup" );
-                    popup?.element?.remove();
-
-                table.normal( data.id );
+                await module.updateTransaction( args );
             } } );
             table.addColumn( { 
                 input: { name: "id", type: "hidden" }, 
                 cell: { css: {}, display: 0, modes: [ "edit" ] },
-                format: [ "isoDate" ] } );
+                format: [] } );
             table.addColumn( { 
                 input: { name: "datetime", type: "text" }, 
                 cell: { css: { class: "date" }, display: 12, modes: [ "read", "edit" ] },
@@ -100,7 +83,6 @@ const Panel = function( module )
                 input: { type: "submit", value: "UPDATE" }, 
                 cell: { css: {}, display: 4, modes: [ "edit" ] },
                 format: [] } );
-            table.setColumns( module.mode );
             table.populate( { array: array, orderBy: "symbol" } );
             table.setTotals();
     };

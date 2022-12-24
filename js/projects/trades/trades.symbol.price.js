@@ -4,12 +4,10 @@ const Panel = function( module )
 {
     let self = this;
     let panel;
-    let subcontent;
 
     this.init = async function( parent, params )
     {
         panel = await parent.addContainer( { id: "panel", type: "panel", format: "block" } );
-        subcontent = t2.ui.children.get( "subcontent" );
 
         this.element = panel.element;
         this.type = panel.type;
@@ -21,7 +19,6 @@ const Panel = function( module )
     this.run = async function()
     {
         panel.clear();
-        subcontent.clear();
         
         await this.plot();
     };

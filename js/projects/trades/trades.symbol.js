@@ -2,29 +2,58 @@ import totals from "./trades.calculate.totals.js";
 
 const Symbol = function( module )
 {
-    let breadcrumbs = t2.ui.children.get( "footer.breadcrumbs" );
-
+    let self = this;
+    
     this.run = async function()
     {
         Object.assign( module, this );
 
-        await symbols();
-
-        if ( !module.symbol || module._symbol )
-            return;
+        await navigation();
 
         await this.refresh();  
     };
 
+    async function navigation()
+    {
+        let menu = t2.ui.children.get( "menu" );
+
+        let symbols = await menu.addComponent( { id: "symbols", type: "menu", format: "block" } );
+            symbols.update( module.data.symbol );
+            symbols.activate( module.symbol );
+            symbols.addListener( { type: "click", handler: function() 
+            { 
+                t2.navigation.update( 
+                {
+                    clear: [ "content" ]
+                } );
+
+                let link = arguments[ 2 ].curr;
+                let symbol = link.textContent;
+
+                t2.navigation.components.breadcrumbs.set( 2, symbol ); 
+
+                module.setSymbol( symbol );
+            } } );   
+
+        if ( module.symbol )
+            symbols.activate( module.symbol );
+    }
+
     this.refresh = async function()
     {
         delete module.date;
-        module.symbol = module._symbol;
 
-        //let subcontent = t2.ui.children.get( "subcontent" );
-        //    subcontent.clear();
-        
+        if ( t2.navigation.linked )
+        {
+            delete t2.navigation.linked;
+            return;
+        }
+
+        if ( !module.symbol )
+            return;
+
         await module.queries(); 
+        
         await layout();
     };
 
@@ -37,7 +66,6 @@ const Symbol = function( module )
     async function container()
     {
         let content = t2.ui.children.get( "content" );
-        //    content.clear();
 
         let details = await content.addContainer( { id: "details", type: "panels", format: "block", output: "vertical" } );
         let title = await details.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
@@ -56,21 +84,17 @@ const Symbol = function( module )
             tabs.addListener( { type: "click", handler: ( active ) => 
             {
                 module.tab = array.findIndex( id => id == active.id );
-                
+
                 title.set( `${ module.symbol } ${ active.id }` );
                 
-                breadcrumbs.set( 2, module.symbol );
-                breadcrumbs.set( 3, active.panel?.label || "" ); 
+                t2.navigation.components.breadcrumbs.set( 3, active.panel?.label || "" ); 
             } } );  
             tabs.update( details.panels );
-            tabs.activate( array[ 0 ] );
+            tabs.activate( array[ module.tab ] || array[ 0 ] );
     }
 
     async function summary()
     {
-        if ( !module.symbol )
-            return;
-        
         let result = await totals( module );
         
         let margin = t2.ui.children.get( "margin" );
@@ -157,41 +181,6 @@ const Symbol = function( module )
                 column: { name: "brokerage" },
                 row: { name: "data" }
             } );
-    }
-
-    // symbols menu
-    async function symbols()
-    {
-        let menu = t2.ui.children.get( "menu" );
-
-        let symbols = await menu.addComponent( { id: "symbols", type: "menu", format: "block" } );
-            symbols.update( module.data.symbol );
-            symbols.activate( module.symbol );
-            symbols.addListener( { type: "click", handler: function() 
-            { 
-                let link = arguments[ 2 ].curr;
-                let symbol = link.textContent;
-
-                module._symbol = symbol;
-
-                breadcrumbs.set( 2, symbol ); 
-
-                if ( module.symbol )
-                {
-                    link.classList.remove( "inactive" );
-                    
-                    module.unsetSymbol( symbol );
-                }
-                else
-                {
-                    link.classList.add( "inactive" );
-                    
-                    module.setSymbol( symbol );
-                }
-            } } );   
-
-        if ( module.symbol )
-            symbols.activate( module.symbol );
     }
 };
 

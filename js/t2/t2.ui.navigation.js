@@ -34,11 +34,14 @@ const Navigation = function()
     this.path = function( path )
     {
         let _path = path.split( "/" );
+        let index = 0;
 
-        names.forEach( ( name, index ) => 
+        names.forEach( ( name ) => 
         {
-            if ( _path[ index ] )
-                self[ name ].activate( _path[ index ] );
+            if ( _path[ index ] && self.components[ name ].activate ) 
+                self.components[ name ].activate( _path[ index ] );
+
+            index++;
         } );
     };
 

@@ -13,20 +13,35 @@ const Day = function( module )
     {
         Object.assign( module, this );
 
-        await this.refresh();  
+        console.warn( module.date );
+        
+        await this.refresh();
+        await module.queries();  
         await layout();  
+
+        update();
+
+        return;
+
+        for ( let [ id, component ] of t2.ui.children )
+            console.log( component.class, component.type, id );
     };
 
     this.refresh = async function()
     {
         delete module.symbol;
-        module.date = module.date || today;
-
-        await module.queries();    
+        module.date = module.date || today;   
     };
 
     async function layout()
     {
+        [ "submenu", "subcontent", "submargin" ].forEach( id => t2.navigation.addIgnore( { id: id, ignore: [ "clear" ] } ) );
+        
+        t2.navigation.update( 
+        {
+            clear: [ "menu", "submenu", "content", "subcontent" ]
+        } );
+        
         await chart();
         await symbols();
         await date();
@@ -35,6 +50,7 @@ const Day = function( module )
         await losses();
         await problems();
         await week();   
+        await zero();
         await module.transaction( self );
     }
 
@@ -178,10 +194,10 @@ const Day = function( module )
                 let link = arguments[ 2 ].curr;
                 let symbol = link.textContent;
 
-                module._symbol = symbol;
                 module.symbol = symbol;
 
                 t2.navigation.path( `/symbol/${ symbol }` );
+                t2.navigation.linked = true;
             } } );   
 
         if ( module.symbol )
@@ -192,7 +208,7 @@ const Day = function( module )
     async function date()
     {
         let dates = await submenu.addComponent( { id: "date", type: "form", format: "flex" } );
-            dates.addListener( { type: "submit", handler: async ( data ) => module.setDate( data.date ) } );
+            dates.addListener( { type: "submit", handler: async ( args ) => module.setDate( args.data.date ) } );
             dates.addField( { 
                 input: { name: "date", type: "date", value: module.date, max: today, required: "" }, 
                 cell: { css: {}, display: 7 },
@@ -233,7 +249,14 @@ const Day = function( module )
 
         let table = await container.addComponent( { id: brokerage.toLowerCase(), type: "table" } );
             table.addRowListener( { type: "contextmenu", handler: table.edit } );
-            table.addSubmitListener( { type: "submit", handler: module.updateTransaction } );//( e, data, self, table, brokerage ) 
+            table.addSubmitListener( { type: "submit", handler: async ( args ) => 
+            {
+                args.source = self;
+
+                await module.updateTransaction( args );
+
+                update();
+            } } );
             table.addColumn( { 
                 input: { name: "id", type: "hidden" }, 
                 cell: { css: {}, display: 0, modes: [ "edit" ] },
@@ -297,7 +320,6 @@ const Day = function( module )
                 input: { type: "submit", value: "UPDATE" }, 
                 cell: { css: {}, display: 4, modes: [ "edit" ] },
                 format: [] } );
-            table.setColumns();
             table.populate( { array: array, orderBy: "datetime" } );
             table.setTotals();
 
@@ -377,7 +399,6 @@ const Day = function( module )
 
                     return value;
                 } } );
-            table.setColumns();
             table.populate( { array: array, orderBy: "name" } );
             table.setTotals();
     }
@@ -411,7 +432,7 @@ const Day = function( module )
             title.set( `Week at a Glance` );
         
         let qty = { predicate: { conditions: [ { name: "qty", operator: ">=", value: 0 } ], options: [ "buy", "sell" ] } };
-        let week = await container.addComponent( { id: "week", type: "week", format: "table-body" } );
+        let week = await container.addComponent( { id: "week", type: "weekdays", format: "table-body" } );
             week.addCellListener( { type: "contextmenu", handler: records } );
             week.populate(
             { 
@@ -426,6 +447,64 @@ const Day = function( module )
                     format: [ "negate", "auto" ] 
                 }
             } );
+    }
+
+    // show errant transactions
+    async function zero()
+    {
+        let array = module.data.all.filter( record => !record.qty || !record.price );
+
+        let container = await content.addContainer( { id: "zero", type: "box", format: "inline-block" } );
+            container.scale();
+        let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
+            title.set( "Zero Entries" );
+
+        let table = await container.addComponent( { id: "zero", type: "table" } );
+            table.addRowListener( { type: "contextmenu", handler: table.edit } );
+            table.addSubmitListener( { type: "submit", handler: ( args ) => 
+            {
+                args.source = self;
+
+                module.updateTransaction( args );
+            } } );
+            table.addColumn( { 
+                input: { name: "id", type: "hidden" }, 
+                cell: { css: {}, display: 0, modes: [ "edit" ] },
+                format: [] } );
+            table.addColumn( { 
+                input: { name: "datetime", type: "datetime" }, 
+                cell: { css: { class: "date" }, display: 12, modes: [ "read", "edit" ] },
+                format: [ "date&time" ] } );
+            table.addColumn( { 
+                input: { name: "symbol", type: "select" }, 
+                cell: { css: {}, display: 4, modes: [ "read", "edit" ] },
+                format: [ "uppercase" ],
+                options: module.data.symbol } );
+            table.addColumn( { 
+                input: { name: "action", type: "text" }, 
+                cell: { css: { value: null }, display: 3, modes: [ "read", "edit" ] },
+                format: [ "uppercase" ] } );
+            table.addColumn( { 
+                input: { name: "notes", type: "text" }, 
+                cell: { css: { value: "action" }, display: 4, modes: [ "edit" ] } } );
+            table.addColumn( { 
+                input: { name: "qty", type: "number", step: 0.0001 }, 
+                cell: { css: { class: "info" }, display: 3, modes: [ "read", "edit" ] },
+                format: [ "auto" ] } );
+            table.addColumn( { 
+                input: { name: "price", type: "number", step: 0.0001 }, 
+                cell: { css: { class: "value" }, display: 4, modes: [ "read", "edit" ] },
+                format: [ "dollar" ] } );
+            table.addColumn( { 
+                input: { name: "brokerage", type: "select" }, 
+                cell: { css: {}, display: 9, modes: [ "edit" ] },
+                format: [],
+                options: [ "TDAmeritrade", "JPMorganChase", "Robinhood" ] } );         
+            table.addColumn( { 
+                input: { type: "submit", value: "UPDATE" }, 
+                cell: { css: {}, display: 4, modes: [ "edit" ] },
+                format: [] } );
+            table.populate( { array: array, orderBy: "datetime" } );        
     }
 
     // week cell popup
@@ -488,7 +567,6 @@ const Day = function( module )
 
                     return value;
                 } } ); 
-            table.setColumns();
             table.populate( { array: array, orderBy: "datetime" } );
             table.setTotals();
 
@@ -497,6 +575,12 @@ const Day = function( module )
 
         previous.cell = td;
         previous.popup = popup;
+    }
+
+    async function update()
+    {
+        let week = t2.ui.children.get( "content.week.week" );
+            week.update();
     }
 };
 

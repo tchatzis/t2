@@ -37,7 +37,7 @@ const T2 = function()
     {
         await t2.navigation.setLayout( { name: "navigation", ignore: [ "menu" ] } );
 
-        let menu = await self.navigation.addComponent( { id: "menu", type: "menu", format: "flex", parent: "header" } );
+        let menu = await self.navigation.addComponent( { id: "main", type: "menu", format: "flex", parent: "header" } );
             menu.addListener( { type: "click", handler: async function()
             {
                 let active = arguments[ 2 ];

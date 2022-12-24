@@ -6,6 +6,7 @@ const Panel = function( module )
     let actions = [ "BUY", "SELL" ];
     let arrays = {};
     let limit = 1.2001;
+    let delay = 100;
     let comparator = ( a, b ) => { return { 
         BUY:  a.qty == b.qty && a.price <= b.price && a.price * limit > b.price,/* && a.brokerage == b.brokerage,*/ 
         SELL: a.qty == b.qty && a.price >= b.price && a.price < b.price * limit,/* && a.brokerage == b.brokerage */
@@ -18,7 +19,6 @@ const Panel = function( module )
     this.init = async function( parent, params )
     {
         panel = await parent.addContainer( { id: "panel", type: "panel", format: "flex-left" } );
-        subcontent = t2.ui.children.get( "subcontent" );
 
         this.element = panel.element;
         this.type = panel.type;
@@ -30,9 +30,6 @@ const Panel = function( module )
     this.run = async function()
     {
         panel.clear();
-        subcontent.clear();
-        
-        await module.queries();
 
         let records = module.data.filtered;
 
@@ -48,9 +45,7 @@ const Panel = function( module )
                 tables[ result.action ].setTotals();
             } ); 
 
-        //await t2.common.delay( alert, 2000, "Ready?" );
-
-        let { accepted, rejected } = await scan( "BUY", "highlight", 100 );
+        let { accepted, rejected } = await scan( "BUY", "highlight", delay );
 
         execute( accepted );
     };
@@ -128,7 +123,6 @@ const Panel = function( module )
                 input: { name: "brokerage", type: "hidden" }, 
                 cell: { css: { class: "value" }, display: 0, modes: [ "read" ] },
                 format: [] } );
-            transactions.setColumns( module.mode );
 
         tables[ action ] = transactions;
 
@@ -158,8 +152,11 @@ const Panel = function( module )
 
             if ( found )
             {
-                row( action, data, "hidden" );
-                row( other( action ), found, "hidden" );
+                await t2.common.delay( () =>
+                {
+                    tables[ action ].removeRow( data );
+                    tables[ other( action ) ].removeRow( found );
+                }, delay )
 
                 accepted.push( { [ action ]: data, [ other( action ) ]: found } );
             }
@@ -170,11 +167,11 @@ const Panel = function( module )
             {
                 i++;
 
-                [ "highlight", "pairing" ].forEach( css => active?.classList.remove( css ) );  
-                 
-                active = tr;  
+                active = tr;
 
-                await t2.common.delay( iterator, delay, i, tr ); 
+                [ "highlight", "pairing" ].forEach( css => active?.classList.remove( css ) );
+                
+                await t2.common.delay( iterator, 0, i, tr );                    
             };    
         }
 
@@ -219,7 +216,7 @@ const Panel = function( module )
             } );
 
             let id = t2.common.uuid();
-            let total = { id: id, action: "GAIN", notes: percent > 10 ? `${ percent }%` : "", qty: totals.qty, price: totals.price, value: totals.value, brokerage: "none", sign: 1, flag: percent > 10 };
+            let total = { id: id, action: "GAIN", notes: percent, qty: totals.qty, price: totals.price, value: totals.value, brokerage: "none", sign: 1 };
             grouped.push( total );
         } );
 
@@ -273,8 +270,12 @@ const Panel = function( module )
                     {
                         args.totals[ args.column ] += args.value; 
 
-                        if ( args.record.flag )
-                            transactions.highlight( args.record.id );
+                        if ( args.record.notes )
+                        {
+                            let hue = args.record.notes * 6;
+
+                            transactions.hsl( args.record.id, hue );
+                        }
                     }
 
                     return args.value;
@@ -283,7 +284,6 @@ const Panel = function( module )
                 input: { name: "brokerage", type: "hidden" }, 
                 cell: { css: { class: "value" }, display: 0, modes: [ "read" ] },
                 format: [] } );
-            transactions.setColumns( module.mode );
 
         tables.grouped = transactions;
     }
@@ -325,12 +325,13 @@ const Panel = function( module )
     }
     
     // manually select unmatched
-    async function select( record )
+    async function select( args )
     {
         let debug = false;
         
+        let record = args.data;
         let action = record.action;
-        
+
         if ( action == "DIV" )
             action = "BUY";
 
@@ -419,6 +420,16 @@ const Panel = function( module )
                 let v = Math.round( r.map( o => o.value * o.sign ).reduce( ( a, b ) => ( a + b ), 0 ) * 10000 ) / 10000;
                 let total = { id: "", action: "GAIN", notes: "", qty: qty, price: Math.round( v / sell * 10000 ) / 10000, value: v, brokerage: "none", sign: 1 };
 
+                r.forEach( record => 
+                {
+                    let action = record.action;
+
+                    if ( record.action == "DIV" )
+                        action = "BUY";
+                    
+                    tables[ action ].removeRow( record );
+                } );
+                
                 r.push( total );
 
                 tables.grouped.populate( { array: tables.grouped.array.concat( r ) } );

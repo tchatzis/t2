@@ -129,7 +129,7 @@ const Component = function()
         let t = params.date.getDay();
         let today = params.date.getDate();
 
-        for ( let i = 0; i <= 6; i++ )
+        for ( let i = 1; i <= 5; i++ )
         {
             let date = new Date();
                 date.setDate( today + ( i - t ) );

@@ -3,7 +3,7 @@ import Common from "./t2.common.handlers.js";
 const Handlers = function()
 {
     this.addComponent = async function( params )
-    {
+    {   
         if ( t2.ui.children.has( params.id ) )
             return t2.ui.children.get( params.id );
         
@@ -15,10 +15,7 @@ const Handlers = function()
             component.path.set( params.id, this.path.get( this.id ).concat( params.id ) );
             component.init( params );  
 
-        let path = component.path.get( params.id ).join( "." );
-        t2.ui.children.set( path, component );
-
-        this.children.set( params.id, component );
+        this.adopt( component, params );
 
         return component;
     };
@@ -36,12 +33,7 @@ const Handlers = function()
             container.path.set( params.id, this.path.get( this.id ).concat( params.id ) );
             container.init( params ); 
     
-        let path = container.path.get( params.id ).join( "." );
-        t2.ui.children.set( path, container );
-        
-        this.children.set( params.id, container );
-
-        Object.assign( container, params );
+        this.adopt( container, params );
 
         return container;
     };
@@ -56,12 +48,7 @@ const Handlers = function()
             object.path.set( params.id, this.path.get( this.id ).concat( params.id ) );
             await object.init( this, params ); 
         
-            let path = object.path.get( params.id ).join( "." );
-            t2.ui.children.set( path, object );
-        
-        this.children.set( params.id, object );
-
-        Object.assign( object, params );
+        this.adopt( object, params );
 
         return object;
     };

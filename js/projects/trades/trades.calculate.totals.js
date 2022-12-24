@@ -16,6 +16,8 @@ async function totals( module )
         let output = {};
             output.brokerage = brokerage;
             output.data = {};
+        let _last = records.filter( record => ( record.brokerage == brokerage ) );
+        let last = _last[ _last.length - 1 ];
         
         let object = {};
             object.brokerage = brokerage;
@@ -35,8 +37,6 @@ async function totals( module )
             object.data[ action ].qty   = round( object.data[ action ].records.map( record => record.qty * record.sign * div ).reduce( sum, 0 ) );
             object.data[ action ].value = round( object.data[ action ].records.map( record => record.value * record.sign * div ).reduce( sum, 0 ) );
             object.data[ action ].price = round( object.data[ action ].value / object.data[ action ].qty );
-
-            let last = object.data[ action ].records[ object.data[ action ].records.length - 1 ];
 
             if ( last )
                 output.data[ "last price" ] = round( last.price );

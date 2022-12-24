@@ -26,16 +26,13 @@ const Panel = function( module )
         subcontent.clear();
         panel.clear();
         
-        await module.queries(); 
         await week();   
         await history();     
-        await module.transaction( handler );  
+        await module.transaction();  
     };
 
     async function history()
     {  
-        await module.queries();
-
         let records = module.data.filtered;
         
         table = await panel.addComponent( { id: "transactions", type: "table" } );
@@ -44,16 +41,11 @@ const Panel = function( module )
         { 
             row.classList.toggle( "pairing" ); 
         } } );
-        table.addSubmitListener( { type: "submit", handler: async function ( data )
+        table.addSubmitListener( { type: "submit", handler: async function ( args )
         { 
-            let form = this;
+            args.source = self;
 
-            let record = await t2.db.tx.update( module.table, Number( data.id ), new Data( data ) );
-
-            let records = await t2.db.tx.filter( module.table, [ { key: "symbol", operator: "==", value: module.symbol } ] );
-
-            table.populate( { array: records.data, orderBy: "datetime" } );
-            table.setTotals();
+            await module.updateTransaction( args );
         } } );
         table.addColumn( { 
             input: { name: "id", type: "hidden" }, 
@@ -118,7 +110,6 @@ const Panel = function( module )
             input: { type: "submit", value: "UPDATE" }, 
             cell: { css: {}, display: 4, modes: [ "edit" ] },
             format: [] } );
-        table.setColumns( module.mode );
         table.populate( { array: records, orderBy: "datetime" } );
         table.setTotals();
     }
@@ -126,7 +117,7 @@ const Panel = function( module )
     async function week()
     {
         let qty = { predicate: { conditions: [ { name: "qty", operator: ">=", value: 0 } ], options: [ "buy", "sell" ] } };
-        let week = await panel.addComponent( { id: "week", type: "week", format: "table-body" } );
+        let week = await panel.addComponent( { id: "week", type: "weekdays", format: "table-body" } );
             week.populate(
             { 
                 data: module.data.filtered, 
@@ -142,7 +133,7 @@ const Panel = function( module )
             } );
     }
 
-    async function handler( data )
+    /*async function handler( data )
     {
         let event = this;
         let submit = event.submitter;
@@ -161,7 +152,7 @@ const Panel = function( module )
         table.setTotals();
 
         self.run();
-    }
+    }*/
 };
 
 export default Panel;

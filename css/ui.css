@@ -401,6 +401,12 @@
     transition: transform 500ms linear, width 1000ms linear;
 }
 
+.scanning
+{
+    background-color: #CC0;
+    transition: background-color 100ms linear;
+}
+
 .section
 {
     color: violet;

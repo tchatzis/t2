@@ -5,11 +5,15 @@ const formats =
     absolute:   ( value ) => Math.abs( value ),
     auto:       ( value ) => 
                 {
+                    let exp = 5;
+                    let pow = Math.pow( 10, exp );
                     let int = parseInt( value );
-                    let dec = value - int;
-                    let precision = Math.round( dec * 10000 ) / 10000;
+                    let dec = Math.round( ( value - int ) * pow ) / pow;
+                    let string = String( dec );
+                    let array = string.split( "." );
+                    let decimal = array[ 1 ] ? "." + array[ 1 ].substring( 0, exp ) : 0;
 
-                    return int + precision;
+                    return Number( int + decimal );
                 },
     boolean:    ( value ) => !!value,
     date:       ( value ) => new Date( value ).toLocaleDateString(),

@@ -1,9 +1,20 @@
 const Common = function()
 {
+    this.adopt = function( object, params )
+    {
+        let path = object.path.get( params.id ).join( "." );
+
+        t2.ui.children.set( path, object );
+
+        this.children.set( params.id, object );
+
+        Object.assign( object, params );
+    };
+    
     this.class = this.constructor.name;
 
     if ( !this.format )
-        console.warn( this.id, this.format, this )
+        console.error( "Format is not defined in", "id:", this.id, "format:", this.format, "object:", this )
 
     this.element.classList.add( this.format );
     this.element.setAttribute( "data-id", this.id );

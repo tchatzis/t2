@@ -2,9 +2,7 @@ import Handlers from "./t2.container.handlers.js";
 
 const Container = function()
 {
-    let self = this;
-
-    function Element( element )
+    function Container( element )
     {
         this.children = new Map();
         this.element = element;
@@ -47,7 +45,7 @@ const Container = function()
 
     this.root = async function( element )
     {
-        let container = new Element( element );
+        let container = new Container( element );
 
         container.path.set( container.id, [ container.id ] );
         container.format = getComputedStyle( element ).getPropertyValue( "display" );
@@ -55,7 +53,7 @@ const Container = function()
         let path = container.path.get( container.id ).join( "." );
 
         t2.ui.children.set( path, container );
-        container.children.set( path, container );
+        container.children.set( container.id, container );
 
         Handlers.call( container );
 

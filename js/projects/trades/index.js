@@ -6,9 +6,9 @@ const Trades = function()
 
     this.init = async function()
     {
-        await this.queries();
+        await navigation();
 
-        navigation();
+        await this.queries();
 
         let max = Math.max.apply( null, this.data.all.map( record => new Date( record.datetime ) ) );
 
@@ -17,7 +17,7 @@ const Trades = function()
 
     async function navigation()
     {
-        let menu = t2.navigation.components.menu;
+        let menu = t2.navigation.components.main;
             menu.update( Array.from( t2.movie.scenes.keys() ) );
             menu.active( self.info.namespace );
 
@@ -60,7 +60,6 @@ const Trades = function()
 
         if ( this.date )
         {
-            //console.log( "date", this.date );
             this.data.filtered = this.data.filtered.filter( record => t2.formats.isoDate( record.datetime ) == this.date ); 
         }
 
@@ -103,7 +102,7 @@ const Trades = function()
     {
         this.date = date;
 
-        nav.call( this );
+        await this.run();
     };
     
     this.setSymbol = async function( symbol )
@@ -113,7 +112,7 @@ const Trades = function()
         await this.refresh();
     };
 
-    this.unsetSymbol = async function( symbol )
+    this.unsetSymbol = async function()
     {
         delete this.symbol;
 
@@ -129,13 +128,18 @@ const Trades = function()
     // common transaction entry form
     this.transaction = async function( source )
     {
+        console.warn( source );
+        
         let subcontent = t2.ui.children.get( "subcontent" );
 
         let form = await subcontent.addComponent( { id: "transaction", type: "form", format: "flex" } );
-            form.addListener( { type: "submit", handler: async ( e, data ) =>
+            form.addListener( { type: "submit", handler: async ( args ) =>
             {
-                let record = await this.addTransaction( e, data, source );
-                this.updateTable( record, source );
+                args.source = source;
+   
+                let record = await this.addTransaction( args );
+
+                this.appendRow( source, record );
             } } );
             form.addField( { 
                 input: { name: "datetime", type: "datetime", value: t2.formats.datetime( new Date() ) },
@@ -177,22 +181,30 @@ const Trades = function()
                 format: [] } );   
     };
 
-    // add transaction handler
+    // add transaction handlers
     this.addTransaction = async function( args )
     {
         let event = args.event;
         let data = args.data;
+        let table = args.table; 
         let form = event.target;
         let submit = event.submitter;
             submit.setAttribute( "disabled", "" );
+
         let message = t2.ui.children.get( "message" );
             message.output = "text";
             message.element.classList.add( "expanded" );    
-        let messages = await message.addComponent( { id: "message", type: "message", format: "block", output: "text" } );    
+        let messages = await message.addComponent( { id: "message", type: "message", format: "block", output: "text" } ); 
 
         data.action = submit.value;
 
         let record = await t2.db.tx.create( self.table, new Data( data ) );
+
+        if ( table )
+        {
+            table.highlight( record.id );
+            table.updateRow( row, record.data, Number( row.dataset.index ) );
+        }
 
         messages.set( `Added ${ record.id }` );
         await t2.common.delay( () => message.element.classList.remove( "expanded" ), 5000 ); 
@@ -205,14 +217,32 @@ const Trades = function()
         form.notes.value = "";
         submit.removeAttribute( "disabled" );
 
-        source.refresh();
+        await this.queries();
+
+        if ( table ) 
+            table.unhighlight( record.id );
 
         return record;
     };
 
+    this.appendRow = function( source, record )
+    {
+        let data = record.data;
+
+        let table = source[ data.brokerage ];
+            table.addRow( data, table.array.length );
+            table.parent.unscale();
+            table.highlight( data.id );
+            table.setTotals();
+
+            table.array.push( record );
+
+        return table;
+    };
+
+    // update transaction handlers
     this.updateTransaction = async function( args )
     { 
-        let event = args.event;
         let data = args.data;
         let table = args.table; 
         let row = args.row;
@@ -223,31 +253,24 @@ const Trades = function()
 
         let record = await t2.db.tx.update( self.table, Number( data.id ), new Data( data ) );
 
-        table.highlight( record.id );
-        table.resetTotals();
-        table.updateRow( row, record.data, Number( row.dataset.index ) );
-        table.setTotals();
+        await this.queries();
+
+        if ( table )
+        {
+            table.highlight( record.id );
+            table.updateRow( row, record.data, Number( row.dataset.index ) );
+        }
 
         messages.set( `Updated ${ record.id }` ); 
         await t2.common.delay( () => message.element.classList.remove( "expanded" ), 5000 ); 
         messages.set();
 
         let popup = t2.ui.children.get( "subcontent.popup" );
-            popup?.element?.remove();
+            popup?.element?.remove();  
+
+        if ( table ) 
+            table.unhighlight( record.id );
     }
-
-    this.updateTable = function( record, source )
-    {
-        let data = record.data;
-        
-        let table = source[ data.brokerage ];
-            table.addRow( record, table.array.length );
-            table.parent.unscale();
-            table.highlight( data.id );
-            table.setTotals();
-
-        return table;
-    };
 };
 
 export default Trades;

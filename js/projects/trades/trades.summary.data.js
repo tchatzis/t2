@@ -45,7 +45,9 @@ const Panel = function( module )
     async function output()
     {
         let array = await preamble();
-        let qty = { predicate: { conditions: [ { name: "qty", operator: ">", value: 0 } ], options: [ "active", "inactive" ] } };      
+        let status = { predicate: { conditions: [ { name: "qty", operator: ">", value: 0 } ], options: [ "active", "inactive" ] } };   
+        let div = { predicate: { conditions: [ { name: "div", operator: ">", value: 0 } ], options: [ "number", "data" ] } }; 
+        let qty = { predicate: { conditions: [ { name: "qty", operator: ">", value: 0 } ], options: [ "number", "data" ] } };    
         let average = { predicate: { conditions: [ { name: "qty", operator: "==", value: 0 }, { name: "average", operator: ">", value: 0 } ], options: [ "buy", "value" ] } };  
         let gain = { predicate: { conditions: [ { name: "qty", operator: "==", value: 0 }, { name: "gain", operator: "<=", value: 0 } ], options: [ "sell", "value" ] } };
         let dividend = { predicate: { conditions: [ { name: "dividend", operator: ">", value: 0 } ], options: [ "buy", "value" ] } }; 
@@ -54,29 +56,31 @@ const Panel = function( module )
             table.addRowListener( { type: "contextmenu", handler: () => {} } );
             table.addColumn( { 
                 input: { name: "symbol", type: "text" }, 
-                cell: { css: {}, display: 4, modes: [ "read" ] },
+                cell: { css: status, display: 4, modes: [ "read" ] },
                 format: [ "uppercase" ] } );
             table.addColumn( { 
                 input: { name: "trades", type: "number", step: 1, min: 0 }, 
                 cell: { css: {}, display: 3, modes: [ "read" ] } } );
             table.addColumn( { 
                 input: { name: "div", type: "number", step: 1, min: 0 }, 
-                cell: { css: {}, display: 3, modes: [ "read" ] },
-                format: [ "precision" ] } );
+                cell: { css: div, display: 3, modes: [ "read" ] },
+                format: [ "auto" ] } );
             table.addColumn( { 
                 input: { name: "buy", type: "number", step: 1, min: 0 }, 
-                cell: { css: {}, display: 3, modes: [ "read" ] } } );
+                cell: { css: {}, display: 3, modes: [ "read" ] },
+                format: [ "auto" ] } );
             table.addColumn( { 
                 input: { name: "sell", type: "number", step: 1, min: 0 }, 
-                cell: { css: {}, display: 3, modes: [ "read" ] } } );
+                cell: { css: {}, display: 3, modes: [ "read" ] },
+                format: [ "auto" ] } );
             table.addColumn( { 
                 input: { name: "qty", type: "number", step: 1, min: 0 }, 
                 cell: { css: qty, display: 3, modes: [ "read" ] },
-                format: [ "precision" ] } );
+                format: [ "auto" ] } );
             table.addColumn( { 
                 input: { name: "average", type: "number", step: 0.001 }, 
                 cell: { css: average, display: 4, modes: [ "read" ] },
-                format: [ "precision" ],
+                format: [ "auto" ],
                 formula: ( args ) =>
                 {
                     args.totals[ args.column ] = 0;
@@ -100,7 +104,6 @@ const Panel = function( module )
                 input: { name: "dividend", type: "number", readonly: "" }, 
                 cell: { css: dividend, display: 4, modes: [ "read" ] },
                 format: [ "dollar" ] } );
-            table.setColumns( module.mode );
             table.populate( { array: array, orderBy: "symbol" } );
             table.setTotals();
             table.highlight( module.symbol );

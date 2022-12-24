@@ -86,16 +86,11 @@ const Search = function( module )
     {  
         table = await container.addComponent( { id: "transactions", type: "table" } );
         table.addRowListener( { type: "contextmenu", handler: table.edit } );
-        table.addSubmitListener( { type: "submit", handler: async function ( data )
+        table.addSubmitListener( { type: "submit", handler: async function ( args )
         { 
-            let form = this;
+            args.source = self;
 
-            let record = await t2.db.tx.update( module.table, Number( data.id ), new Data( data ) );
-
-            let records = await t2.db.tx.filter( module.table, [ { key: "symbol", operator: "==", value: module.symbol } ] );
-
-            table.populate( { array: records.data, orderBy: "datetime" } );
-            table.setTotals();
+            await module.updateTransaction( args );
         } } );
         table.addColumn( { 
             input: { name: "id", type: "hidden" }, 
@@ -159,13 +154,12 @@ const Search = function( module )
         table.addColumn( { 
             input: { type: "submit", value: "UPDATE" }, 
             cell: { css: {}, display: 4, modes: [ "edit" ] },
-            format: [] } );
-        table.setColumns( module.mode );  
+            format: [] } ); 
     }
 
     function handler()
     {
-        let filters = arguments[ 0 ];
+        let filters = arguments[ 0 ].data;
         let result = [ ...module.data.all ];
 
         Object.keys( filters ).forEach( filter => 
@@ -194,7 +188,7 @@ const Search = function( module )
             }
         } );
 
-        console.log( result );
+        //console.log( filters, result );
 
         module.symbol = result.symbol;
 

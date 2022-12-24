@@ -1,8 +1,5 @@
 const Common = function()
 {
-    let self = this;
-    let ignored = [];
-
     this.addTime = ( _date, time ) =>
     {
         let date = new Date( _date );
@@ -66,6 +63,14 @@ const Common = function()
         parent.appendChild( el );
         
         return el; 
+    };
+
+    this.getCSS = function( el, prop )
+    {
+        let style = getComputedStyle( el );
+        let array = style[ prop ].split( " " ).map( val => parseInt( val ) );
+
+        return array.reduce( ( a, b ) => a + b, 0 );
     };
     
     this.getParent = function( elParams )

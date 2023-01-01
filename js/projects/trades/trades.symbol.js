@@ -1,73 +1,71 @@
 import totals from "./trades.calculate.totals.js";
 
-const Symbol = function( module )
+const Tabs = function( module )
 {
     let self = this;
+    let tab = 0;
     
-    this.run = async function()
-    {
-        Object.assign( module, this );
+    this.init = async function()
+    {   
+        await this.refresh(); 
 
-        await navigation();
-
-        await this.refresh();  
+        await navigation();         
     };
-
-    async function navigation()
-    {
-        let menu = t2.ui.children.get( "menu" );
-
-        let symbols = await menu.addComponent( { id: "symbols", type: "menu", format: "block" } );
-            symbols.update( module.data.symbol );
-            symbols.activate( module.symbol );
-            symbols.addListener( { type: "click", handler: function() 
-            { 
-                t2.navigation.update( 
-                {
-                    clear: [ "content" ]
-                } );
-
-                let link = arguments[ 2 ].curr;
-                let symbol = link.textContent;
-
-                t2.navigation.components.breadcrumbs.set( 2, symbol ); 
-
-                module.setSymbol( symbol );
-            } } );   
-
-        if ( module.symbol )
-            symbols.activate( module.symbol );
-    }
 
     this.refresh = async function()
     {
-        delete module.date;
-
-        if ( t2.navigation.linked )
-        {
-            delete t2.navigation.linked;
-            return;
-        }
+        module.unsetDate();
 
         if ( !module.symbol )
             return;
 
         await module.queries(); 
-        
-        await layout();
     };
-
-    async function layout()
+    
+    async function navigation()
     {
-        await container();
-        await summary(); 
+        if ( module.symbol )
+            await t2.navigation.update( 
+            [ 
+                { id: "submenu",    functions: [ { ignore: "clear" }, { clear: null }, { hide: null } ] }, 
+                { id: "subcontent", functions: [ { ignore: "clear" }, { clear: null }, { show: null }, { invoke: [ { f: module.transaction, args: self } ] } ] },
+                { id: "submargin",  functions: [ { ignore: "clear" }, { clear: null }, { show: null } ] },
+                { id: "menu",       functions: [ { ignore: "clear" }, { show: null }, { invoke: [ { f: symbols, args: null } ] } ] },
+                { id: "content",    functions: [ { clear: null }, { invoke: [ { f: container, args: null } ] } ] },
+                { id: "margin",     functions: [ { clear: null }, { invoke: [ { f: summary, args: null } ] } ] }
+            ] );
+        else
+            await t2.navigation.update( 
+            [ 
+                { id: "submenu",    functions: [ { ignore: "clear" }, { clear: null }, { hide: null } ] }, 
+                { id: "subcontent", functions: [ { ignore: "clear" }, { clear: null }, { show: null } ] },
+                { id: "submargin",  functions: [ { ignore: "clear" }, { clear: null }, { show: null } ] },
+                { id: "menu",       functions: [ { ignore: "clear" }, { show: null }, { invoke: [ { f: symbols, args: null } ] } ] },
+                { id: "content",    functions: [ { clear: null } ] },
+                { id: "margin",     functions: [ { clear: null } ] }
+            ] );      
     }
 
+    // menu
+    async function symbols()
+    {
+        let symbols = this.children.get( "symbols" );
+            symbols.addBreadcrumbs( 2, t2.navigation.components.breadcrumbs );   
+            symbols.update( module.data.symbol );
+            symbols.highlight( module.symbol );
+            symbols.addListener( { type: "click", handler: async function() 
+            { 
+                module.setSymbol( symbols.activated.toUpperCase() );
+
+                self.init();
+            } } );  
+    }
+
+    // content
     async function container()
     {
-        let content = t2.ui.children.get( "content" );
-
-        let details = await content.addContainer( { id: "details", type: "panels", format: "block", output: "vertical" } );
+        let details = await this.addContainer( { id: "panels", type: "panels", format: "block", output: "vertical" } );
+            
         let title = await details.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
             title.set( "Stock Details" );
 
@@ -81,26 +79,23 @@ const Symbol = function( module )
         let array = Array.from( details.panels.keys() );
         
         let tabs = await details.setComponent( { id: "tabs", type: "tabs", format: "flex-left", output: "horizontal" } );
+            tabs.addBreadcrumbs( 3, t2.navigation.components.breadcrumbs );    
             tabs.addListener( { type: "click", handler: ( active ) => 
             {
-                module.tab = array.findIndex( id => id == active.id );
+                tab = array.findIndex( id => id == active.id );
 
                 title.set( `${ module.symbol } ${ active.id }` );
-                
-                t2.navigation.components.breadcrumbs.set( 3, active.panel?.label || "" ); 
             } } );  
             tabs.update( details.panels );
-            tabs.activate( array[ module.tab ] || array[ 0 ] );
+            tabs.activate( array[ tab || 0 ] );
     }
 
+    // margin
     async function summary()
     {
         let result = await totals( module );
-        
-        let margin = t2.ui.children.get( "margin" );
-            margin.clear();
 
-        let matrix = await margin.addComponent( { id: "matrix", type: "matrix", format: "table-body" } );
+        let matrix = await this.addComponent( { id: "matrix", type: "matrix", format: "table-body" } );
             matrix.addRow( { 
                 input: { name: "status", type: "text" }, 
                 cell: { css: { value: "status" }, display: 4, modes: [ "read" ] },
@@ -184,4 +179,4 @@ const Symbol = function( module )
     }
 };
 
-export default Symbol;
+export default Tabs;

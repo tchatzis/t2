@@ -3,8 +3,6 @@ import Handlers from "./t2.component.handlers.js";
 const Component = function()
 {
     let self = this;
-    
-    this.path = [];
 
     this.init = function( params )
     {
@@ -19,13 +17,13 @@ const Component = function()
 
     this.reset = function()
     {
-        this.path = [];
+        this.array = [];
     };
 
     this.unset = function( index )
     {
-        this.path.splice( index, 1 );
-        this.element.textContent = path.join( "/" );
+        this.array.splice( index, 1 );
+        this.element.textContent = this.array.join( "/" );
     };
 };
 

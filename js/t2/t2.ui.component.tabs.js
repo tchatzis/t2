@@ -21,14 +21,13 @@ const Component = function()
             panel.show();
 
         let module = this.panels.get( id );
-
-        // run added modules
-        if ( module.run )
-            module.run();
+            module.refresh();
 
         active.curr = tab;
         active.id = id;
         active.panel = panel;
+
+        this.setBreadcrumbs( id ); 
         
         listeners.forEach( listener => listener.handler( active ) );
     };

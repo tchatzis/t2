@@ -1,26 +1,23 @@
 const Navigation = function()
 {
     let self = this;
-    let names = new Set();
+    let names = new Map();
+    let i = 0;
 
+    this.children = new Map();
+    
     this.components = {};
 
     this.addComponent = async function( params )
     {
         let parent = t2.ui.children.get( params.parent );
 
-        names.add( params.id );
-        
         this.components[ params.id ] = await parent.addComponent( { id: params.id, type: params.type || "menu", array: params.array, format: params.format || "flex", output: params.output || "block" } );
+
+        if ( [ "menu", "tabs" ].find( type => type == this.components[ params.id ].type ) )
+            names.set( i++, params.id );
     
         return this.components[ params.id ];
-    };
-
-    this.addIgnore = function( params )
-    {
-        let container = t2.ui.children.get( params.id );
-
-        params.ignore.forEach( ignore => container.ignore( ignore ) );          
     };
 
     this.import = async function( module, name )
@@ -31,36 +28,41 @@ const Navigation = function()
         return script;
     };
 
-    this.path = function( path )
+    this.path = async function( _path )
     {
-        let _path = path.split( "/" );
-        let index = 0;
+        let path = _path.split( "/" );
 
-        names.forEach( ( name ) => 
+        async function activate( index )
         {
-            if ( _path[ index ] && self.components[ name ].activate ) 
-                self.components[ name ].activate( _path[ index ] );
+            let name = names.get( index );
+            let link = path[ index ];
 
-            index++;
-        } );
+            if ( name && link )
+                await self.components[ name ].activate( link )
+
+            if ( index < names.size )
+                activate( index + 1 );
+        }
+
+        activate( 0 );
     };
 
-    this.setLayout = async function( params )
-    {
-        await t2.ui.layout.init( params );
-    };
-
-    this.update = function( params )
-    {
-        Object.keys( params ).forEach( event => 
+    this.update = function( array )
+    {   
+        // array of { element.id, [ functions ] }
+        array.forEach( item =>
         {
-            params[ event ].forEach( id => 
+            let component = t2.ui.children.get( item.id );
+
+            function execute( set )
             {
-                let component = t2.ui.children.get( id );
+                for ( let f in set )
+                {
+                    component[ f ]( set[ f ] );  
+                }
+            }
 
-                if ( component[ event ] )
-                    component[ event ]();
-            } );
+            item.functions.forEach( execute );
         } );
     };
 }

@@ -1,7 +1,8 @@
-import Common from "../../t2/t2.common.handlers.js";
+import Common from "../../t2/t2.container.handlers.js";
 
-const Export = function()
+const Panel = function()
 {
+    let self = this;
     let panel;
     
     this.init = async function( parent, params )
@@ -14,12 +15,26 @@ const Export = function()
         Object.assign( this, params );
         Common.call( this ); 
     };
+
+    this.refresh = async function()
+    {
+        await navigation();
+    };
+
+    async function navigation()
+    {
+        await t2.navigation.update( 
+        [ 
+            { id: "content", functions: [ { ignore: "clear" } ] },
+            { id: `content.panels.${ self.id }`, functions: [ { clear: null }, { invoke: [ { f: output, args: null } ] } ] }
+        ] );
+    } 
     
-    this.run = async function()
+    async function output()
     {
         panel.clear();
 
-        let form = t2.common.el( "form", panel.element );
+        let form = t2.common.el( "form", this.element );
             form.id = "export";
             form.addEventListener( "submit", ( e ) => data( e ) );
         let submit = t2.common.el( "input", panel.element );
@@ -45,7 +60,7 @@ const Export = function()
 
                 result.data.forEach( record => data[ result.table ].push( record ) ); 
             } );
-        let file = new File( [ JSON.stringify( data ) ], `${ t2.formats.date( new Date() ) }.idb`, options );
+        let file = new File( [ JSON.stringify( data ) ], `${ t2.formats.isoDate( new Date() ) }.idb`, options );
 
         download( file );
     }
@@ -62,4 +77,4 @@ const Export = function()
     }
 };
 
-export default Export;
+export default Panel;

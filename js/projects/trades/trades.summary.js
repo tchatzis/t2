@@ -1,58 +1,61 @@
-const Summary = function( module )
+const Tabs = function( module )
 {
     let self = this;
-    let content = t2.ui.children.get( "content" );
-    let subcontent = t2.ui.children.get( "subcontent" );
-        subcontent.clear();
-    let breadcrumbs = t2.ui.children.get( "footer.breadcrumbs" );
-    
-    this.run = async function()
-    {
-        Object.assign( module, this );
+    let tab = 0;
 
-        await this.refresh();  
+    this.init = async function()
+    {
+        await this.refresh(); 
+
+        await navigation();  
     };
 
     this.refresh = async function()
     {
-        delete module.date;
-        delete module.symbol;
+        module.unsetDate();
+        module.unsetSymbol();
 
-        content.clear();
-
-        container();
+        await module.queries();
     };
+
+    async function navigation()
+    {
+        await t2.navigation.update( 
+        [ 
+            { id: "submargin", functions: [ { ignore: "clear" }, { clear: null }, { show: null } ] }, 
+            { id: "menu",       functions: [ { ignore: "clear" }, { hide: null } ] },
+            { id: "content",    functions: [ { clear: null }, { invoke: [ { f: container, args: null } ] } ] },
+            { id: "subcontent",     functions: [ { clear: null }, { hide: null } ] },
+            { id: "margin",     functions: [ { clear: null }, { show: null } ] }
+        ] );
+    }
 
     async function container()
     {
-        let details = await content.addContainer( { id: "details", type: "panels", format: "block", output: "vertical" } );
-            // set breadcrumbs
-            details.addListener( { type: "click", handler: ( active ) => 
-            {
-                breadcrumbs.set.path( 2, active.panel?.label || "" );
-            } } );
+        let details = await this.addContainer( { id: "panels", type: "panels", format: "block", output: "vertical" } );
+
         let title = await details.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
             title.set( "Summary Details" );
-            await details.setModule( { id: "gains", label: "gains", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.summary.gains.js" } } );
-            await details.setModule( { id: "symbols", label: "symbols", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.summary.symbols.js" } } );
-            await details.setModule( { id: "closed", label: "closed", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.summary.closed.js" } } );
-            await details.setModule( { id: "data", label: "data", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.summary.data.js" } } );
-            await details.setModule( { id: "dividends", label: "dividends", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.summary.dividends.js" } } );
+
+        await details.setModule( { id: "gains", label: "gains", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.summary.gains.js" } } );
+        await details.setModule( { id: "symbols", label: "symbols", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.summary.symbols.js" } } );
+        await details.setModule( { id: "closed", label: "closed", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.summary.closed.js" } } );
+        await details.setModule( { id: "data", label: "data", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.summary.data.js" } } );
+        await details.setModule( { id: "dividends", label: "dividends", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.summary.dividends.js" } } );
         
         let array = Array.from( details.panels.keys() );
         
         let tabs = await details.setComponent( { id: "tabs", type: "tabs", format: "flex-left", output: "horizontal" } );
-        tabs.addListener( { type: "click", handler: ( active ) => 
-        {
-            module.tab = array.findIndex( id => id == active.id );
-            
-            title.set( `${ active.id }` );
-            
-            breadcrumbs.set( 2, active.panel?.label || "" ); 
-        } } );  
-        tabs.update( details.panels );
-        tabs.activate( "gains" );
+            tabs.addBreadcrumbs( 2, t2.navigation.components.breadcrumbs );    
+            tabs.addListener( { type: "click", handler: ( active ) => 
+            {
+                tab = array.findIndex( id => id == active.id );
+                
+                title.set( `${ active.id }` );
+            } } );  
+            tabs.update( details.panels );
+            tabs.activate( array[ tab || 0 ] );
     }
 };
 
-export default Summary;
+export default Tabs;

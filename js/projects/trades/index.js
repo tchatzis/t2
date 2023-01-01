@@ -1,4 +1,5 @@
 import Data from "./trades.data.js";
+import Message from "../../t2/t2.ui.message.js";
 
 const Trades = function()
 {
@@ -6,36 +7,30 @@ const Trades = function()
 
     this.init = async function()
     {
+        await this.refresh();
+
         await navigation();
+    };
 
+    this.refresh = async function()
+    {
+        this.unsetSymbol();
+        
         await this.queries();
-
-        let max = Math.max.apply( null, this.data.all.map( record => new Date( record.datetime ) ) );
-
-        this.date = t2.formats.isoDate( new Date( max ) );
     };
 
     async function navigation()
-    {
+    { 
         let menu = t2.navigation.components.main;
             menu.update( Array.from( t2.movie.scenes.keys() ) );
-            menu.active( self.info.namespace );
+            menu.highlight( self.info.namespace );
 
         let view = t2.navigation.components.view;
             view.setModule( self );
             view.update( [ "Day", "Symbol", "Summary", "Search", "Fix", "Deposits" ] );
             view.activate( view.array[ 0 ].toLowerCase() );
-            view.addListener( { event: "click", handler: () =>
-            {
-                [ "submenu", "subcontent", "submargin" ].forEach( id => t2.navigation.addIgnore( { id: id, ignore: [ "clear" ] } ) );
-                
-                t2.navigation.update( 
-                {
-                    clear: [ "menu", "submenu", "content", "subcontent", "margin", "submargin" ]
-                } );
-            } } );
 
-        await t2.navigation.setLayout( { name: "all", ignore: [] } );
+        await t2.ui.layout.init( { name: "all", preserve: [ "header", "footer" ] } );
     }
 
     this.filter = function()
@@ -98,26 +93,13 @@ const Trades = function()
         } ); 
     };
 
-    this.setDate = async function( date )
-    {
-        this.date = date;
+    this.setDate = ( date ) => this.date = date;
 
-        await this.run();
-    };
+    this.unsetDate = () => delete this.date;
     
-    this.setSymbol = async function( symbol )
-    {
-        this.symbol = symbol;
+    this.setSymbol = ( symbol ) => this.symbol = symbol;
 
-        await this.refresh();
-    };
-
-    this.unsetSymbol = async function()
-    {
-        delete this.symbol;
-
-        await this.refresh();
-    };
+    this.unsetSymbol = () => delete this.symbol;
 
     this.sort =
     {
@@ -128,18 +110,12 @@ const Trades = function()
     // common transaction entry form
     this.transaction = async function( source )
     {
-        console.warn( source );
-        
-        let subcontent = t2.ui.children.get( "subcontent" );
-
-        let form = await subcontent.addComponent( { id: "transaction", type: "form", format: "flex" } );
+        let form = await this.addComponent( { id: "transaction", type: "form", format: "flex" } );
             form.addListener( { type: "submit", handler: async ( args ) =>
             {
                 args.source = source;
    
-                let record = await this.addTransaction( args );
-
-                this.appendRow( source, record );
+                let record = await self.addTransaction( args );
             } } );
             form.addField( { 
                 input: { name: "datetime", type: "datetime", value: t2.formats.datetime( new Date() ) },
@@ -178,37 +154,24 @@ const Trades = function()
             form.addField( { 
                 input: { type: "submit", value: "DIV" }, 
                 cell: { css: {}, display: 3 },
-                format: [] } );   
+                format: [] } );  
     };
 
     // add transaction handlers
     this.addTransaction = async function( args )
     {
         let event = args.event;
-        let data = args.data;
-        let table = args.table; 
         let form = event.target;
         let submit = event.submitter;
             submit.setAttribute( "disabled", "" );
-
-        let message = t2.ui.children.get( "message" );
-            message.output = "text";
-            message.element.classList.add( "expanded" );    
-        let messages = await message.addComponent( { id: "message", type: "message", format: "block", output: "text" } ); 
-
-        data.action = submit.value;
-
+        let data = args.data;
+            data.action = submit.value;
+        let message = new Message();
+            message.init();
         let record = await t2.db.tx.create( self.table, new Data( data ) );
+        let table = self.appendRow( args.source, record );
 
-        if ( table )
-        {
-            table.highlight( record.id );
-            table.updateRow( row, record.data, Number( row.dataset.index ) );
-        }
-
-        messages.set( `Added ${ record.id }` );
-        await t2.common.delay( () => message.element.classList.remove( "expanded" ), 5000 ); 
-        messages.set();
+        message.set( `Added ${ record.id }` );
 
         form.datetime.value = t2.formats.datetime( new Date() );
         form.symbol.value = "";
@@ -230,12 +193,16 @@ const Trades = function()
         let data = record.data;
 
         let table = source[ data.brokerage ];
-            table.addRow( data, table.array.length );
-            table.parent.unscale();
-            table.highlight( data.id );
-            table.setTotals();
 
-            table.array.push( record );
+        if ( !table )
+            return;
+
+        table.addRow( data, table.array.length );
+        table.parent.unscale();
+        table.highlight( data.id );
+        table.setTotals();
+
+        table.array.push( data );
 
         return table;
     };
@@ -246,11 +213,8 @@ const Trades = function()
         let data = args.data;
         let table = args.table; 
         let row = args.row;
-        let message = t2.ui.children.get( "message" );
-            message.output = "text";
-            message.element.classList.add( "expanded" );    
-        let messages = await message.addComponent( { id: "message", type: "message", format: "block", output: "text" } ); 
-
+        let message = new Message();
+            message.init();
         let record = await t2.db.tx.update( self.table, Number( data.id ), new Data( data ) );
 
         await this.queries();
@@ -261,9 +225,7 @@ const Trades = function()
             table.updateRow( row, record.data, Number( row.dataset.index ) );
         }
 
-        messages.set( `Updated ${ record.id }` ); 
-        await t2.common.delay( () => message.element.classList.remove( "expanded" ), 5000 ); 
-        messages.set();
+        message.set( `Updated ${ record.id }` ); 
 
         let popup = t2.ui.children.get( "subcontent.popup" );
             popup?.element?.remove();  

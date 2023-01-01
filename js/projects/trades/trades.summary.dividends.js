@@ -1,5 +1,4 @@
-import Common from "../../t2/t2.common.handlers.js";
-import Data from "./trades.data.js";
+import Common from "../../t2/t2.container.handlers.js";
 
 const Panel = function( module )
 {
@@ -17,18 +16,32 @@ const Panel = function( module )
         Common.call( this );
     };
 
-    this.run = async function()
+    this.refresh = async function()
     {
-        panel.clear();
-        
-        await output();   
-    };    
+        await module.queries(); 
+
+        await navigation();
+    };
+    
+    async function navigation()
+    {
+        await t2.navigation.update( 
+        [ 
+            { id: "submenu", functions: [ { ignore: "clear" }, { clear: null } ] }, 
+            { id: "subcontent", functions: [ { ignore: "clear" } ] },
+            { id: "submargin", functions: [ { ignore: "clear" }, { clear: null } ] },
+            { id: "menu", functions: [ { ignore: "clear" } ] },
+            { id: "content", functions: [ { ignore: "clear" } ] },
+            { id: `content.panels.${ self.id }`, functions: [ { clear: null }, { invoke: [ { f: output, args: null } ] } ] },
+            { id: "margin", functions: [ { ignore: "clear" } ] }
+        ] );
+    }  
 
     async function output()
     {
         let array = module.data.filtered.filter( record => ( record.action == "DIV") );
 
-        let table = await panel.addComponent( { id: "dividends", type: "table" } );
+        let table = await this.addComponent( { id: "dividends", type: "table" } );
             table.addRowListener( { type: "contextmenu", handler: table.edit } );
             table.addSubmitListener( { type: "submit", handler: async function ( args )
             { 
@@ -78,7 +91,7 @@ const Panel = function( module )
                 input: { name: "brokerage", type: "select" }, 
                 cell: { css: {}, display: 8, modes: [ "read", "edit" ] },
                 format: [],
-                options: [ "TDAmeritrade", "JPMorganChase", "Robinhood" ] } );
+                options: module.data.brokerage } );
             table.addColumn( { 
                 input: { type: "submit", value: "UPDATE" }, 
                 cell: { css: {}, display: 4, modes: [ "edit" ] },

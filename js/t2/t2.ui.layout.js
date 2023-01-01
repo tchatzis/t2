@@ -16,19 +16,20 @@ const Layout = function()
     {
         for ( let [ id, component ] of t2.ui.children )
         {
-            let dataset = component.element.dataset.ignore?.split( "," ) || [];
-            let ignore = params.ignore?.some( event => dataset.find( data => data == event ) );
+            if ( !params.preserve.find( _id => id.includes( _id ) ) )
+            {
+                t2.ui.children.delete( id );
 
-            if ( !ignore )
-                component.element.remove();
+                component.remove();
+                component = undefined;
+                //console.warn( "remove:", id );
+            }
         }
     };
 
     layout.all = async function()
     {
-        await container.addElement( { id: "header", parent: document.body } );
         await container.addElement( { id: "wrapper", parent: document.body } );
-        await container.addElement( { id: "footer", parent: document.body } );
         await container.addElement( { id: "message", parent: document.body } );
         
         await container.addElement( { id: "menu", parent: t2.ui.children.get( "wrapper" ).element } );
@@ -42,9 +43,8 @@ const Layout = function()
 
     layout.minimal = async function()
     {
-        await container.addElement( { id: "header", parent: document.body } );
-        await container.addElement( { id: "wrapper", parent: document.body } );
-        await container.addElement( { id: "footer", parent: document.body } );
+        await container.addElement( { id: "content", parent: document.body } );
+        await container.addElement( { id: "message", parent: document.body } );
     };
 
     layout.navigation = async function()

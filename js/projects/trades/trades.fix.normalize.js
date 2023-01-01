@@ -1,21 +1,19 @@
 
-import Common from "../../t2/t2.common.handlers.js";
+import Common from "../../t2/t2.container.handlers.js";
 import Data from "./trades.data.js";
 import details from "./trades.fix.details.js";
 import handlers from "./trades.fix.handlers.js";
+import Message from "./trades.message.js";
 
 const Panel = function( module )
 {
     let self = this;
     let panel;
-    let parent;
     
-    this.init = async function( _parent, params )
+    this.init = async function( parent, params )
     {
-        parent = _parent;
-        
         panel = await parent.addContainer( { id: "panel", type: "panel", format: "flex" } );
-
+ 
         this.element = panel.element;
         this.type = panel.type;
 
@@ -23,12 +21,29 @@ const Panel = function( module )
         Common.call( this );
     };
 
-    this.run = async function()
+    this.refresh = async function()
     {
-        panel.clear();
-        
-        await module.queries();
+        await module.queries(); 
 
+        await navigation();
+    }; 
+
+    async function navigation()
+    {
+        await t2.navigation.update( 
+        [ 
+            { id: "submenu", functions: [ { ignore: "clear" }, { clear: null } ] }, 
+            { id: "subcontent", functions: [ { ignore: "clear" } ] },
+            { id: "submargin", functions: [ { ignore: "clear" }, { clear: null } ] },
+            { id: "menu", functions: [ { ignore: "clear" } ] },
+            { id: "content", functions: [ { ignore: "clear" } ] },
+            { id: `content.panels.${ self.id }`, functions: [ { clear: null }, { invoke: [ { f: output, args: null } ] } ] },
+            { id: "margin", functions: [ { ignore: "clear" } ] }
+        ] );
+    } 
+
+    async function output()
+    {
         let records = module.data.filtered;
         let sample = records[ 0 ];
 
@@ -36,7 +51,7 @@ const Panel = function( module )
 
         // before
         {
-            let before = await panel.addContainer( { id: "before", type: "box", format: "block" } );
+            let before = await this.addContainer( { id: "before", type: "box", format: "block" } );
             let title = await before.addComponent( { id: "data", type: "title", format: "block", output: "text" } );
                 title.set( "Before" );
 
@@ -57,10 +72,12 @@ const Panel = function( module )
         let form = await panel.addComponent( { id: "form", type: "form", format: "flex" } );
             form.addListener( { type: "submit", handler: async function ()
             {
+                let message = new Message();
+                    message.init();                
+                
                 await handlers.normalize( module.table, records );
 
-                let message = await parent.addComponent( { id: "message", type: "message", format: "block", output: "text" } );
-                    message.set( "Success" );
+                message.set( "Success" );
             } } );
         form.addField( { 
             input: { type: "submit", value: "EXECUTE" }, 

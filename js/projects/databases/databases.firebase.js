@@ -1,25 +1,32 @@
-const Firebase = function( module )
+const Tabs = function( module )
 {
-    this.run = async function()
+    let self = this;
+    let tab = 0;
+    
+    this.init = async function()
     {
-        Object.assign( module, this );
-
         await this.refresh();
+
+        await navigation(); 
     };
 
     this.refresh = async function()
     {
-        await layout();
+
     };
 
-    async function layout()
+    async function navigation()
     {
-        //await container();
+        await t2.navigation.update( 
+        [ 
+            { id: "content",    functions: [ { clear: null }, { invoke: [ { f: container, args: null } ] } ] },
+        ] );
+    }
 
-        //let submenu = t2.ui.children.get( "submenu" );
+    async function container()
+    {
 
-        //submenu.element.textContent = `${ t2.db.name } v${ t2.db.version }`;
     }
 };
 
-export default Firebase;
+export default Tabs;

@@ -1,34 +1,34 @@
-import Data from "./trades.data.js";
-
-const Search = function( module )
+const Template = function( module )
 {
     let self = this;
-    let content = t2.ui.children.get( "content" );
-    let container;
-    let margin = t2.ui.children.get( "margin" );
     let table;
 
-    this.run = async function()
+    this.init = async function()
     {
-        Object.assign( module, this );
+        await this.refresh(); 
 
-        await this.refresh();  
+        await navigation();  
     };
 
     this.refresh = async function()
     {
-        content.clear();
+        module.unsetSymbol();
+        module.unsetDate();
 
-        container = await content.addContainer( { id: "results", type: "box", format: "block" } );
-        
-        await module.queries(); 
-        await layout();   
+        await module.queries();
     };
 
-    async function layout()
+    async function navigation()
     {
-        output();
-        filters();
+        await t2.navigation.update( 
+        [ 
+            { id: "submenu",    functions: [ { clear: null }, { hide: null } ] },
+            { id: "subcontent", functions: [ { clear: null }, { hide: null } ] },
+            { id: "submargin",  functions: [ { clear: null }, { hide: null } ] },
+            { id: "menu",       functions: [ { ignore: "clear" }, { hide: null } ] },
+            { id: "content",    functions: [ { clear: null }, { invoke: [ { f: output, args: null } ] } ] },
+            { id: "margin",     functions: [ { clear: null }, { show: null }, { invoke: [ { f: filters, args: null } ] } ] } 
+        ] );
     }
 
     async function filters()
@@ -38,7 +38,7 @@ const Search = function( module )
         let all = module.data.all.map( record => new Date( record.datetime ) );
         let min = t2.formats.isoDate( Math.min.apply( null, all ) );
 
-        let form = await margin.addComponent( { id: "range", type: "form", format: "block" } );
+        let form = await this.addComponent( { id: "range", type: "form", format: "block" } );
             form.addListener( { type: "submit", handler: handler } );
             form.addField( { 
                 input: { name: "from", label: "from", type: "date", value: min, min: min, max: max, required: "" }, 
@@ -84,7 +84,7 @@ const Search = function( module )
 
     async function output()
     {  
-        table = await container.addComponent( { id: "transactions", type: "table" } );
+        table = await this.addComponent( { id: "transactions", type: "table" } );
         table.addRowListener( { type: "contextmenu", handler: table.edit } );
         table.addSubmitListener( { type: "submit", handler: async function ( args )
         { 
@@ -192,11 +192,11 @@ const Search = function( module )
 
         module.symbol = result.symbol;
 
-        result.length ? container.show() : container.hide()
+        //result.length ? this.show() : this.hide()
 
         table.populate( { array: result, orderBy: "datetime" } );
         table.setTotals();
     }
 };
 
-export default Search;
+export default Template;

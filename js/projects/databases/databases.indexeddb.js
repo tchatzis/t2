@@ -1,55 +1,54 @@
-const IndexedDB = function( module )
+const Tabs = function( module )
 {
-    this.run = async function()
+    let self = this;
+    let tab = 0;
+    
+    this.init = async function()
     {
-        Object.assign( module, this );
-
         await this.refresh();
+
+        await navigation(); 
     };
 
     this.refresh = async function()
     {
-        await layout();
+
     };
 
-    async function layout()
+    async function navigation()
     {
-        await container();
-
-        //let submenu = t2.ui.children.get( "submenu" );
-
-        //submenu.element.textContent = `${ t2.db.name } v${ t2.db.version }`;
+        await t2.navigation.update( 
+        [ 
+            { id: "content",    functions: [ { clear: null }, { invoke: [ { f: container, args: null } ] } ] },
+        ] );
     }
 
     async function container()
     {
-        //let breadcrumbs = t2.ui.children.get( "footer.breadcrumbs" );
-        
-        let wrapper = t2.ui.children.get( "wrapper" );
-            //wrapper.clear();
+        let details = await this.addContainer( { id: "panels", type: "panels", format: "block", output: "vertical" } );
 
-        let details = await wrapper.addContainer( { id: "details", type: "panels", format: "block", output: "vertical" } );
-            // set breadcrumbs
-            details.addListener( { type: "click", handler: ( active ) => 
-            {
-                //breadcrumbs.set.path( 2, active.panel?.label || "" );
-            } } );
         let title = await details.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
-            title.set( "IndexedDB Tools" );
-            await details.setModule( { id: "export", label: "export", format: "block", config: { arguments: [ module ], src: "../projects/databases/databases.indexeddb.export.js" } } );
-            await details.setModule( { id: "import", label: "import", format: "block", config: { arguments: [ module ], src: "../projects/databases/databases.indexeddb.import.js" } } );
-            await details.setModule( { id: "open", label: "open", format: "block", config: { arguments: [ module ], src: "../projects/databases/databases.indexeddb.open.js" } } );
-            await details.setModule( { id: "schema", label: "schema", format: "block", config: { arguments: [ module ], src: "../projects/databases/databases.indexeddb.schema.js" } } );
-            await details.setModule( { id: "table", label: "add table", format: "block", config: { arguments: [ module ], src: "../projects/databases/databases.indexeddb.table.js" } } );
+            title.set( `${ t2.db.name } v${ t2.db.version }` );
 
+        await details.setModule( { id: "export", label: "export", format: "block", config: { arguments: [ module ], src: "../projects/databases/databases.indexeddb.export.js" } } );
+        await details.setModule( { id: "import", label: "import", format: "block", config: { arguments: [ module ], src: "../projects/databases/databases.indexeddb.import.js" } } );
+        await details.setModule( { id: "open", label: "open", format: "block", config: { arguments: [ module ], src: "../projects/databases/databases.indexeddb.open.js" } } );
+        await details.setModule( { id: "schema", label: "schema", format: "block", config: { arguments: [ module ], src: "../projects/databases/databases.indexeddb.schema.js" } } );
+        await details.setModule( { id: "table", label: "add table", format: "block", config: { arguments: [ module ], src: "../projects/databases/databases.indexeddb.table.js" } } );
+
+        let array = Array.from( details.panels.keys() );  
+        
         let tabs = await details.setComponent( { id: "tabs", type: "tabs", format: "flex-left", output: "horizontal" } );
-            tabs.addListener( { type: "click", handler: ( active ) => title.set( active.panel.label ) } );
+            tabs.addBreadcrumbs( 2, t2.navigation.components.breadcrumbs );
+            tabs.addListener( { type: "click", handler: ( active ) => 
+            {
+                tab = array.findIndex( id => id == active.id );
+
+                title.set( `${ active.id }` );
+            } } );  
             tabs.update( details.panels );
-
-        let array = Array.from( details.panels.keys() );
-
-        tabs.activate( array[ 0 ] );
+            tabs.activate( array[ tab || 0 ] );
     }
 };
 
-export default IndexedDB;
+export default Tabs;

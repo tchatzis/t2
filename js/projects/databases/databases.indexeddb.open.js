@@ -1,9 +1,11 @@
-import Common from "../../t2/t2.common.handlers.js";
+import Common from "../../t2/t2.container.handlers.js";
+import Message from "../../t2/t2.ui.message.js";
 
-const Open = function()
+const Panel = function()
 {
-    let listeners = [];
+    let self = this;
     let panel;
+    let listeners = [];
     
     this.init = async function( parent, params )
     {
@@ -16,16 +18,28 @@ const Open = function()
         Common.call( this ); 
     };
 
+    this.refresh = async function()
+    {
+        await navigation();
+    };
+
+    async function navigation()
+    {
+        await t2.navigation.update( 
+        [ 
+            { id: "content", functions: [ { ignore: "clear" } ] },
+            { id: `content.panels.${ self.id }`, functions: [ { clear: null }, { invoke: [ { f: output, args: null } ] } ] }
+        ] );
+    } 
+
     this.addListener = function( listener )
     {
         listeners.push( listener );
     };
     
-    this.run = async function()
+    async function output()
     {;
-        panel.clear();
-        
-        let form = t2.common.el( "form", panel.element );
+        let form = t2.common.el( "form", this.element );
             form.id = "open";
             form.addEventListener( "submit", openDB );
         let name = t2.common.el( "input", panel.element );
@@ -53,11 +67,14 @@ const Open = function()
     {
         e.preventDefault();
 
+        let message = new Message();
+        await message.init();
+
         await t2.db.db.close();
 
         t2.db.version = 0;
 
-        submenu.textContent = "CLOSED";
+        message.set( "CLOSED" );
     }
 
     async function openDB( e )
@@ -68,13 +85,15 @@ const Open = function()
         let formData = new FormData( e.target );
         let keys = Array.from( formData.keys() );
             keys.forEach( key => data[ key ] = formData.get( key ) );
+        let message = new Message();
+        await message.init();
 
         await t2.db.open( data );
 
         listeners.forEach( listener => listener.handler( data ) );
 
-        submenu.textContent = `${ t2.db.name } v${ t2.db.version }`;
+        message.set( `OPEN ${ t2.db.name } v${ t2.db.version }` );
     }
 };
 
-export default Open;
+export default Panel;

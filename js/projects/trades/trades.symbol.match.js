@@ -1,4 +1,4 @@
-import Common from "../../t2/t2.common.handlers.js";
+import Common from "../../t2/t2.container.handlers.js";
 
 const Panel = function( module )
 {
@@ -13,7 +13,6 @@ const Panel = function( module )
     } };
     let match;
     let panel;
-    let subcontent;
     let tables = {};
 
     this.init = async function( parent, params )
@@ -27,18 +26,38 @@ const Panel = function( module )
         Common.call( this );
     };
 
-    this.run = async function()
+    this.refresh = async function()
     {
-        panel.clear();
+        await module.queries(); 
 
         let records = module.data.filtered;
 
         if ( !records )
             return;
 
-        match = new Map();
+        await navigation();
 
-        let results = await sort( records );
+        match = new Map();
+    };
+
+    async function navigation()
+    {
+        await t2.navigation.update(
+        [ 
+            { id: "submenu", functions: [ { ignore: "clear" }, { clear: null } ] }, 
+            { id: "subcontent", functions: [ { ignore: "clear" } ] },
+            { id: "submargin", functions: [ { ignore: "clear" }, { clear: null } ] },
+            { id: "menu", functions: [ { ignore: "clear" } ] },
+            { id: "content", functions: [ { ignore: "clear" } ] },
+            { id: `content.panels.${ self.id }`, functions: [ { clear: null }, { invoke: [ { f: start, args: null } ] } ] },
+            { id: "margin", functions: [ { ignore: "clear" } ] }
+        ] );
+    }
+
+    // invoke this function
+    async function start()
+    {
+        let results = await sort( module.data.filtered );
             results.forEach( result => 
             {
                 tables[ result.action ].populate( { array: result.array, orderBy: "price" } );
@@ -48,41 +67,41 @@ const Panel = function( module )
         let { accepted, rejected } = await scan( "BUY", "highlight", delay );
 
         execute( accepted );
-    };
 
-    // start the matching scripts
-    async function execute( accepted )
-    {
-        let array = group( accepted );
-
-        await grouped();
-
-        tables.grouped.populate( { array: array } );
-        tables.grouped.setTotals();
-    }
-
-    // split buys and sells
-    async function sort( records )
-    {
-        const promises = [];
-        
-        actions.forEach( action =>
+        // split buys and sells
+        async function sort( records )
         {
-            let actions =
+            const promises = [];
+            
+            actions.forEach( action =>
             {
-                BUY: [ "BUY", "DIV" ],
-                SELL: [ "SELL" ]
-            };
+                let actions =
+                {
+                    BUY: [ "BUY", "DIV" ],
+                    SELL: [ "SELL" ]
+                };
 
-            let array = records.filter( record => actions[ action ].find( action => record.action == action ) );
+                let array = records.filter( record => actions[ action ].find( action => record.action == action ) );
 
-            arrays[ action ] = array;
+                arrays[ action ] = array;
 
-            if ( array.length )
-                promises.push( transactions( action, array ) );
-        } );
+                if ( array.length )
+                    promises.push( transactions( action, array ) );
+            } );
 
-        return await Promise.all( promises );
+            return await Promise.all( promises );
+        }
+
+        // start the matching scripts
+        async function execute( accepted )
+        {
+            let array = group( accepted );
+
+            await grouped();
+
+            tables.grouped.populate( { array: array } );
+            tables.grouped.setTotals();
+        }
     }
 
     // table of transactions - display element

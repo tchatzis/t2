@@ -4,9 +4,6 @@ const Handlers = function()
 {
     this.addComponent = async function( params )
     {   
-        if ( t2.ui.children.has( params.id ) )
-            return t2.ui.children.get( params.id );
-        
         let module    = await import( `../t2/t2.ui.component.${ params.type }.js` );
         let component = await new module.default();
             component.id = params.id;
@@ -22,9 +19,6 @@ const Handlers = function()
 
     this.addContainer = async function( params )
     {
-        if ( t2.ui.children.has( params.id ) )
-            return t2.ui.children.get( params.id );
-
         let module    = await import( `../t2/t2.ui.container.${ params.type }.js` );
         let container = await new module.default();
             container.id = params.id;
@@ -69,9 +63,28 @@ const Handlers = function()
     this.ignore = function( f )
     {
         let ignore = this.element.dataset.ignore?.split( "," ) || [];
+
+        if ( !ignore.find( prop => f == prop ) )
             ignore.push( f );
         
         this.element.dataset.ignore = ignore.toString();
+    };
+
+    this.invoke = async function( functions )
+    {
+        let container = this;
+        
+        async function invoke( index )
+        {
+            let func = functions[ index ];
+
+            await func.f.call( container, func.args );
+
+            if ( index < functions.length - 1 )
+                await invoke( index + 1 );
+        }
+        
+        await invoke( 0 );
     };
 
     this.remove = () => this.element.remove();

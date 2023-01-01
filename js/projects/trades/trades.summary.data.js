@@ -1,11 +1,10 @@
-import Common from "../../t2/t2.common.handlers.js";
+import Common from "../../t2/t2.container.handlers.js";
 import { aggregate, reset, total } from "./trades.aggregate.js";
 
 const Panel = function( module )
 {
     let self = this;
     let panel;
-    let sum = ( a, b ) => a + b;
 
     this.init = async function( parent, params )
     {
@@ -18,13 +17,26 @@ const Panel = function( module )
         Common.call( this );
     };
 
-    this.run = async function()
+    this.refresh = async function()
     {
-        panel.clear();
-        
         await module.queries(); 
-        await output();   
-    };    
+
+        await navigation();
+    };
+    
+    async function navigation()
+    {
+        await t2.navigation.update( 
+        [ 
+            { id: "submenu", functions: [ { ignore: "clear" }, { clear: null } ] }, 
+            { id: "subcontent", functions: [ { ignore: "clear" } ] },
+            { id: "submargin", functions: [ { ignore: "clear" }, { clear: null } ] },
+            { id: "menu", functions: [ { ignore: "clear" } ] },
+            { id: "content", functions: [ { ignore: "clear" } ] },
+            { id: `content.panels.${ self.id }`, functions: [ { clear: null }, { invoke: [ { f: output, args: null } ] } ] },
+            { id: "margin", functions: [ { ignore: "clear" } ] }
+        ] );
+    }
 
     function preamble()
     {
@@ -52,7 +64,7 @@ const Panel = function( module )
         let gain = { predicate: { conditions: [ { name: "qty", operator: "==", value: 0 }, { name: "gain", operator: "<=", value: 0 } ], options: [ "sell", "value" ] } };
         let dividend = { predicate: { conditions: [ { name: "dividend", operator: ">", value: 0 } ], options: [ "buy", "value" ] } }; 
 
-        let table = await panel.addComponent( { id: "aggregates", type: "table" } );  
+        let table = await this.addComponent( { id: "aggregates", type: "table" } );  
             table.addRowListener( { type: "contextmenu", handler: () => {} } );
             table.addColumn( { 
                 input: { name: "symbol", type: "text" }, 

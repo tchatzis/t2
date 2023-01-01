@@ -74,14 +74,14 @@ const Component = function()
         let data = args.data;
         let columns = args.columns;
 
-        let subcontent = t2.ui.children.get( "subcontent" );
-        let parent = await subcontent.addContainer( { id: "popop", type: "popup", format: "block" } );
+        let submargin = t2.ui.children.get( "submargin" );
+        let parent = await submargin.addContainer( { id: "popop", type: "popup", format: "block" } );
             parent.clear();
             parent.show();
 
         self.highlight( data.id );
 
-        let container = await parent.addContainer( { id: "edit", type: "box", format: "block" } );
+        let container = await parent.addContainer( { id: data.id, type: "box", format: "block" } );
             container.element.style.position = "relative";
         let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
             title.set( `Edit \u00BB ${ data.id }` );  

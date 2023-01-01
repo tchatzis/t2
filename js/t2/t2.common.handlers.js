@@ -1,5 +1,9 @@
+import Container from "./t2.ui.container.element.js";
+
 const Common = function()
 {
+    let self = this;
+    
     this.adopt = function( object, params )
     {
         let path = object.path.get( params.id ).join( "." );
@@ -10,7 +14,12 @@ const Common = function()
 
         Object.assign( object, params );
     };
-    
+
+    this.attach = function( component )
+    {
+        component.element.appendChild( this.element );
+    };
+
     this.class = this.constructor.name;
 
     if ( !this.format )
@@ -111,7 +120,7 @@ const Common = function()
                         parent.id = key;
                         parent.classList.add( "field" );
 
-                    let type = await check( key, content, parent );
+                    let type = await check.call( this, key, content, parent );
                         
                     if ( key == "datetime" )
                         parent.classList.add( key );
@@ -123,8 +132,9 @@ const Common = function()
 
         path: function( index, value )
         {
-            this.path[ index ] = value;
-            this.element.textContent = this.path.join( "/" );
+            this.array[ index ] = value;
+            this.array = this.array.slice( 0, index + 1 );
+            this.element.textContent = this.array.join( "/" );
         },
     
         text: function( content )
@@ -135,7 +145,6 @@ const Common = function()
 
     async function check( key, content, parent )
     {
-        let output = null;
         let value = content[ key ];
         let type = typeof value;
 
@@ -149,8 +158,8 @@ const Common = function()
                 }
                 else
                 {
-                    let root = await t2.ui.root( parent );
-  
+                    let container = new Container();
+                    let root = await container.root( parent );
                     let tuple = await root.addComponent( { id: key, type: "tuple", format: "block", output: "object" } );
                         tuple.set( value );
                 }

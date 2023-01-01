@@ -153,7 +153,7 @@
     background-color: #111;
     border-top: 1px solid #222;
     bottom: 1px;
-    display: flex !important;
+    display: flex;
     height: 21px;
     justify-content: space-around;
     left: 0;

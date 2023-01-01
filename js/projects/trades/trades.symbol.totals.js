@@ -1,4 +1,4 @@
-import Common from "../../t2/t2.common.handlers.js";
+import Common from "../../t2/t2.container.handlers.js";
 import totals from "./trades.calculate.totals.js";
 
 const Panel = function( module )
@@ -17,19 +17,32 @@ const Panel = function( module )
         Common.call( this ); 
     };
 
-    this.run = async function()
+    this.refresh = async function()
     {
-        panel.clear();
+        await module.queries(); 
 
-        await details()
-        await summary();
+        await navigation();
     };
+
+    async function navigation()
+    {
+        await t2.navigation.update( 
+        [ 
+            { id: "submenu", functions: [ { ignore: "clear" }, { clear: null } ] }, 
+            { id: "subcontent", functions: [ { ignore: "clear" } ] },
+            { id: "submargin", functions: [ { ignore: "clear" }, { clear: null } ] },
+            { id: "menu", functions: [ { ignore: "clear" } ] },
+            { id: "content", functions: [ { ignore: "clear" } ] },
+            { id: `content.panels.${ self.id }`, functions: [ { clear: null }, { invoke: [ { f: details, args: null }, { f: summary, args: null } ] } ] },
+            { id: "margin", functions: [ { ignore: "clear" } ] }
+        ] );
+    }  
 
     async function details()
     {
         let result = await totals( module );
 
-        let container = await panel.addContainer( { id: "matrix", type: "box", format: "inline-block" } );
+        let container = await this.addContainer( { id: "matrix", type: "box", format: "inline-block" } );
         let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
             title.set( `${ module.symbol } Details` );
 
@@ -168,7 +181,7 @@ const Panel = function( module )
 
         result.push( object );
 
-        let container = await panel.addContainer( { id: "summary", type: "box", format: "inline-block" } );
+        let container = await this.addContainer( { id: "summary", type: "box", format: "inline-block" } );
         let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
             title.set( `${ module.symbol } Summary` );
 

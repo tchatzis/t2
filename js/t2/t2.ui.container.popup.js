@@ -19,6 +19,7 @@ const Container = function()
             {
                 this.exit();
                 this.remove();
+                this.parent.children.delete( this.id );
             }
         } );
 

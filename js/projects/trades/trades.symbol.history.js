@@ -1,5 +1,4 @@
-import Common from "../../t2/t2.common.handlers.js";
-import Data from "./trades.data.js";
+import Common from "../../t2/t2.container.handlers.js";
 import tooltip from "./trades.tooltip.js";
 
 const Panel = function( module )
@@ -7,12 +6,10 @@ const Panel = function( module )
     let self = this;
     let panel;
     let table;
-    let subcontent;
     
     this.init = async function( parent, params )
     {
-        panel = await parent.addContainer( { id: "panel", type: "panel", format: "flex" } );
-        subcontent = t2.ui.children.get( "subcontent" );
+        panel = await parent.addContainer( { id: params.id, type: "panel", format: "flex" } );
  
         this.element = panel.element;
         this.type = panel.type;
@@ -21,21 +18,32 @@ const Panel = function( module )
         Common.call( this );
     };
 
-    this.run = async function()
+    this.refresh = async function()
     {
-        subcontent.clear();
-        panel.clear();
-        
-        await week();   
-        await history();     
-        await module.transaction();  
+        await module.queries(); 
+
+        await navigation();
     };
+
+    async function navigation()
+    {
+        await t2.navigation.update( 
+        [ 
+            { id: "submenu", functions: [ { ignore: "clear" }, { clear: null } ] }, 
+            { id: "subcontent", functions: [ { ignore: "clear" } ] },
+            { id: "submargin", functions: [ { ignore: "clear" }, { clear: null } ] },
+            { id: "menu", functions: [ { ignore: "clear" } ] },
+            { id: "content", functions: [ { ignore: "clear" } ] },
+            { id: `content.panels.${ self.id }`, functions: [ { clear: null }, { invoke: [ { f: history, args: null }, { f: week, args: null } ] } ] },
+            { id: "margin", functions: [ { ignore: "clear" } ] }
+        ] );
+    }
 
     async function history()
     {  
         let records = module.data.filtered;
-        
-        table = await panel.addComponent( { id: "transactions", type: "table" } );
+
+        table = await this.addComponent( { id: "transactions", type: "table" } );
         table.addRowListener( { type: "contextmenu", handler: table.edit } );
         table.addRowListener( { type: "click", handler: ( data, config, row ) => 
         { 
@@ -117,7 +125,7 @@ const Panel = function( module )
     async function week()
     {
         let qty = { predicate: { conditions: [ { name: "qty", operator: ">=", value: 0 } ], options: [ "buy", "sell" ] } };
-        let week = await panel.addComponent( { id: "week", type: "weekdays", format: "table-body" } );
+        let week = await this.addComponent( { id: "week", type: "weekdays", format: "table-body" } );
             week.populate(
             { 
                 data: module.data.filtered, 
@@ -132,27 +140,6 @@ const Panel = function( module )
                 }
             } );
     }
-
-    /*async function handler( data )
-    {
-        let event = this;
-        let submit = event.submitter;
-            submit.setAttribute( "disabled", "" );
-
-        data.action = submit.value;
-
-        let record = await t2.db.tx.create( module.table, new Data( data ) );
-
-        let records = await t2.db.tx.filter( module.table, [ { key: "symbol", operator: "==", value: record.data.symbol } ] );
-
-        submit.removeAttribute( "disabled" );
-
-        table.populate( { array: records.data } );
-        table.highlight( record.data.id );
-        table.setTotals();
-
-        self.run();
-    }*/
 };
 
 export default Panel;

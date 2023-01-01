@@ -1,10 +1,7 @@
-const Deposits = function( module )
+const Template = function( module )
 {
     const self = this;
     const day = 1000 * 60 * 60 * 24;
-    const content = t2.ui.children.get( "content" );
-    const margin = t2.ui.children.get( "margin" );
-    const subcontent = t2.ui.children.get( "subcontent" );
     
     const Data = function( data )
     {
@@ -13,51 +10,53 @@ const Deposits = function( module )
         this.id = Number( this.id );
     };
 
-    this.run = async function()
+    this.init = async function()
     {
-        Object.assign( module, this );
-
         this.table = "deposits";
+        
+        await this.refresh(); 
 
-        await this.refresh();  
+        await navigation();  
     };
 
     this.refresh = async function()
     {
-        content.clear();
-        margin.clear();
-        subcontent.clear();
-
+        module.unsetSymbol();
+        module.unsetDate();
+        
         let records = await t2.db.tx.retrieve( self.table );
 
         this.data = records.data;
         this.data.forEach( record => record.date = Math.round( new Date( record.datetime ).getTime() * day ) / day );
-
-        await layout();
     };
 
-    async function layout()
+    async function navigation()
     {
-        await chart();
-        await history();
-        await transaction();
+        await t2.navigation.update( 
+        [ 
+            { id: "subcontent", functions: [ { clear: null }, { show: null }, { invoke: [ { f: transaction, args: null } ] } ] },
+            { id: "submargin",  functions: [ { clear: null }, { show: null } ] },
+            { id: "menu",       functions: [ { ignore: "clear" }, { hide: null } ] },
+            { id: "content",    functions: [ { clear: null }, { invoke: [ { f: chart, args: null } ] } ] },
+            { id: "margin",     functions: [ { clear: null }, { invoke: [ { f: history, args: null } ] } ] }
+        ] );
     }
 
     async function chart()
     { 
-        let chart = await content.addComponent( { id: "deposits", type: "chart", format: "flex" } );
+        let chart = await this.addComponent( { id: "deposits", type: "chart", format: "flex" } );
             chart.addLayer( { color: "green", font: "12px sans-serif", type: "bar",
                 data: self.data,
                 axes:
                 { 
                     "0": { axis: "date", settings: { format: "date", step: day, mod: mondays, axis: true } },
-                    "1": { axis: "amount", settings: { mod: ( p ) => !( p % 10 ), axis: true } } 
+                    "1": { axis: "amount", settings: { format: "number", mod: ( p ) => !( p % 10 ), axis: true } }
                 } } );
     }
 
     async function history()
     {
-        let container = await margin.addContainer( { id: "history", type: "box", format: "inline-block" } );
+        let container = await this.addContainer( { id: "history", type: "box", format: "inline-block" } );
         let title = await container.addComponent( { id: "title", type: "title", format:"block", output: "text" } );
             title.set( "Deposit History" );
 
@@ -111,7 +110,6 @@ const Deposits = function( module )
                 input: { type: "submit", value: "SUBMIT" }, 
                 cell: { css: {}, display: 4, modes: [ "edit" ] },
                 format: [] } );
-            table.setColumns( module.mode );
             table.populate( { array: self.data, orderBy: "datetime" } );
             table.setTotals();
     }
@@ -119,7 +117,7 @@ const Deposits = function( module )
     // transaction entry form
     async function transaction()
     {
-        let form = await subcontent.addComponent( { id: "deposits", type: "form", format: "flex" } );
+        let form = await this.addComponent( { id: "deposits", type: "form", format: "flex" } );
             form.addListener( { type: "submit", handler: async function ( data )
             {
                 data.action = this.submitter.value;
@@ -128,24 +126,13 @@ const Deposits = function( module )
 
                 self.refresh();
 
-                let message = await content.addComponent( { id: "message", type: "message", format: "block", output: "text" } );
+                let message = await this.addComponent( { id: "message", type: "message", format: "block", output: "text" } );
                     message.set( "Success" );
             } } );
             form.addField( { 
                 input: { name: "datetime", type: "datetime", value: t2.formats.datetime( new Date() ) },
                 cell: { css: {}, display: 10 },
-                format: [ "datetime" ]/*,
-                update: ( input ) => 
-                {
-                    function set()
-                    {
-                        let datetime = new Date();
-    
-                        input.value = t2.formats.datetime( datetime );
-                    }
-
-                    setInterval( set, 1000 );
-                }*/ } );
+                format: [] } );
             form.addField( { 
                 input: { name: "amount", type: "number", min: 0, step: 0.01, required: "" }, 
                 cell: { css: {}, display: 4 },
@@ -183,4 +170,4 @@ const Deposits = function( module )
     }
 };
 
-export default Deposits;
+export default Template;

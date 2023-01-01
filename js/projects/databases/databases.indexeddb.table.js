@@ -1,7 +1,8 @@
-import Common from "../../t2/t2.common.handlers.js";
+import Common from "../../t2/t2.container.handlers.js";
 
-const Table = function()
+const Panel = function()
 {
+    let self = this;
     let panel;
     
     this.init = async function( parent, params )
@@ -14,11 +15,23 @@ const Table = function()
         Object.assign( this, params );
         Common.call( this ); 
     };
-    
-    this.run = async function()
-    {
-        panel.clear();
 
+    this.refresh = async function()
+    {
+        await navigation();
+    };
+
+    async function navigation()
+    {
+        await t2.navigation.update( 
+        [ 
+            { id: "content", functions: [ { ignore: "clear" } ] },
+            { id: `content.panels.${ self.id }`, functions: [ { clear: null }, { invoke: [ { f: output, args: null } ] } ] }
+        ] );
+    } 
+    
+    async function output()
+    {
         let form = t2.common.el( "form", panel.element );
             form.id = "table";
             form.addEventListener( "submit", async ( e ) =>
@@ -37,7 +50,7 @@ const Table = function()
                 version.value = ( t2.db.version || 1 ) + 1;
                 table.value = null;
             } );
-        let name = t2.common.el( "input", panel.element );
+        let name = t2.common.el( "input", this.element );
             name.name = "name";
             name.placeholder = "name";
             name.value = t2.db.name;
@@ -61,4 +74,4 @@ const Table = function()
     };
 };
 
-export default Table;
+export default Panel;

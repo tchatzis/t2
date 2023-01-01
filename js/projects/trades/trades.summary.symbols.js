@@ -1,4 +1,4 @@
-import Common from "../../t2/t2.common.handlers.js";
+import Common from "../../t2/t2.container.handlers.js";
 
 const Panel = function( module )
 {
@@ -17,13 +17,26 @@ const Panel = function( module )
         Common.call( this );
     };
 
-    this.run = async function()
+    this.refresh = async function()
     {
-        panel.clear();
-        
         await module.queries(); 
-        await output();   
-    };    
+
+        await navigation();
+    };
+
+    async function navigation()
+    {
+        await t2.navigation.update( 
+        [ 
+            { id: "submenu", functions: [ { ignore: "clear" }, { clear: null } ] }, 
+            { id: "subcontent", functions: [ { ignore: "clear" } ] },
+            { id: "submargin", functions: [ { ignore: "clear" }, { clear: null } ] },
+            { id: "menu", functions: [ { ignore: "clear" } ] },
+            { id: "content", functions: [ { ignore: "clear" } ] },
+            { id: `content.panels.${ self.id }`, functions: [ { clear: null }, { invoke: [ { f: output, args: null } ] } ] },
+            { id: "margin", functions: [ { ignore: "clear" } ] }
+        ] );
+    } 
 
     async function output()
     {
@@ -44,7 +57,7 @@ const Panel = function( module )
 
         array.push( { symbol: "\u25fa", qty: 0, value: 0 } );
 
-        let chart = await panel.addComponent( { id: "symbols", type: "chart", format: "flex" } );
+        let chart = await this.addComponent( { id: "symbols", type: "chart", format: "flex" } );
             chart.addLayer( { color: "gray", font: "12px sans-serif", type: "bar",
                 data: array,
                 axes:

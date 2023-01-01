@@ -1,19 +1,17 @@
-import Common from "../../t2/t2.common.handlers.js";
+import Common from "../../t2/t2.container.handlers.js";
 import details from "./trades.fix.details.js";
 import handlers from "./trades.fix.handlers.js";
+import Message from "./trades.message.js";
 
 const Panel = function( module )
 {
     let self = this;
     let panel;
-    let parent;
     
-    this.init = async function( _parent, params )
+    this.init = async function( parent, params )
     {
-        parent = _parent;
-        
         panel = await parent.addContainer( { id: "panel", type: "panel", format: "flex" } );
-
+ 
         this.element = panel.element;
         this.type = panel.type;
 
@@ -21,11 +19,30 @@ const Panel = function( module )
         Common.call( this );
     };
 
-    this.run = async function()
+    this.refresh = async function()
     {
-        panel.clear();
+        await module.queries(); 
 
-        let outline = await panel.addContainer( { id: "outline", type: "box", format: "block" } );
+        await navigation();
+    }; 
+
+    async function navigation()
+    {
+        await t2.navigation.update( 
+        [ 
+            { id: "submenu", functions: [ { ignore: "clear" }, { clear: null } ] }, 
+            { id: "subcontent", functions: [ { ignore: "clear" } ] },
+            { id: "submargin", functions: [ { ignore: "clear" }, { clear: null } ] },
+            { id: "menu", functions: [ { ignore: "clear" } ] },
+            { id: "content", functions: [ { ignore: "clear" } ] },
+            { id: `content.panels.${ self.id }`, functions: [ { clear: null }, { invoke: [ { f: output, args: null } ] } ] },
+            { id: "margin", functions: [ { ignore: "clear" } ] }
+        ] );
+    } 
+
+    async function output()
+    {
+        let outline = await this.addContainer( { id: "outline", type: "box", format: "block" } );
 
         let form = await outline.addComponent( { id: "test", type: "form", format: "block" } );
             form.addListener( { type: "submit", handler: test } );
@@ -55,10 +72,12 @@ const Panel = function( module )
             if ( !confirmed )
                 return;
 
+            let message = new Message();
+                message.init();    
+
             await handlers.rename( module.table, records.data, data );
 
-            let message = await parent.addComponent( { id: "message", type: "message", format: "block", output: "text" } );
-                message.set( `Renamed ${ data.symbol } to ${ data.to.toUpperCase() }` );         
+            message.set( "Success" );        
         };
     };
 };

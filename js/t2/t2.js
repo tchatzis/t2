@@ -35,40 +35,25 @@ const T2 = function()
 
     async function navigation()
     {
-        await t2.navigation.setLayout( { name: "navigation", ignore: [ "menu" ] } );
+        await self.ui.layout.init( { name: "navigation" } );
+
+        let breadcrumbs = await self.navigation.addComponent( { id: "breadcrumbs", type: "path", format: "block", output: "path", parent: "footer" } );
+            breadcrumbs.reset(); 
 
         let menu = await self.navigation.addComponent( { id: "main", type: "menu", format: "flex", parent: "header" } );
+            menu.addBreadcrumbs( 0, breadcrumbs );
             menu.addListener( { type: "click", handler: async function()
             {
-                let active = arguments[ 2 ];
-
-                menu.activated = active.curr.getAttribute( "data-link" );
-
                 self.movie.changeScene( menu.activated );
-
-                breadcrumbs.reset();
-                breadcrumbs.set( 0, menu.activated ); 
             } } );
 
         let view = await self.navigation.addComponent( { id: "view", type: "menu", format: "flex", output: null, parent: "footer" } );
+            view.addBreadcrumbs( 1, breadcrumbs );
             view.addListener( { type: "click", handler: async function()
             {
-                let active = arguments[ 2 ];
-
-                view.activated = active.curr.getAttribute( "data-link" );
-
                 let script = await t2.navigation.import( view.module, view.activated );
-                await script.run();
-
-                breadcrumbs.reset();
-                breadcrumbs.set( 0, menu.activated ); 
-                breadcrumbs.set( 1, view.activated );
+                await script.init();
             } } );
-
-        let breadcrumbs = await self.navigation.addComponent( { id: "breadcrumbs", type: "path", format: "block", output: "path", parent: "footer" } );
-            breadcrumbs.reset();   
-            breadcrumbs.set( 0, menu.activated );
-            breadcrumbs.set( 1, view.activated );
     }
 };
 

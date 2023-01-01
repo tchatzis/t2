@@ -1,4 +1,4 @@
-import Common from "../../t2/t2.common.handlers.js";
+import Common from "../../t2/t2.container.handlers.js";
 
 const Panel = function( module )
 {
@@ -15,20 +15,34 @@ const Panel = function( module )
         Object.assign( this, params );
         Common.call( this ); 
     };
-
-    this.run = async function()
+    
+    this.refresh = async function()
     {
-        panel.clear();
-        
-        await this.plot();
+        await module.queries(); 
+
+        await navigation();
     };
 
-    this.plot = async function()
+    async function navigation()
+    {
+        await t2.navigation.update( 
+        [ 
+            { id: "submenu", functions: [ { ignore: "clear" }, { clear: null } ] }, 
+            { id: "subcontent", functions: [ { ignore: "clear" } ] },
+            { id: "submargin", functions: [ { ignore: "clear" }, { clear: null } ] },
+            { id: "menu", functions: [ { ignore: "clear" } ] },
+            { id: "content", functions: [ { ignore: "clear" } ] },
+            { id: `content.panels.${ self.id }`, functions: [ { clear: null }, { invoke: [ { f: plot, args: null } ] } ] },
+            { id: "margin", functions: [ { ignore: "clear" } ] }
+        ] );
+    } 
+
+    async function plot()
     {
         // filter by symbol and no dividends
-        this.array = module.data.all.filter( record => ( record.symbol == module.symbol ) );
+        let array = module.data.all.filter( record => ( record.symbol == module.symbol ) );
         // sort by date asc
-        this.array.sort( ( a, b ) => a.date < b.date ? 1 : -1 );
+        array.sort( ( a, b ) => a.date < b.date ? 1 : -1 );
 
         // format and calculate data
         let position = 0;
@@ -36,8 +50,8 @@ const Panel = function( module )
         let day = 1000 * 60 * 60 * 24;
 
         // sort by date desc
-        this.array.sort( ( a, b ) => a.datetime > b.datetime ? 1 : -1 );
-        this.array.forEach( record => 
+        array.sort( ( a, b ) => a.datetime > b.datetime ? 1 : -1 );
+        array.forEach( record => 
         { 
             record.date = Math.round( new Date( record.datetime ).getTime() * day ) / day;
 
@@ -50,9 +64,9 @@ const Panel = function( module )
             record.average = qty ? record.position / qty : 0;
         } );
 
-        let timeline = await panel.addComponent( { id: "timeline", type: "chart", format: "flex" } );
+        let timeline = await this.addComponent( { id: "timeline", type: "chart", format: "flex" } );
             timeline.addLayer( { color: "rgba( 0, 255, 255, 1 )", font: "12px sans-serif", type: "step",
-                data: this.array,
+                data: array,
                 axes:
                 { 
                     "0": { axis: "date", settings: { format: "date", step: day, mod: mondays, axis: true } },

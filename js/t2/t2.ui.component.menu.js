@@ -13,7 +13,7 @@ const Component = function()
             link?.click();
     };  
     
-    this.active = function( name )
+    this.highlight = function( name )
     {
         let link = self.getLink( name );
 
@@ -60,6 +60,11 @@ const Component = function()
         
         link.classList.add( "active" );
 
+        let name = link.getAttribute( "data-link" );
+
+        this.activated = name
+        this.setBreadcrumbs( name ); 
+
         if ( active.curr && active.curr !== link )
         {
             active.curr.classList.remove( "active" );   
@@ -93,34 +98,12 @@ const Component = function()
                     this.setActive( element );
 
                     for ( let [ type, listener ] of listeners )
-                    {
-                        f( e, listener, active );
-                    };
+                        listener.handler( e, listener, active );
                 } );
 
             map.set( element, new Map() );        
         } ); 
     };
-    
-    this.listen = function()
-    {
-        Array.from( map.keys() ).forEach( element =>
-        {
-            Array.from( listeners.keys() ).forEach( listener =>
-            {
-                element.removeEventListener( listener.type, ( e ) => f( e, listener, active ) );
-                element.addEventListener( listener.type, ( e ) => f( e, listener, active ) );
-            } );
-        } );
-    };
-
-    function f( e, listener )
-    {
-        e.preventDefault();
-        e.stopPropagation();
-
-        listener.handler( ...arguments );
-    } 
 };
 
 export default Component;

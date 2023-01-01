@@ -1,7 +1,8 @@
-import Common from "../../t2/t2.common.handlers.js";
+import Common from "../../t2/t2.container.handlers.js";
 
-const Import = function()
+const Panel = function()
 {
+    let self = this;
     let panel;
     
     this.init = async function( parent, params )
@@ -14,12 +15,24 @@ const Import = function()
         Object.assign( this, params );
         Common.call( this ); 
     };
-    
-    this.run = async function()
-    {
-        panel.clear();
 
-        let form = t2.common.el( "form", panel.element );
+    this.refresh = async function()
+    {
+        await navigation();
+    };
+
+    async function navigation()
+    {
+        await t2.navigation.update( 
+        [ 
+            { id: "content", functions: [ { ignore: "clear" } ] },
+            { id: `content.panels.${ self.id }`, functions: [ { clear: null }, { invoke: [ { f: output, args: null } ] } ] }
+        ] );
+    } 
+    
+    async function output()
+    {
+        let form = t2.common.el( "form", this.element );
             form.id = "import";
             form.addEventListener( "submit", ( e ) => upload( e ) );
         let file = t2.common.el( "input", panel.element );
@@ -50,4 +63,4 @@ const Import = function()
     };
 };
 
-export default Import;
+export default Panel;

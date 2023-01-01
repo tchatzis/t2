@@ -1,68 +1,62 @@
-const Day = function( module )
+const Template = function( module )
 {
     let self = this;
-    let today = t2.formats.isoDate( new Date() );
-    let content = t2.ui.children.get( "content" );
-    let margin = t2.ui.children.get( "margin" );
-    let menu = t2.ui.children.get( "menu" );
-    let submenu = t2.ui.children.get( "submenu" );
+    let max = Math.max.apply( null, module.data.all.map( record => new Date( record.datetime ) ) );
     let sum = ( a, b ) => a + b;
     let previous = { cell: null, popup: null };
 
-    this.run = async function()
+    this.init = async function()
     {
-        Object.assign( module, this );
-
-        console.warn( module.date );
-        
         await this.refresh();
-        await module.queries();  
-        await layout();  
 
-        update();
-
-        return;
-
-        for ( let [ id, component ] of t2.ui.children )
-            console.log( component.class, component.type, id );
+        await navigation();  
     };
 
     this.refresh = async function()
     {
-        delete module.symbol;
-        module.date = module.date || today;   
+        module.unsetSymbol();
+        module.setDate( module.date || t2.formats.isoDate( max ) ); 
+
+        await module.queries();
     };
 
-    async function layout()
+    async function navigation()
     {
-        [ "submenu", "subcontent", "submargin" ].forEach( id => t2.navigation.addIgnore( { id: id, ignore: [ "clear" ] } ) );
+        self.array = await preamble();
         
-        t2.navigation.update( 
-        {
-            clear: [ "menu", "submenu", "content", "subcontent" ]
-        } );
-        
-        await chart();
-        await symbols();
-        await date();
-        brokerages();
-        await balances();
-        await losses();
-        await problems();
-        await week();   
-        await zero();
-        await module.transaction( self );
+        await t2.navigation.update( 
+        [ 
+            { id: "submenu",    functions: [ { ignore: "clear" }, { clear: null }, { show: null }, { invoke: [ { f: date, args: null } ] } ] }, 
+            { id: "subcontent", functions: [ { ignore: "clear" }, { clear: null }, { show: null }, { invoke: [ { f: module.transaction, args: self } ] } ] },
+            { id: "submargin",  functions: [ { ignore: "clear" }, { clear: null }, { show: null } ] },
+            { id: "menu",       functions: [ { clear: null }, { show: null }, { invoke: [ { f: symbols, args: null } ] } ] },
+            { id: "content",    functions: [ { clear: null }, { invoke: 
+            [ 
+                { f: chart, args: null },
+                { f: brokerages, args: null },
+                { f: balances, args: null },
+                { f: losses, args: null },
+                { f: problems, args: null },
+                { f: week, args: null },
+                { f: zero, args: null }
+            ] } ] },
+            { id: "margin", functions: [ { clear: null }, { show: null } ] }
+        ] );
     }
 
     // transactions data
-    function brokerages()
+    async function brokerages()
     {
-        module.data.brokerage.forEach( async ( brokerage ) =>
+        let promises = [];
+        
+        module.data.brokerage.forEach( async ( brokerage ) => 
         {
             let array = module.data.filtered.filter( record => ( t2.formats.isoDate( record.datetime ) == module.date ) && record.brokerage == brokerage );
 
-            await transactions( array, brokerage );
+            promises.push( await transactions.call( this, array, brokerage ) );
         } );
+
+        await Promise.all( promises );
     }
 
     // chart data
@@ -187,17 +181,15 @@ const Day = function( module )
     {
         let array = self.symbols;
 
-        let symbols = await menu.addComponent( { id: "symbols", type: "menu", format: "block" } );
+        let symbols = await this.addComponent( { id: "symbols", type: "menu", format: "block" } );
             symbols.update( array );
-            symbols.addListener( { type: "click", handler: function() 
+            symbols.addListener( { type: "click", handler: async function() 
             { 
-                let link = arguments[ 2 ].curr;
-                let symbol = link.textContent;
+                let symbol = symbols.activated.toUpperCase();
+                
+                module.setSymbol( symbol );
 
-                module.symbol = symbol;
-
-                t2.navigation.path( `/symbol/${ symbol }` );
-                t2.navigation.linked = true;
+                await t2.navigation.path( `/symbol/${ symbol }` );
             } } );   
 
         if ( module.symbol )
@@ -207,10 +199,10 @@ const Day = function( module )
     // select date form
     async function date()
     {
-        let dates = await submenu.addComponent( { id: "date", type: "form", format: "flex" } );
+        let dates = await this.addComponent( { id: "date", type: "form", format: "flex" } );
             dates.addListener( { type: "submit", handler: async ( args ) => module.setDate( args.data.date ) } );
             dates.addField( { 
-                input: { name: "date", type: "date", value: module.date, max: today, required: "" }, 
+                input: { name: "date", type: "date", value: module.date, max: max, required: "" }, 
                 cell: { css: {}, display: 7 },
                 format: [ "date" ] } );
             dates.addField( { 
@@ -222,16 +214,14 @@ const Day = function( module )
     // today's transactions chart
     async function chart()
     {
-        let array = preamble();
-
-        let container = await content.addContainer( { id: "values", type: "box", format: "inline-block" } );
+        let container = await this.addContainer( { id: "values", type: "box", format: "inline-block" } );
             container.scale( 0.5 );
         let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
             title.set( `Transactions \u00BB ${ module.date }` );
 
         let chart = await container.addComponent( { id: "symbols", type: "chart", format: "flex" } );
             chart.addLayer( { color: "hsl( 180, 70%, 30% )", font: "12px sans-serif", type: "bar",
-                data: array,
+                data: self.array,
                 axes:
                 { 
                     "0": { axis: "symbol", settings: { mod: ( p ) => !( p % 1 ), axis: true, format: "uppercase", step: 1, colored: { axis: true, data: true } } },
@@ -242,7 +232,7 @@ const Day = function( module )
     // today's transactions table
     async function transactions( array, brokerage )
     {
-        let container = await content.addContainer( { id: brokerage.toLowerCase(), type: "box", format: "inline-block" } );
+        let container = await this.addContainer( { id: brokerage.toLowerCase(), type: "box", format: "inline-block" } );
             container.scale();
         let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
             title.set( `${ brokerage } \u00BB ${ module.date }` );
@@ -254,8 +244,6 @@ const Day = function( module )
                 args.source = self;
 
                 await module.updateTransaction( args );
-
-                update();
             } } );
             table.addColumn( { 
                 input: { name: "id", type: "hidden" }, 
@@ -333,7 +321,7 @@ const Day = function( module )
         
         let array = self.losses;
 
-        let container = await content.addContainer( { id: "losses", type: "box", format: "inline-block" } );
+        let container = await this.addContainer( { id: "losses", type: "box", format: "inline-block" } );
             container.scale();
         let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
             title.set( `Underperforming \u00BB ${ module.date }` );
@@ -353,7 +341,7 @@ const Day = function( module )
     {
         let array = self.losses.filter( record => record.name.charCodeAt( 0 ) < 256 );
 
-        let container = await content.addContainer( { id: "problems", type: "box", format: "inline-block" } );
+        let container = await this.addContainer( { id: "problems", type: "box", format: "inline-block" } );
             container.scale();
         let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
             title.set( `Underperforming Stocks \u00BB ${ module.date }` );
@@ -408,7 +396,7 @@ const Day = function( module )
     {
         let array = await find();
 
-        let container = await content.addContainer( { id: "balances", type: "box", format: "inline-block" } );
+        let container = await this.addContainer( { id: "balances", type: "box", format: "inline-block" } );
             container.scale();
         let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
             title.set( `Balances \u00BB ${ module.date }` );
@@ -426,7 +414,7 @@ const Day = function( module )
     // this week at a glance component
     async function week()
     {
-        let container = await content.addContainer( { id: "week", type: "box", format: "inline-block" } );
+        let container = await this.addContainer( { id: "week", type: "box", format: "inline-block" } );
             container.scale();
         let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
             title.set( `Week at a Glance` );
@@ -454,7 +442,7 @@ const Day = function( module )
     {
         let array = module.data.all.filter( record => !record.qty || !record.price );
 
-        let container = await content.addContainer( { id: "zero", type: "box", format: "inline-block" } );
+        let container = await this.addContainer( { id: "zero", type: "box", format: "inline-block" } );
             container.scale();
         let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
             title.set( "Zero Entries" );
@@ -510,8 +498,12 @@ const Day = function( module )
     // week cell popup
     async function records( td, key, column, array )
     {
-        let subcontent = t2.ui.children.get( "subcontent" );
-        let popop = await subcontent.addContainer( { id: "popop", type: "popup", format: "block" } );
+        if ( !array )
+            return;
+
+        let submargin = t2.ui.children.get( "submargin" );
+        
+        let popop = await submargin.addContainer( { id: "popop", type: "popup", format: "block" } );
             popop.reset();
             popop.setExit( () => td.classList.remove( "highlight" ) );
 
@@ -576,12 +568,6 @@ const Day = function( module )
         previous.cell = td;
         previous.popup = popup;
     }
-
-    async function update()
-    {
-        let week = t2.ui.children.get( "content.week.week" );
-            week.update();
-    }
 };
 
-export default Day;
+export default Template;

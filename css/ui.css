@@ -76,7 +76,7 @@
 .data
 {
     border-right: 1px solid #222;
-    border-bottom: 1px solid #222;
+    border-top: 1px solid #222;
     color: silver;
     font-size: 10px;
     min-width: 4em;
@@ -315,7 +315,13 @@
 .outline:hover
 {
     border-bottom: 1px solid #ccc;
+    
     border-top: 1px solid #ccc;
+}
+
+.over > td
+{
+    border-top-color: green;
 }
 
 .pair

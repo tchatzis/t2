@@ -1,21 +1,44 @@
-var DND = function()
+const DND = function()
 {
-    var scope = this;
+    let scope = this;
+        scope.offset = 0;
+    let type = 'application/x-moz-node';
 
+    this.disable = ( index ) => 
+    {
+        scope.items[ index ].removeAttribute( "draggable" );
+        scope.items[ index ].setAttribute( "data-disabled", "drop" );
+        scope.offset++;
+    };
+
+    this.enable = ( item, index ) => 
+    {
+        item.setAttribute( "draggable", true ) 
+        item.setAttribute( "data-index", index );
+        item.addEventListener( 'dragstart', scope.start );
+        item.addEventListener( 'dragover', scope.over );
+        item.addEventListener( 'dragenter', scope.enter );
+        item.addEventListener( 'dragleave', scope.leave );
+        item.addEventListener( 'dragend', scope.end );
+        item.addEventListener( 'drop', scope.drop );
+    };
+    
     this.drop = ( e ) =>
     {
         e.stopPropagation();
 
         var el = scope.find( e ); 
 
+        if ( el.hasAttribute( "data-disabled" ) )
+            return false;
+
         if ( scope.element !== el )  
         {
-            scope.element.innerHTML = el.innerHTML;
-            el.innerHTML = e.dataTransfer.getData( 'text/html' );
-        }
+            scope.parent.insertBefore( scope.element, el );
 
-        scope.reorder( el );
-        scope.callback( el );
+            scope.reorder( el );
+            scope.callback( el );
+        }
 
         return false;
     };
@@ -29,8 +52,12 @@ var DND = function()
 
     this.enter = ( e ) =>
     {
-        var el = scope.find( e );   
-            el.classList.add( "over" );
+        var el = scope.find( e ); 
+        
+        if ( el.hasAttribute( "data-disabled" ) )
+            return false;
+
+        el.classList.add( "over" );
     };
 
     this.leave = ( e ) =>
@@ -47,17 +74,7 @@ var DND = function()
         scope.items = Array.from( scope.parent.children );
         scope.values = values;
 
-        scope.items.forEach( ( item, index ) => 
-        {
-            item.setAttribute( "draggable", true ) 
-            item.setAttribute( "data-index", index );
-            item.addEventListener( 'dragstart', scope.start );
-            item.addEventListener( 'dragover', scope.over );
-            item.addEventListener( 'dragenter', scope.enter );
-            item.addEventListener( 'dragleave', scope.leave );
-            item.addEventListener( 'dragend', scope.end );
-            item.addEventListener( 'drop', scope.drop );
-        } );
+        scope.items.forEach( ( item, index ) => this.enable( item, index ) );
     };
 
     this.over = ( e ) =>
@@ -69,8 +86,8 @@ var DND = function()
 
     this.reorder = ( el ) =>
     {        
-        var dropIndex = Number( el.dataset.index );
-        var dragIndex = Number( scope.element.dataset.index );
+        var dropIndex = Number( el.dataset.index ) - scope.offset;
+        var dragIndex = Number( scope.element.dataset.index ) - scope.offset;
         var dragValue = scope.values.splice( dragIndex, 1 )[ 0 ];
 
         scope.values.splice( dropIndex, 0, dragValue );
@@ -82,7 +99,7 @@ var DND = function()
 
         e.target.style.opacity = 0.5;
         e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData( 'text/html', e.target.innerHTML );
+        e.dataTransfer.setData( type, e.target );
     };
 };
 

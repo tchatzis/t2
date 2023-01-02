@@ -1,21 +1,32 @@
-import navigation from "../../t2/t2.ui.navigation.js";
-
-const Index = function()
+const Sandbox = function()
 {
     const self = this;
-    let breadcrumbs;
 
     this.init = async function()
     {
-        await navigation.call( this, 
-        { 
-            init: { layout: "minimal", ignore: [ "header" ] }, 
-            menu: { activate: self.info.namespace, array: Array.from( t2.movie.scenes.keys() ), ignore: [ "header", "footer" ] }, 
-            view: { activate: null, array: [ "list", "table" ], ignore: [ "header", "footer" ] } 
-        } );
+        await this.refresh();
 
-        breadcrumbs = t2.ui.children.get( "footer.breadcrumbs" );
+        await navigation();
     };
+
+    this.refresh = async function()
+    {
+
+    };
+
+    async function navigation()
+    { 
+        let menu = t2.navigation.components.main;
+            menu.update( Array.from( t2.movie.scenes.keys() ) );
+            menu.highlight( self.info.namespace );
+
+        let view = t2.navigation.components.view;
+            view.setModule( self );
+            view.update( [ "List", "Table" ] );
+            view.activate( view.array[ 0 ].toLowerCase() );
+
+        await t2.ui.layout.init( { name: "minimal", preserve: [ "header", "footer" ] } );
+    }
 };
 
-export default Index;
+export default Sandbox;

@@ -1,40 +1,82 @@
-const Component = function( module )
+const Template = function( module )
 {
     let self = this;
-    let wrapper = t2.ui.children.get( "wrapper" );
+    let array = [];
+    let table;
     
-    this.init = function()
+    this.init = async function()
     {
-        console.log( self.info )
+        await this.refresh();
+
+        await navigation();
     };
 
-    this.run = async function()
+    this.refresh = async function()
     {
-        let box2 = await wrapper.addContainer( { id: "segments", type: "box", format: "block", output: null } );
 
-        let segments = await box2.addComponent( { id: "segments", type: "list", format: "flex" } );
-            segments.addColumn( { 
-                input: { name: "x", type: "number", step: 0.1, min: 0 }, 
-                cell: { css: {}, display: 3, modes: [ "read", "edit" ] },
-                format: [ "number" ] } );
-            segments.addColumn( { 
-                input: { name: "y", type: "number", step: 0.1, min: 0 }, 
-                cell: { css: {}, display: 3, modes: [ "read", "edit" ] },
-                format: [ "number" ] } );
-            segments.addColumn( { 
-                input: { name: "z", type: "number", step: 0.1, min: 0 }, 
-                cell: { css: {}, display: 3, modes: [ "read", "edit" ] },
-                format: [ "number" ] } );
-            segments.addColumn( { 
-                input: { name: "add", type: "submit", value: "ADD" }, 
-                cell: { css: {}, display: 4, modes: [ "read", "edit" ] },
-                format: [] } );
-            segments.addColumn( { 
-                input: { name: "delete", type: "submit", value: "DELETE" }, 
-                cell: { css: {}, display: 4, modes: [ "read", "edit" ] },
-                format: [] } );
-            segments.setColumns();
     };
+
+    async function navigation()
+    {
+        await t2.navigation.update( 
+        [ 
+            { id: "content", functions: [ { clear: null }, { invoke: [ { f: list, args: null }, { f: output, args: null } ] } ] },
+        ] );
+    } 
+
+    async function list()
+    {
+        let list = await this.addComponent( { id: "list", type: "list", format: "block" } );
+            list.addRowListener( { type: "contextmenu", handler: highlight } );
+            list.subscription.add( { event: "addRow", handler: () => update( array ) } );
+            list.subscription.add( { event: "removeRow", handler: () => update( array ) } );
+            list.subscription.add( { event: "saveRow", handler: () => update( array ) } );
+            list.addColumn( { 
+                input: { name: "x", type: "number", step: 0.01, min: 0, required: "" }, 
+                cell: { css: {}, display: 3, modes: [ "read", "edit" ] },
+                format: [] } );
+            list.addColumn( { 
+                input: { name: "y", type: "number", step: 0.01, min: 0, required: "" }, 
+                cell: { css: {}, display: 3, modes: [ "read", "edit" ] },
+                format: [] } );
+            list.addColumn( { 
+                input: { name: "z", type: "number", step: 0.01, min: 0, required: "" }, 
+                cell: { css: {}, display: 3, modes: [ "read", "edit" ] },
+                format: [] } );
+            list.populate( { array: array } );
+            list.setTotals();  
+    };
+
+    async function output()
+    {
+        let box = await this.addContainer( { id: "box", type: "box", format: "block" } );
+        
+        table = await box.addComponent( { id: "table", type: "table", format: "block" } );
+        table.addColumn( { 
+            input: { name: "x", type: "number", step: 0.01, min: 0, required: "" }, 
+            cell: { css: {}, display: 3, modes: [ "read", "edit" ] },
+            format: [] } );
+        table.addColumn( { 
+            input: { name: "y", type: "number", step: 0.01, min: 0, required: "" }, 
+            cell: { css: {}, display: 3, modes: [ "read", "edit" ] },
+            format: [] } );
+        table.addColumn( { 
+            input: { name: "z", type: "number", step: 0.01, min: 0, required: "" }, 
+            cell: { css: {}, display: 3, modes: [ "read", "edit" ] },
+            format: [] } );
+        table.update( { array: array } );
+    }
+
+    function highlight( args )
+    {
+        //data, columns, row
+        console.log( args );
+    }
+
+    function update( array )
+    {
+        table?.update( { array: array } );
+    }
 };
 
-export default Component;
+export default Template;

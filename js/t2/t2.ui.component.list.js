@@ -1,16 +1,18 @@
-import formats from "./t2.formats.js";
+import DND from "../modules/dnd.js";
+import helpers from "./t2.component.table.helpers.js";
+import Totals from "./t2.common.totals.js";
 import Handlers from "./t2.component.handlers.js";
 
-const List = function()
+const Component = function()
 {
     let self = this;
     let el = t2.common.el;
     let columns = new Map();
-    let listeners = { row: [], column: [], submit: [] };
+    let listeners = { add: [], remove: [], save: [], row: [] };
     let active = { highlight: null };
+    let dnd = new DND();
 
-    this.totals = {};
-
+    // initialize
     this.init = function( params )
     {
         let table = el( "table", this.parent.element );
@@ -27,122 +29,30 @@ const List = function()
 
         Handlers.call( this );
     };
-
-    this.addColumn = function( params )
-    {
-        let input = params.input;
-        let cell = params.cell;
-
-        if ( input.type == "number" )
-            this.totals[ input.name ] = 0;
-
-        columns.set( input.name, params );
-    };
-
+    
+    // listeners
     this.addRowListener = function( listener )
     {
         listeners.row.push( listener );
     };
 
-    this.addSubmitListener = function( listener )
+    // elements
+    this.headerless = function()
     {
-        listeners.submit.push( listener );
-    };
-
-    this.allColumns = function( params )
-    {
-        if ( !params.array.length )
-            return;
-        
-        let keys = Object.keys( params.array[ 0 ] );
-            keys.forEach( key =>
-            {
-                let config = 
-                {
-                    input: { name: key, type: "text" }, 
-                    cell: { css: { class: "data" }, display: 6, modes: [ "read" ] }
-                };
-
-                this.addColumn( config );
-            } );
-
-        this.setColumns( "read" );
-        this.populate( params );
-    };
-
-    this.edit = async function()
-    {
-        let data = arguments[ 0 ];
-
-        let columns = arguments[ 1 ];
-
-        let subcontent = t2.ui.children.get( "subcontent" );
-        let parent = await subcontent.addContainer( { id: "popop", type: "popup", format: "block" } );
-            parent.clear();
-            parent.show();
-
-        self.highlight( data.id );
-
-        let container = await parent.addContainer( { id: "edit", type: "box", format: "inline-block" } );
-        let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
-            title.set( `Edit \u00BB ${ data.id }` );  
-
-        let form = await container.addComponent( { id: `${ self.id }.${ data.id }`, type: "form", format: "block" } );
-            form.addListener( { type: "submit", handler: function ( data )
-            {
-                listeners.submit.forEach( listener => 
-                {
-                    listener.handler.call( form, data );
-                } );
-                parent.hide();
-            } } );
-
-        Array.from( columns.entries() ).forEach( column =>
-        {
-            let name = column[ 0 ];
-            let config = column[ 1 ];
-
-            if ( config.cell.modes.find( mode => mode == "edit" ) )
-            {
-                let input = Object.assign( { label: name, name: name, type: config.input.type, value: data[ name ] || config.input.value || "" }, config.input );
-
-                if ( config.input.type == "checkbox" )
-                {
-                    let checked = !!data[ name ];
-
-                    if ( checked )
-                        input.checked = checked;
-                }
-
-                form.addField( { 
-                    input: input, 
-                    cell: config.cell,
-                    format: config.format, 
-                    options: config.options } );
-                }
-        } );
+        this.header.classList.add( "hidden" );
     };
 
     this.highlight = function( id )
     {
-        let row = document.querySelector( `[ data-id = "${ id }" ]` );
+        let row = this.element.querySelector( `[ data-id = "${ id }" ]` );
             row?.classList.add( "highlight" );
     };
 
-    this.normal = function( id )
-    {
-        let row = document.querySelector( `[ data-id = "${ id }" ]` );
-            row?.classList.remove( "highlight" );
-    };
-
-    this.setColumns = function( mode, hidden )
+    this.setHeaders = function()
     {
         this.columns = Array.from( columns.keys() );
 
         this.header.innerHTML = null;
-        if ( hidden )
-            this.header.classList.add( "hidden" );
-
         this.footer.innerHTML = null;
 
         let th = el( "th", this.header );
@@ -153,7 +63,7 @@ const List = function()
 
         this.columns.forEach( column => 
         {
-            let display = show( column, mode );
+            let display = helpers.show( columns, column );
 
             let th = el( "th", this.header );
                 th.textContent = column;
@@ -163,185 +73,293 @@ const List = function()
                 tf.setAttribute( "data-column", column );
                 tf.style.display = display;
         } );
-
-        this.populate( { array: [ null ] } );
     };
 
-    this.setTotals = function()
+    this.unhighlight = function( id )
     {
-        this.columns.forEach( ( column, index ) => 
-        {
-            let params = columns.get( column );
-
-            if ( params.input.type == "number" )
-            {
-                let value = this.totals[ column ];
-
-                params.format?.forEach( f => value = formats[ f ]( value ) );
-
-                let cell = this.footer.children[ index + 1 ];
-                    cell.classList.add( "value" );
-                    cell.classList.add( "totals" );
-                    cell.textContent = value;
-            }
-        } );
+        let row = this.element.querySelector( `[ data-id = "${ id }" ]` );
+            row?.classList.remove( "highlight" );
     };
 
+    this.find = function( e )
+    {
+        let node = e.target;
+
+        while ( node.tagName !== "TR" )
+        {
+            node = node.parentNode;
+        }
+
+        return node;
+    };
+
+    // data 
     this.populate = function( args )
     {
+        controls();
+
         this.reset();
-        
-        let use = args.array;
 
-            if ( !use.length )
+        add();
+
+        this.array = args.array;
+        this.array.forEach( ( record, index ) => this.addRow( record, index + 1 ) );
+
+        dnd.init( this.element, this.find, this.array, () => this.renumber.call( this ) );
+        dnd.disable( 0 );
+
+        helpers.resize( self );
+    };
+
+    this.renumber = function()
+    {   
+        let count = this.array.length;
+        let children = this.element.children.length;
+
+        for ( let index = 1; index < children; index++ )
+        {
+            let record = this.array[ index - 1 ];
+            let id = `${ this.id }.${ index }`;
+            let row = this.element.children[ index ];
+                row.dataset.id = record.id || index;
+                row.dataset.index = index;
+                row.dataset.count = count;
+
+            let th = row.firstChild;
+                th.textContent = index;
+
+            let inputs = row.querySelectorAll( "input" );    
+
+            for ( let input of inputs )
             {
-                this.parent.hide();
-
-                return;
-            }
+                input.dataset.index = index;
+                input.setAttribute( "Form", id );
+            }   
             
-            use.forEach( ( record, index ) => 
-            {             
-                record = record || { id: 0 };
-
-                let row = el( "tr", self.element );
-                    row.setAttribute( "data-id", record.id );
-                    row.setAttribute( "data-index", index );
-                    row.setAttribute( "data-count", use.length );
-
-                listeners.row.forEach( listener =>
-                {
-                    row.addEventListener( listener.type, ( e ) => 
-                    { 
-                        e.preventDefault(); 
-
-                        listener.handler( record, columns, row ); 
-
-                        self.normal( active.highlight?.getAttribute( "data-id" ) );
-
-                        active.highlight = row;
-                    } );
-
-                    row.classList.add( "tr" );
-                } );
-
-                if ( record.disabled )
-                    row.classList.add( "disabled" );
-
-                display( row, record, index );
-            } );
-
-        this.array = use;
+            let form = row.querySelector( "form" );
+                form.id = id;
+        };
     };
 
     this.reset = function()
     {
-        this.columns.forEach( column => this.totals[ column ] = 0 );
+        this.resetTotals();
         this.element.innerHTML = null;
+        this.array = [];
     };
 
-    this.update = function( key, data )
+    this.update = function( args )
     {
-        let row = this.array.find( item => item[ key ] == data[ key ] );
-            row = data;
-
-        this.hightlight( data[ key ] );
-    };
-
-    function css( cell, column, record )
-    {
-        let css = "data";
+        let _args = { array: args.array || this.array };
         
-        if ( cell.css )
+        this.populate( _args );
+        
+        if ( this.totals._display )
+            this.setTotals(); 
+    };
+
+    // column
+    this.addColumn = function( params )
+    {
+        let input = params.input;
+
+        if ( input.type == "number" )
+            this.totals[ input.name ] = 0;
+
+        columns.set( input.name, params );
+
+        this.setHeaders();
+    };
+
+    // row
+    this.addRow = function( record, index )
+    {
+        record.id = record.id || index;
+        
+        let row = el( "tr", self.element );
+            row.setAttribute( "data-id", record.id );
+            row.setAttribute( "data-index", index );
+            row.setAttribute( "data-count", this.array.length );
+
+        if ( index )
         {
-            let option = Object.keys( cell.css )[ 0 ];
-
-            switch( option )
-            {
-                case "class":
-                    css = cell.css.class;
-                break;
-                
-                case "column":
-                    css = column.toLowerCase();
-                break;
-
-                case "predicate":
-                    let predicate = cell.css.predicate.conditions.every( condition => eval( `${ record[ condition.name ] } ${ condition.operator } ${ condition.value }` ) );
-
-                    css = cell.css.predicate.options[ 1 - predicate ];
-                break;
-                
-                case "value":
-                    css = record[ cell.css.value || column ]?.toLowerCase();
-                break;
-            } 
+            dnd.enable( row, index );
+            dnd.items.push( row );
         }
 
-        return css;
-    }
+        helpers.listen( self, row, record, listeners, active, columns );
+        this.updateRow( row, record, index );
 
-    function display( row, record, index )
+        this.dispatch( "addRow" );        
+
+        if ( record.disabled )
+            row.classList.add( "disabled" );
+    };
+
+    this.removeRow = function( record, index )
+    {
+        let row = this.element.querySelector( `[ data-index = "${ index }" ]` );
+            row.remove();
+
+        if ( this.totals._display )
+            this.removeTotal( record );
+
+        this.array.splice( index - 1, 1 );
+
+        this.dispatch( "removeRow" );
+
+        this.renumber();
+    };
+
+    this.saveRow = function( record, index )
+    {
+        this.array.splice( index - 1, 1, record );
+        this.updateTotals();
+
+        this.dispatch( "saveRow" );
+    };
+
+    this.updateRow = function( row, record, index )
     {
         row.innerHTML = null;
 
         let th = el( "th", row );
             th.style.width = "2em";
-            th.textContent = index + 1;
-        
-        self.columns.forEach( ( column, index ) => 
+            th.textContent = index;
+
+        self.columns.forEach( column => 
         {
             let config = columns.get( column );
+            let value = this.formatter( config, column, record, 1 );
+
+            // display
             let cell = config.cell;
-            let value = record[ column ];
-            let attributes = config.input; 
-            let format = config.format;
-            let th = self.header.children[ index + 1 ];
-            let tf = self.footer.children[ index + 1 ];
-            let display = show( column );
-
-            switch ( attributes.type )
-            {
-                case "number":
-                    value = Number( value || 0 );
-                break;
-            };
-
-            format?.forEach( f => value = formats[ f ]( value, column, record ) );
-
-            attributes.value = attributes.value || value;
+            let display = helpers.show( columns, column ); 
 
             let td = el( "td", row );
                 td.classList.add( "data" );
                 td.style.width = cell.display + "em";
-                td.classList.add( css( cell, column, record ) );
+                td.classList.add( helpers.css( cell, column, record ) );
                 td.style.display = display;
-
-            let input = t2.common.el( "input", td );
-
-            for ( let attr in attributes )
-                input.setAttribute( attr, attributes[ attr ] ); 
-  
-            // set header / footer column widths
-            th.style.width = td.offsetWidth + "px";
-            tf.style.width = td.offsetWidth + "px";
+            
+            input( index, td, value, config.input );
         } );
+
+        // form
+        let td = el( "td", row );
+            td.classList.add( "hidden" );
+
+        let form = el( "form", td );
+            form.id = `${ self.id }.${ index }`;
+            form.addEventListener( "submit", submit );
+
+        this.dispatch( "updateRow" ); 
+
+        if ( this.totals._display )
+            this.setTotals();
+    };
+
+    // totals
+    Totals.call( this, columns );
+
+    // default ( add ) row
+    function add()
+    {
+        let record = {};
+
+        for ( let [ id, config ] of columns )
+            if ( config.input.type !== "submit" )
+                record[ id ] = null;
+
+        self.addRow( record, 0 );
     }
 
-    function show( column )
+    // add controls
+    function controls()
     {
-        let display = "none"; 
-        let params = columns.get( column );
-        let conditions = [];
-            conditions.push( params.input.type !== "hidden" );
-            conditions.push( params.cell.modes.find( mode => mode == "edit" ) );
-            conditions.push( params.cell.display );
+        self.addColumn( { 
+            input: { name: "add", type: "submit", value: "+" }, 
+            cell: { css: {}, display: 4, modes: [ "read", "edit" ] },
+            format: [] } );
+        self.addColumn( { 
+            input: { name: "remove", type: "submit", value: "-" }, 
+            cell: { css: {}, display: 4, modes: [ "read", "edit" ] },
+            format: [] } );
+    }
 
-        if ( conditions.every( bool => bool ) )
-            display = "table-cell";
+    function input( index, td, value, config )
+    {
+        let id = `${ self.id }.${ index }`;
+        let f;
+        let v;
 
-        return display;
-    };
+        switch( config.name )
+        {
+            case "add":
+                f = index ? "save" : config.name;
+                f = f + "Row";
+                v = index ? "\u2705" : "\u2795";
+            break;
+
+            case "remove":
+                f = index ? config.name : "reset";
+                f = f + "Row";
+                v = index ? "\u274C" : "  ";
+            break;
+
+            default:
+                f = index ? "change" : null; 
+                v = value;
+            break;
+        }
+
+        let input = el( "input", td );
+            Object.assign( input, config );
+            input.setAttribute( "value", v );
+            input.setAttribute( "Form", id );
+            input.setAttribute( "data-function", f );
+            input.setAttribute( "data-index", index );
+    }
+
+    // button handlers
+    function submit( e )
+    {
+        e.preventDefault();
+
+        let button = e.submitter;
+        let action = button.dataset.function;
+        let formdata = new FormData( e.target );
+        let index = Number( button.dataset.index );
+        let record = {};
+
+        for ( let [ column, value ] of formdata )
+        {
+            let config = columns.get( column );
+                config.format.forEach( f => value = t2.formats[ f ]( value ) );
+            
+            record[ column ] = value;
+        }
+
+        switch ( action )
+        {
+            case "addRow":
+                self.array.push( record );
+                self[ action ]( record, self.array.length );
+            break;
+
+            case "removeRow":
+                self[ action ]( record, index );
+            break;
+
+            case "resetRow":
+                e.target.reset();
+            break;
+
+            case "saveRow":
+                self[ action ]( record, index );
+            break;
+        }
+    }
 };
 
-export default List;
+export default Component;

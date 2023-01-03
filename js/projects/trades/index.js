@@ -1,5 +1,6 @@
 import Data from "./trades.data.js";
 import Message from "../../t2/t2.ui.message.js";
+import Queries from "../../t2/t2.queries.js";
 
 const Trades = function()
 {
@@ -7,6 +8,12 @@ const Trades = function()
 
     this.init = async function()
     {
+        this.q = new Queries();
+        await this.q.init( { table: "trades" } );
+        this.q.set( "actions", [ "BUY", "SELL", "DIV" ] );
+        this.q.set( "brokerage", [ "TDAmeritrade", "JPMorganChase", "Robinhood" ] );
+        this.q.set( "source", [ "JPMorganChase", "RBC", "HSBC", "Robinhood", "Cheque" ] );
+
         await this.refresh();
 
         await navigation();
@@ -15,8 +22,25 @@ const Trades = function()
     this.refresh = async function()
     {
         this.unsetSymbol();
-        
+
         await this.queries();
+    };
+
+    this.queries = async function()
+    {
+        await this.q.refresh();
+        
+        this.q.filters.add( { operator: "eq", name: "symbol", value: [ this.symbol ] } );
+        this.q.filters.add( { operator: "date.between", name: "datetime", value: [ this.from, this.to ] } );
+        this.q.filters.add( { operator: "date.eq", format: "isoDate", name: "datetime", value: [ this.date ] } );
+
+        this.q.define( 
+        [ 
+            { key: "datetime", format: "datetime", sort: "asc", use: "filtered" }, 
+            { key: "symbol", format: "uppercase", sort: "asc", use: "all" } 
+        ] );
+
+        this.data = this.q.data;
     };
 
     async function navigation()
@@ -33,66 +57,6 @@ const Trades = function()
         await t2.ui.layout.init( { name: "all", preserve: [ "header", "footer" ] } );
     }
 
-    this.filter = function()
-    {
-        this.data.filtered = [ ...this.data.all ];
-        
-        if ( this.symbol )
-        {
-            //console.log( "symbol", this.symbol );
-            this.data.filtered = this.data.filtered.filter( record => record.symbol == this.symbol );
-        }
-        
-        if ( this.from && this.to )
-        {
-            //console.log( "from", this.from, "to", this.to );
-            let from = new Date( this.from );
-            let to = new Date( this.to );
-                to.setDate( to.getDate() + 2 );
-
-            this.data.filtered = this.data.filtered.filter( record => ( new Date( record.datetime ) > from && new Date( record.datetime ) < to ) );
-        }
-
-        if ( this.date )
-        {
-            this.data.filtered = this.data.filtered.filter( record => t2.formats.isoDate( record.datetime ) == this.date ); 
-        }
-
-        t2.common.log( "blue", "filtered:", this.data.filtered.length );
-    };
-
-    this.queries = async () =>
-    {
-        this.table = "trades";
-
-        let records = await t2.db.tx.retrieve( this.table );
-
-        this.data = 
-        {
-            actions:    [ "BUY", "SELL", "DIV" ],
-            all:        records.data,
-            brokerage:  [ "TDAmeritrade", "JPMorganChase", "Robinhood" ],
-            filtered:   [],
-            source:     [ "JPMorganChase", "RBC", "HSBC", "Robinhood", "Cheque" ]    
-        };
-
-        this.filter();
-
-        [ 
-            { key: "datetime", format: "datetime", sort: "asc", use: "filtered" }, 
-            { key: "symbol", format: "uppercase", sort: "asc", use: "all" } 
-        ].forEach( property => 
-        {
-            let map = new Map();
-
-            this.data[ property.use ].map( record => map.set( record[ property.key ], record ) );
-
-            let array = Array.from( map.keys() );
-                array = array.map( item => t2.formats[ property.format ]( item ) );
-            this.data[ property.key ] = array.sort( this.sort[ property.sort ] );
-        } ); 
-    };
-
     this.setDate = ( date ) => this.date = date;
 
     this.unsetDate = () => delete this.date;
@@ -100,12 +64,6 @@ const Trades = function()
     this.setSymbol = ( symbol ) => this.symbol = symbol;
 
     this.unsetSymbol = () => delete this.symbol;
-
-    this.sort =
-    {
-        asc:  ( a, b ) => ( a > b ) ? 1 : -1,
-        desc: ( a, b ) => ( a < b ) ? 1 : -1
-    };
 
     // common transaction entry form
     this.transaction = async function( source )
@@ -167,8 +125,8 @@ const Trades = function()
         let data = args.data;
             data.action = submit.value;
         let message = new Message();
-            message.init();
-        let record = await t2.db.tx.create( self.table, new Data( data ) );
+            await message.init();
+        let record = await t2.db.tx.create( self.q.table, new Data( data ) );
         let table = self.appendRow( args.source, record );
 
         message.set( `Added ${ record.id }` );
@@ -214,8 +172,8 @@ const Trades = function()
         let table = args.table; 
         let row = args.row;
         let message = new Message();
-            message.init();
-        let record = await t2.db.tx.update( self.table, Number( data.id ), new Data( data ) );
+            await message.init();
+        let record = await t2.db.tx.update( self.q.table, Number( data.id ), new Data( data ) );
 
         await this.queries();
 

@@ -31,7 +31,7 @@ const Tabs = function( module )
                 { id: "subcontent", functions: [ { ignore: "clear" }, { clear: null }, { show: null }, { invoke: [ { f: module.transaction, args: self } ] } ] },
                 { id: "submargin",  functions: [ { ignore: "clear" }, { clear: null }, { show: null } ] },
                 { id: "menu",       functions: [ { ignore: "clear" }, { show: null }, { invoke: [ { f: symbols, args: null } ] } ] },
-                { id: "content",    functions: [ { clear: null }, { invoke: [ { f: container, args: null } ] } ] },
+                { id: "content",    functions: [ { clear: null }, { invoke: [ { f: output, args: null } ] } ] },
                 { id: "margin",     functions: [ { clear: null }, { invoke: [ { f: summary, args: null } ] } ] }
             ] );
         else
@@ -62,32 +62,22 @@ const Tabs = function( module )
     }
 
     // content
-    async function container()
+    async function output()
     {
-        let details = await this.addContainer( { id: "panels", type: "panels", format: "block", output: "vertical" } );
-            
-        let title = await details.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
-            title.set( "Stock Details" );
-
-        await details.setModule( { id: "history", label: "history", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.history.js" } } );
-        await details.setModule( { id: "match", label: "match", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.match.js" } } );
-        await details.setModule( { id: "totals", label: "totals", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.totals.js" } } );
-        await details.setModule( { id: "price", label: "price", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.price.js" } } );
-        await details.setModule( { id: "timeline", label: "timeline", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.timeline.js" } } );
-        await details.setModule( { id: "gain", label: "gain", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.gain.js" } } );
-        
-        let array = Array.from( details.panels.keys() );
-        
-        let tabs = await details.setComponent( { id: "tabs", type: "tabs", format: "flex-left", output: "horizontal" } );
-            tabs.addBreadcrumbs( 3, t2.navigation.components.breadcrumbs );    
-            tabs.addListener( { type: "click", handler: ( active ) => 
-            {
-                tab = array.findIndex( id => id == active.id );
-
-                title.set( `${ module.symbol } ${ active.id }` );
-            } } );  
-            tabs.update( details.panels );
-            tabs.activate( array[ tab || 0 ] );
+        let panels = await this.addComponent( { id: "panels", type: "panels", format: "block", output: "vertical" } );
+            await panels.add( "Module", { id: "history", label: "history", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.history.js" } } );
+            await panels.add( "Module", { id: "match", label: "match", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.match.js" } } );
+            await panels.add( "Module", { id: "totals", label: "totals", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.totals.js" } } );
+            await panels.add( "Module", { id: "price", label: "price", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.price.js" } } );
+            await panels.add( "Module", { id: "timeline", label: "timeline", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.timeline.js" } } );
+            await panels.add( "Module", { id: "gain", label: "gain", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.gain.js" } } );
+            panels.tab = tab;
+            panels.saveTab = ( t ) => tab = t;
+            panels.setControls( 
+            { 
+                breadcrumbs: { index: 2, component: t2.navigation.components.breadcrumbs },
+                controller: { id: "tabs", type: "tabs", format: "flex-left", output: "horizontal" }
+            } );
     }
 
     // margin

@@ -81,6 +81,7 @@ const Component = function()
             row?.classList.remove( "highlight" );
     };
 
+    // DND
     this.find = function( e )
     {
         let node = e.target;
@@ -188,9 +189,7 @@ const Component = function()
         }
 
         helpers.listen( self, row, record, listeners, active, columns );
-        this.updateRow( row, record, index );
-
-        this.dispatch( "addRow" );        
+        this.updateRow( row, record, index );      
 
         if ( record.disabled )
             row.classList.add( "disabled" );
@@ -206,17 +205,16 @@ const Component = function()
 
         this.array.splice( index - 1, 1 );
 
-        this.dispatch( "removeRow" );
-
         this.renumber();
     };
 
     this.saveRow = function( record, index )
     {
+        record.id = record.id || index;
+        
         this.array.splice( index - 1, 1, record );
-        this.updateTotals();
 
-        this.dispatch( "saveRow" );
+        this.updateTotals();
     };
 
     this.updateRow = function( row, record, index )
@@ -252,8 +250,6 @@ const Component = function()
         let form = el( "form", td );
             form.id = `${ self.id }.${ index }`;
             form.addEventListener( "submit", submit );
-
-        this.dispatch( "updateRow" ); 
 
         if ( this.totals._display )
             this.setTotals();

@@ -31,6 +31,7 @@ const Template = function( module )
             list.subscription.add( { event: "addRow", handler: () => update( array ) } );
             list.subscription.add( { event: "removeRow", handler: () => update( array ) } );
             list.subscription.add( { event: "saveRow", handler: () => update( array ) } );
+            list.subscription.add( { event: "renumber", handler: () => update( array ) } );
             list.addColumn( { 
                 input: { name: "x", type: "number", step: 0.01, min: 0, required: "" }, 
                 cell: { css: {}, display: 3, modes: [ "read", "edit" ] },

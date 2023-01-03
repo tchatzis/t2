@@ -19,7 +19,7 @@ const Tabs = function( module )
     {
         await t2.navigation.update( 
         [ 
-            { id: "content",    functions: [ { clear: null }, { invoke: [ { f: container, args: null } ] } ] },
+            { id: "content", functions: [ { clear: null }, { invoke: [ { f: container, args: null } ] } ] },
         ] );
     }
 

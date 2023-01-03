@@ -12,9 +12,6 @@ const Tabs = function( module )
 
     this.refresh = async function()
     {
-        module.unsetSymbol();
-        module.unsetDate();
-
         await module.queries();
     };
 
@@ -22,12 +19,12 @@ const Tabs = function( module )
     {
         await t2.navigation.update( 
         [ 
-            { id: "submenu",    functions: [ { clear: null }, { hide: null } ] },
-            { id: "subcontent", functions: [ { clear: null }, { hide: null } ] },
-            { id: "submargin",  functions: [ { clear: null }, { hide: null } ] },
-            { id: "menu",       functions: [ { ignore: "clear" }, { hide: null } ] },
+            { id: "submenu",    functions: [ { ignore: "clear" }, { clear: null } ] },
+            { id: "subcontent", functions: [ { ignore: "clear" }, { clear: null }, { show: null } ] },
+            { id: "submargin",  functions: [ { ignore: "clear" }, { clear: null }, { show: null } ] },
+            { id: "menu",       functions: [ { ignore: "clear" }, { show: null } ] },
             { id: "content",    functions: [ { clear: null }, { invoke: [ { f: output, args: null } ] } ] },
-            { id: "margin",     functions: [ { clear: null } ] }
+            { id: "margin",     functions: [ { clear: null }, { show: null } ] }
         ] );
     }
 

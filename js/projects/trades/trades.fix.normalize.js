@@ -3,7 +3,7 @@ import Common from "../../t2/t2.container.handlers.js";
 import Data from "./trades.data.js";
 import details from "./trades.fix.details.js";
 import handlers from "./trades.fix.handlers.js";
-import Message from "./trades.message.js";
+import Message from "../../t2/t2.ui.message.js";
 
 const Panel = function( module )
 {

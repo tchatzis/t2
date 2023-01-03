@@ -148,12 +148,10 @@ const Component = function()
     {
         this.reset();
 
-        let use = args.orderBy ? t2.common.sort( args.array, args.orderBy ) : args.array;
-
-        this.array = use;
+        this.array = args.orderBy ? t2.common.sort( args.array, args.orderBy ) : args.array;
         this.orderBy = args.orderBy;
 
-        if ( !use.length )
+        if ( !this.array.length )
         {
             this.parent.hide();
 
@@ -162,7 +160,7 @@ const Component = function()
 
         this.parent.show();
 
-        use.forEach( ( record, index ) => this.addRow( record, index ) );
+        this.array.forEach( ( record, index ) => this.addRow( record, index ) );
 
         helpers.resize( this );
     };
@@ -176,7 +174,7 @@ const Component = function()
     this.update = function( args )
     {
         let _args = { array: args.array || this.array, orderBy: args.orderBy || this.orderBy };
-        
+
         this.populate( _args );
         
         if ( this.totals._display )

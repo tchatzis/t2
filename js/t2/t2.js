@@ -6,12 +6,14 @@ import IndexedDB from "../modules/indexeddb.js";
 import Layout from "./t2.ui.layout.js";
 import Navigation from "./t2.ui.navigation.js";
 import Movie from "../modules/movie.js";
-//import Schema from "./t2.ui.schema.js";
-//import UI from "./t2.ui.js";
+import { debug, extend } from "./t2.prototypes.js";
 
 const T2 = function()
 {
     let self = this;
+
+    debug();
+    extend();
     
     this.init = async ( namespace ) => 
     {

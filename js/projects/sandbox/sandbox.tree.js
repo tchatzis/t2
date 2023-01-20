@@ -25,8 +25,42 @@ const Template = function( module )
 
     async function output()
     {
+        let array = 
+        [
+            {
+                parent: "lego",
+                label: "city"
+            },
+            {
+                parent: "tree",
+                label: "test"
+            },
+            {
+                parent: "tree",
+                label: "lego"
+            },
+            {
+                parent: "test",
+                label: 1
+            },
+            {
+                parent: 1,
+                label: 2
+            },
+            {
+                parent: "lego",
+                label: "technic"
+            }
+        ];
+        
         let tree = await this.addComponent( { id: "tree", type: "tree", format: "block" } );
+            tree.subscription.add( { event: "selectBranch", handler: listen } );
+            tree.update( { array: array } );
 
+        function listen( e )
+        {
+            console.error( e.detail );
+        }
     }
 };
 

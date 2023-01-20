@@ -66,6 +66,8 @@ const Composite = function()
         } } ); 
         tabs.update( this.panels );
         tabs.activate( this.array[ this.tab || 0 ] );
+
+        return tabs;
     };
 
     this.setTitle = ( string ) => title.set( string );

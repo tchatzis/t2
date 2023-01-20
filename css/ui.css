@@ -197,6 +197,7 @@
 
 .link, .tool
 {
+    background-color: #000;
     border-bottom: 1px solid #222;
     border-left: 10px solid #222;
     border-right: 1px solid #222;
@@ -205,7 +206,7 @@
     font-size: 10px;
     margin-top: 1px;
     min-width: 4vw;
-    padding: 1px 0 1px 5px;
+    padding: 1px 5px 1px 5px;
     pointer-events: auto;
     white-space: nowrap;
     user-select: none;    
@@ -467,7 +468,7 @@
 .title
 {
     border-bottom: 1px dotted #222;
-    color: #999;
+    color: white;
     font-family: Impact;
     font-size: 1.2em;
     font-weight: normal;  
@@ -509,7 +510,7 @@
     font-family: monospace;
     color: silver;
     white-space: pre;
-    z-index: 100;
+    z-index: 1000;
 }
 
 .tr:hover

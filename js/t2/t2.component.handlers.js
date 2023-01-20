@@ -20,12 +20,17 @@ const Handlers = function()
             breadcrumbs.set( index, value );
     };
 
-    this.dispatch = function( type )
+    this.updateBreadcrumbs = function( index, value )
     {
-        let event = new Event( type );
+        breadcrumbs.set( index, value );
+    };
+
+    this.dispatch = function( type, detail )
+    {
+        let event = new CustomEvent( type, { detail: detail } );
 
         this.element.dispatchEvent( event );
-    }
+    };
 
     this.subscription =
     {
@@ -36,7 +41,9 @@ const Handlers = function()
             if ( !f || !f instanceof Function )
                 return;
 
-            let after = () => this.dispatch( params.event );
+            let after = () => this.dispatch( params.event, this.detail );
+
+            this.subscriptions.set( params.event, params.handler );
 
             this[ params.event ] = f.extend( null, after );
 
@@ -44,6 +51,8 @@ const Handlers = function()
         },
         remove: ( params ) => this.element.removeEventListener( params.event, params.handler )
     };
+
+    this.subscriptions = new Map();
 
     Common.call( this );
 };

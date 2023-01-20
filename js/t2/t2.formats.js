@@ -69,6 +69,7 @@ const formats =
     precision:  ( value ) => value.toFixed( 4 ),
     negate:     ( value ) => -Number( value ),
     null:       ( value ) => null,
+    object:     ( value ) => value,
     text:       ( value ) => String( value ),
     time:       ( value ) => 
                 {

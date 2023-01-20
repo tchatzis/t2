@@ -7,13 +7,13 @@ const Queries = function()
             if ( params.value.every( value => value !== undefined ) )
             {
                 params.value.forEach( value => this.data.filtered = this.data.filtered.filter( record => t2.formats[ params.format ]( record[ params.name ] ) == value ) );
+            
+                return this.data.filtered;
             }
         },
         
         "date.between": ( params ) =>
         {
-            //console.log( params )
-            
             if ( params.value.every( value => value !== undefined ) )
             {
                 let from = new Date( params.value[ 0 ] );
@@ -21,6 +21,8 @@ const Queries = function()
                     to.setDate( to.getDate() + 2 );
     
                 this.data.filtered = this.data.filtered.filter( record => ( new Date( record[ params.name ] ) > from && new Date( record[ params.name ] ) < to ) );  
+                
+                return this.data.filtered; 
             }
         },
         
@@ -29,6 +31,8 @@ const Queries = function()
             if ( params.value.every( value => value !== undefined ) )
             {
                 params.value.forEach( value => this.data.filtered = this.data.filtered.filter( record => record[ params.name ] == value ) );
+            
+                return this.data.filtered;
             }
         }
     };

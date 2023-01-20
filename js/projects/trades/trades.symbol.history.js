@@ -76,7 +76,7 @@ const Panel = function( module )
             input: { name: "notes", type: "text" }, 
             cell: { css: { value: "action" }, display: 4, modes: [ "read", "edit" ] } } );
         table.addColumn( { 
-            input: { name: "qty", type: "number", step: 1 }, 
+            input: { name: "qty", type: "number", step: 0.0001 }, 
             cell: { css: { class: "info" }, display: 3, modes: [ "read", "edit" ] },
             format: [ "auto" ],
             formula: ( args ) =>
@@ -88,7 +88,7 @@ const Panel = function( module )
                 return value;
             } } );
         table.addColumn( { 
-            input: { name: "price", type: "number", step: 0.001 }, 
+            input: { name: "price", type: "number", step: 0.0001 }, 
             cell: { css: { class: "value" }, display: 4, modes: [ "read", "edit" ] },
             format: [ "dollar" ],
             formula: ( args ) => 

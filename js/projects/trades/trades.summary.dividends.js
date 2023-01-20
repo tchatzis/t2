@@ -70,7 +70,7 @@ const Panel = function( module )
                 cell: { css: { class: "info" }, display: 4, modes: [ "read", "edit" ] },
                 format: [ "precision" ] } );
             table.addColumn( { 
-                input: { name: "price", type: "number", step: 0.001 }, 
+                input: { name: "price", type: "number", step: 0.0001 }, 
                 cell: { css: { class: "buy" }, display: 4, modes: [ "read", "edit" ] },
                 format: [ "negate", "precision" ],
                 formula: ( args ) => args.value * -1 } );

@@ -48,9 +48,9 @@ const Tabs = function( module )
 
     // menu
     async function symbols()
-    {
+    { 
         let symbols = this.children.get( "symbols" );
-            symbols.addBreadcrumbs( 2, t2.navigation.components.breadcrumbs );   
+            symbols.addBreadcrumbs( 3, t2.navigation.components.breadcrumbs );   
             symbols.update( module.data.symbol );
             symbols.highlight( module.symbol );
             symbols.addListener( { type: "click", handler: async function() 
@@ -73,11 +73,17 @@ const Tabs = function( module )
             await panels.add( "Module", { id: "gain", label: "gain", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.gain.js" } } );
             panels.tab = tab;
             panels.saveTab = ( t ) => tab = t;
-            panels.setControls( 
+        let tabs = await panels.setControls( 
             { 
                 breadcrumbs: { index: 2, component: t2.navigation.components.breadcrumbs },
                 controller: { id: "tabs", type: "tabs", format: "flex-left", output: "horizontal" }
             } );
+            tabs.addListener( { type: "click", handler: () =>
+            {
+                tabs.updateBreadcrumbs( 3, module.symbol.toUpperCase() );
+            } } );
+            // update because output loads after symbols
+            tabs.updateBreadcrumbs( 3, module.symbol.toUpperCase() );
     }
 
     // margin

@@ -77,6 +77,8 @@ const DND = function()
         scope.items.forEach( ( item, index ) => this.enable( item, index ) );
     };
 
+    this.items = [];
+
     this.over = ( e ) =>
     {
         e.preventDefault();

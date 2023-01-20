@@ -95,6 +95,14 @@ const Component = function()
     };
 
     // data 
+    this.change = function( args )
+    {
+        if ( Number( args.element.value ) !== args.value )
+            args.parent.classList.add( "highlight" );
+        else
+            args.parent.classList.remove( "highlight" );
+    };
+
     this.populate = function( args )
     {
         controls();
@@ -176,7 +184,7 @@ const Component = function()
     this.addRow = function( record, index )
     {
         record.id = record.id || index;
-        
+
         let row = el( "tr", self.element );
             row.setAttribute( "data-id", record.id );
             row.setAttribute( "data-index", index );
@@ -189,7 +197,9 @@ const Component = function()
         }
 
         helpers.listen( self, row, record, listeners, active, columns );
-        this.updateRow( row, record, index );      
+        this.updateRow( row, record, index );  
+        
+        this.resetRow( record, 0 );
 
         if ( record.disabled )
             row.classList.add( "disabled" );
@@ -206,6 +216,14 @@ const Component = function()
         this.array.splice( index - 1, 1 );
 
         this.renumber();
+    };
+
+    this.resetRow = function( record, index )
+    {
+        let row = this.element.querySelector( `[ data-index = "${ index }" ]` );
+
+        for ( let td of row.children )
+            td.classList.remove( "highlight" );
     };
 
     this.saveRow = function( record, index )
@@ -315,6 +333,7 @@ const Component = function()
             input.setAttribute( "Form", id );
             input.setAttribute( "data-function", f );
             input.setAttribute( "data-index", index );
+            input.addEventListener( "input", () => self.change( { config: config, element: input, id: id, index: index, parent: td, value: value } ) );
     }
 
     // button handlers
@@ -349,6 +368,7 @@ const Component = function()
 
             case "resetRow":
                 e.target.reset();
+                self[ action ]( record, index );
             break;
 
             case "saveRow":

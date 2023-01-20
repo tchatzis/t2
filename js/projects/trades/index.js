@@ -61,7 +61,10 @@ const Trades = function()
 
     this.unsetDate = () => delete this.date;
     
-    this.setSymbol = ( symbol ) => this.symbol = symbol;
+    this.setSymbol = ( symbol ) => 
+    {
+        this.symbol = symbol;
+    };
 
     this.unsetSymbol = () => delete this.symbol;
 

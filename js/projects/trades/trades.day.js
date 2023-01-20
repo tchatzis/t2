@@ -200,7 +200,12 @@ const Template = function( module )
     async function date()
     {
         let dates = await this.addComponent( { id: "date", type: "form", format: "flex" } );
-            dates.addListener( { type: "submit", handler: async ( args ) => module.setDate( args.data.date ) } );
+            dates.addListener( { type: "submit", handler: async ( args ) => 
+            {
+                //console.log( args );
+                module.date = args.data.date;
+                self.init();
+            } } );
             dates.addField( { 
                 input: { name: "date", type: "date", value: module.date, max: max, required: "" }, 
                 cell: { css: {}, display: 7 },

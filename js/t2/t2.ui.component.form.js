@@ -132,11 +132,7 @@ const Component = function()
 
         input.style.width = ( params.cell.display + 1 ) + "em"; 
         input.setAttribute( "Form", fid );
-        
-        params.listeners?.forEach( listener => 
-        {
-            input.addEventListener( listener.type, () => listener.handler( this.form, input ) );
-        } );
+        input.addEventListener( "input", () => self.change( { element: input, form: this.form, format: params.format } ) );
 
         if ( params.update )
             params.update( input );
@@ -148,26 +144,34 @@ const Component = function()
         listeners.push( listener );
     };
 
-    this.change = function( form, input )
+    this.change = function( args )
     {
+        let input = args.element;
+        let form = args.form;
+
         switch ( input.type )
         {
             case "checkbox":
-                self.form.data[ input.name ] = input.checked;
+                form.data[ input.name ] = input.checked;
             break;
 
             case "number":
-                self.form.data[ input.name ] = Number( input.value );
+                form.data[ input.name ] = Number( input.value );
             break;
 
             case "select":
-                self.form.data[ input.name ] = input.options[ input.selectedIndex ];
+                form.data[ input.name ] = input.options[ input.selectedIndex ];
             break;
 
             default:
-                self.form.data[ input.name ] = input.value;
+                form.data[ input.name ] = input.value;
             break;
         }
+
+        args.data = form.data;
+        args.value = form.data[ input.name ];
+
+        this.detail = args;
     };
 
     this.submit = function( e )

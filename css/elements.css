@@ -13,15 +13,13 @@ body
     user-select: none;
 }
 
-/*canvas
+canvas
 {
     background-color: transparent;
     cursor: none;
-    height: 100vh;
     position: absolute;
-    width: 100vw;
-    z-index: 1;
-}*/
+    pointer-events: none;
+}
 
 label
 {

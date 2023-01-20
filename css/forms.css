@@ -19,11 +19,12 @@ input
 
 input[ type=checkbox ]
 {
-    margin: 0 !important;
+    margin-left: 0 !important;
+    bottom: -5px;
     padding: 0 !important;
     pointer-events: auto;
-    height: 21px;
-    width: 21px !important;
+    position: relative;
+    width: 2em !important;
 }
 
 input[ type=datetime-local ]

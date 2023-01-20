@@ -14,7 +14,7 @@ const Component = function()
         this.element.setAttribute( "width", this.width );
         this.element.setAttribute( "height", this.height );
         
-        this.ctx = this.element.getContext( "2d" );  
+        this.ctx = this.element.getContext( params.format );  
 
         Object.assign( this, params );
 

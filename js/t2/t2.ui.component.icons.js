@@ -7,9 +7,9 @@ const Component = function()
     let listeners = new Map();
     let map = new Map();
 
-    this.activate = function( name )
+    this.activate = function( icon )
     {
-        let link = self.getLink( name.toLowerCase() );
+        let link = self.getLink( icon.dataset.type.toLowerCase() );
             link?.click();
     };  
     
@@ -58,7 +58,7 @@ const Component = function()
         if ( !link )
             return;
         
-        link.classList.add( "active" );
+        link.classList.add( "picked" );
 
         let name = link.getAttribute( "data-link" );
 
@@ -67,8 +67,8 @@ const Component = function()
 
         if ( active.curr && active.curr !== link )
         {
-            active.curr.classList.remove( "active" );   
-            active.curr.classList.remove( "inactive" );    
+            active.curr.classList.remove( "picked" );   
+            active.curr.classList.remove( "unpicked" );    
         }
 
         active.curr = link;  
@@ -84,11 +84,12 @@ const Component = function()
         this.array = array;
         this.element.innerHTML = null;
         
-        array.forEach( link =>
+        array.forEach( icon =>
         {
+            let link = icon.getAttribute( "data-type" );
+            
             let element = t2.common.el( "div", self.element );
-                element.classList.add( "link" );
-                element.textContent = link;
+                element.appendChild( icon );
                 element.dataset.link = link.toLowerCase();
                 element.addEventListener( "click", ( e ) => 
                 {

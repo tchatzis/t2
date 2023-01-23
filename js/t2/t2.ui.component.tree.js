@@ -110,7 +110,7 @@ const Component = function()
             {
                 link.style.borderLeftColor = "#222";
                 link.classList.add( "inactive" );
-            } 
+            }  
         }
 
         // context menu

@@ -4,8 +4,7 @@ import Draw from "../../modules/draw.js";
 const Panel = function( module )
 {
     let self = this;
-    let config;
-    let local = {};
+    let use = {};
     let axes = [ "x", "y", "z" ];
     let panel;
     let draw = new Draw();
@@ -113,25 +112,15 @@ const Panel = function( module )
         {
             module.record.layers = module.record.layers || [];
 
-            let canvas = await this.addComponent( { id: detail.branch.label, type: "canvas", format: "2d" } );
             let existing = module.record.layers.find( item => ( item.parent == detail.label && item.label == detail.branch.label ) );
+            let d = { ...detail.branch.detail };
+            let uuid = d.uuid;
+            let canvas = await this.addComponent( { id: d.label, type: "canvas", format: "2d" } );
+                canvas.element.style.position = "absolute";
 
             if ( existing )
             {
-                layer = new Layer( existing );
-
-                /*layer.config = layer.config || { visible: true };
-
-                delete layer.visible;
-                delete module.record.config;
-                module.record.layers = [];
-                module.record.layers.push( layer );
-
-                console.warn( layer );
-
-                await t2.db.tx.overwrite( module.q.table, Number( module.record.id ), module.record );
-
-                console.log( module.record )*/
+                layer = new Layer( existing ); 
             }
             else
             {
@@ -142,21 +131,20 @@ const Panel = function( module )
                 await t2.db.tx.update( module.q.table, Number( module.record.id ), module.record );
             }
 
-            config = layer.config || {};
-
-            map.set( detail.branch.detail, { canvas: canvas, detail: detail.branch.detail, layer: layer } );
+            map.set( uuid, { canvas: canvas, detail: d, layer: layer } );  
         },
         selectBranch: async ( detail ) => 
         {
             margin.clear();
             subcontent.clear();
 
-            local.map = map.get( detail );
+            use.map = map.get( detail.uuid );
+            console.log( detail.label, use );
 
-            if ( !detail.root && local.map.layer )
+            if ( !detail.root && use.map.layer )
             {   
                 submenu.show();
-                picker.update( layer.config.color );
+                picker.update( use.map.layer.config.color );
                 await icons();
                 await input();  
             }
@@ -164,7 +152,7 @@ const Panel = function( module )
                 submenu.hide();
         },
         // data
-        convertData: () => local.map.converted = local.map.layer.array.map( vector => convert.toPixels( vector ) ),
+        convertData: () => use.map.converted = use.map.layer.array.map( vector => convert.toPixels( vector ) ),
         updateData: async () => await t2.db.tx.update( module.q.table, Number( module.record.id ), module.record ),
     };
 
@@ -265,7 +253,7 @@ const Panel = function( module )
                 input.value = value;
         }
 
-        local.vector = vector;
+        use.vector = vector;
 
         return vector;
     }
@@ -281,24 +269,25 @@ const Panel = function( module )
     // draw shapes / path
     function plot()
     {
-        local.view = "top";
+        use.view = "top";
         
-        let ctx = local.map.canvas.ctx;
-        let points = local.map.converted.map( vector => view( vector ) );
+        let ctx = use.map.canvas.ctx;
+        let points = use.map.converted.map( vector => view( vector ) );
+        let layer = use.map.layer;
 
         draw.clear.call( ctx );
 
-        if ( !config.visible )
+        if ( !layer.config.visible )
             return;
 
-        switch ( config.shape )
+        switch ( layer.config.shape )
         {
             case "dot":
-                draw.dots.call( ctx, config.color, points );
+                draw.dots.call( ctx, layer.config.color, points );
             break;
             
             case "polyline":
-                draw.path.call( ctx, config.color, points );
+                draw.path.call( ctx, layer.config.color, points );
             break;
         }
     }
@@ -323,7 +312,7 @@ const Panel = function( module )
     // point to vector
     function unview( point )
     {
-        switch ( local.view )
+        switch ( use.view )
         {
             case "top":
                 return snap( { x: point[ 0 ], y: 0, z: point[ 1 ] } );
@@ -333,7 +322,7 @@ const Panel = function( module )
     // vector to point
     function view( vector )
     {
-        switch ( local.view )
+        switch ( use.view )
         {
             case "top":
                 return { x: vector.x, y: vector.z };
@@ -358,7 +347,8 @@ const Panel = function( module )
         picker = await submenu.addComponent( { id: "picker", type: "color", format: "text", output: "hsl" } );
         picker.subscription.add( { event: "update", handler: () =>
         {
-            layer.config.color = picker.value;
+            let layer = use.map.layer;
+                layer.config.color = picker.value;
 
             let branch = tree.getBranch( layer );
             let link = branch.detail.link;
@@ -379,6 +369,7 @@ const Panel = function( module )
     async function target()
     {
         crosshairs = await this.addComponent( { id: "crosshairs", type: "canvas", format: "2d" } );
+        crosshairs.element.style.position = "absolute";
 
         let bbox = this.element.getBoundingClientRect();
         let element = crosshairs.element;
@@ -390,13 +381,13 @@ const Panel = function( module )
 
                 draw.crosshairs.call( crosshairs.ctx, "rgba( 255, 255, 255, 0.5 )", { x: mouse.x, y: mouse.y } );
 
-                if ( config.shape )
-                    mouse[ e.type ][ config.shape ]();
+                if ( layer.config.shape )
+                    mouse[ e.type ][ layer.config.shape ]();
             } );
             element.addEventListener( "mousedown", ( e ) => 
             {
-                if ( config.shape )
-                    mouse[ e.type ][ config.shape ]();
+                if ( layer.config.shape )
+                    mouse[ e.type ][ layer.config.shape ]();
             } )
     }
 
@@ -405,6 +396,7 @@ const Panel = function( module )
         this.element.style.padding = 0;
         
         let grid = await this.addComponent( { id: "grid", type: "canvas", format: "2d" } );
+            grid.element.style.position = "absolute";
             grid.clear();
             grid.show();
 
@@ -447,7 +439,7 @@ const Panel = function( module )
         let i = t2.icons.init( { type: "dot", height: 16, width: 16, r: 3, style: `fill: gray;` } );
 
         let array = [ h, i ];//[ a, b, c, d, e, f, g ];
-        let active = array.find( element => element.dataset.type == config.shape ) || array[ 0 ];
+        let active = array.find( element => element.dataset.type == layer.config.shape ) || array[ 0 ];
         let icons = await subcontent.addComponent( { id: "shapes", type: "icons", format: "flex" } );
             icons.addListener( { type: "click", handler: click } );
             icons.update( array );
@@ -459,7 +451,7 @@ const Panel = function( module )
             let event  = arguments[ 1 ];
             let active = arguments[ 2 ];
 
-            config.shape = active.curr.dataset.link;
+            layer.config.shape = active.curr.dataset.link;
 
             update();
         }
@@ -468,7 +460,7 @@ const Panel = function( module )
     // margin: list
     async function input()
     { 
-        let array = local.map.layer.array;
+        let array = use.map.layer.array;
         let step = module.record.grid.precision;
 
         list = await margin.addComponent( { id: "vectors", type: "list", format: "block" } );

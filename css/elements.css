@@ -17,7 +17,6 @@ canvas
 {
     background-color: transparent;
     cursor: none;
-    position: absolute;
     pointer-events: none;
 }
 

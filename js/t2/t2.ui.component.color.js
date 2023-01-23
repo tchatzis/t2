@@ -23,6 +23,8 @@ const Component = function( module )
     {
         this.value = color;
 
+        reset();
+
         let td = self.element.querySelector( `td[ data-color = "${ color }" ]` );
 
         if ( td )

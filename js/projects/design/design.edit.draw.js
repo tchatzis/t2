@@ -4,12 +4,22 @@ import Draw from "../../modules/draw.js";
 const Panel = function( module )
 {
     let self = this;
+    let config;
+    let local = {};
+    let axes = [ "x", "y", "z" ];
     let panel;
     let draw = new Draw();
     let cleared = false;
     let drawing = false;
+    let pixels;
+    let list;
+    let tree;
+    let crosshairs;
+    let picker;
+    let submenu = t2.ui.children.get( "submenu" );
     let margin = t2.ui.children.get( "margin" );
     let subcontent = t2.ui.children.get( "subcontent" );
+    let layer;
     let map = new Map();
 
     this.init = async function( parent, params )
@@ -38,27 +48,64 @@ const Panel = function( module )
     {
         await t2.navigation.update( 
         [ 
-            { id: "submenu", functions: [ { ignore: "clear" }, { clear: null } ] }, 
+            { id: "submenu", functions: [ { ignore: "clear" }, { clear: null }, { hide: null }, { invoke: [ { f: color, args: null } ] } ] }, 
             { id: "subcontent", functions: [ { ignore: "clear" }, { clear: null } ] },
             { id: "submargin", functions: [ { ignore: "clear" }, { clear: null } ] },
-            { id: "menu", functions: [ { ignore: "clear" }, { clear: null }, { invoke: [ { f: tree, args: null } ] } ] },
+            { id: "menu", functions: [ { ignore: "clear" }, { clear: null }, { invoke: [ { f: menu, args: null } ] } ] },
             { id: "content", functions: [ { ignore: "clear" } ] },
             { id: `content.panels.${ self.id }`, functions: [ { clear: null }, { invoke: [ { f: output, args: null } ] } ] },
-            { id: "margin", functions: [ { ignore: "clear" } ] }
+            { id: "margin", functions: [ { ignore: "clear" } ] },
         ] );
     } 
 
-    // common
-    function listen( e )
-    {
-        handlers[ e.type ]( e.detail );
-    }
+    /****************************************************************/
 
     const Layer = function( params )
     {
         Object.assign( this, params );
     };
 
+    const convert =
+    {
+        toPixel: ( value ) => value * pixels,
+        toPixels: ( vector ) => 
+        {
+            let converted = {};
+
+            Object.entries( vector ).forEach( component => 
+            {
+                let [ key, value ] = component;
+
+                if ( ~axes.indexOf( key ) )
+                    converted[ key ] = convert.toPixel( value );
+            } );
+
+            return converted;
+        },
+        toSnap: ( vector ) => 
+        {
+            let converted = {};
+
+            Object.entries( vector ).forEach( component => 
+            {
+                let [ key, value ] = component;
+
+                if ( ~axes.indexOf( key ) )
+                    converted[ key ] = Math.round( convert.toUnit( value ) );
+            } );
+
+            return converted;
+        },
+        toUnit: ( value ) => value / pixels
+    };
+
+    // component handlers switch
+    function listen( e )
+    {
+        handlers[ e.type ]( e.detail );
+    }
+
+    // component handlers
     const handlers =
     {
         // branch
@@ -66,53 +113,78 @@ const Panel = function( module )
         {
             module.record.layers = module.record.layers || [];
 
-            let layer;
             let canvas = await this.addComponent( { id: detail.branch.label, type: "canvas", format: "2d" } );
             let existing = module.record.layers.find( item => ( item.parent == detail.label && item.label == detail.branch.label ) );
 
             if ( existing )
             {
                 layer = new Layer( existing );
+
+                /*layer.config = layer.config || { visible: true };
+
+                delete layer.visible;
+                delete module.record.config;
+                module.record.layers = [];
+                module.record.layers.push( layer );
+
+                console.warn( layer );
+
+                await t2.db.tx.overwrite( module.q.table, Number( module.record.id ), module.record );
+
+                console.log( module.record )*/
             }
             else
             {
-                layer = new Layer( { array: [], label: detail.branch.label, parent: detail.label, visible: true } );
+                layer = new Layer( { array: [], label: detail.branch.label, parent: detail.label, config: { visible: true } } );
 
                 module.record.layers.push( layer );
                 
                 await t2.db.tx.update( module.q.table, Number( module.record.id ), module.record );
             }
 
-            map.set( detail.branch.detail, { canvas: canvas, detail: detail.branch.detail, layer: layer } );
+            config = layer.config || {};
 
-            //detail.branch.selectBranch( detail.branch.detail.link );
+            map.set( detail.branch.detail, { canvas: canvas, detail: detail.branch.detail, layer: layer } );
         },
         selectBranch: async ( detail ) => 
         {
             margin.clear();
             subcontent.clear();
 
-            let m = map.get( detail );
+            local.map = map.get( detail );
 
-            if ( !detail.root && m?.layer )
-            {
-                self.layer = m.layer;
-                
+            if ( !detail.root && local.map.layer )
+            {   
+                submenu.show();
+                picker.update( layer.config.color );
                 await icons();
-                await input();
+                await input();  
             }
+            else
+                submenu.hide();
         },
         // data
-        plotData: () => 
-        {
-            //self.layer.array.forEach( vector => console.log( vector ) );
-            
-            console.log( self.layer.array );
-        },
-        updateData: async () => await t2.db.tx.update( module.q.table, Number( module.record.id ), module.record )
+        convertData: () => local.map.converted = local.map.layer.array.map( vector => convert.toPixels( vector ) ),
+        updateData: async () => await t2.db.tx.update( module.q.table, Number( module.record.id ), module.record ),
     };
 
-    const types =
+    // mouse event handlers
+    const mouse = 
+    {
+        mousedown:
+        {
+            dot:      () => self.initial.inputs.get( "add" ).click(),
+            polyline: () => self.initial.inputs.get( "add" ).click()
+        },
+        
+        mousemove:
+        {
+            dot:      broadcast,
+            polyline: broadcast
+        }
+    };
+
+    const shapes =
     {
         circle: ( ctx ) =>
         {
@@ -178,49 +250,154 @@ const Panel = function( module )
         }
     };
 
+    // mouse position updates list, first row
+    function broadcast()
+    {
+        if ( !self.initial )
+            return;
+
+        let point = [ mouse.x, mouse.y ];
+        let vector = unview( point );
+
+        for ( let [ key, value ] of Object.entries( vector ) )
+        {
+            let input = self.initial.inputs.get( key );
+                input.value = value;
+        }
+
+        local.vector = vector;
+
+        return vector;
+    }
+
+    // set crosshairs on vector when rolling over list
+    function highlight( args )
+    {
+        let pixels = view( convert.toPixels( args.data ) );
+
+        draw.crosshairs.call( crosshairs.ctx, "rgba( 0, 255, 255, 1 )", pixels );
+    }
+
+    // draw shapes / path
+    function plot()
+    {
+        local.view = "top";
+        
+        let ctx = local.map.canvas.ctx;
+        let points = local.map.converted.map( vector => view( vector ) );
+
+        draw.clear.call( ctx );
+
+        if ( !config.visible )
+            return;
+
+        switch ( config.shape )
+        {
+            case "dot":
+                draw.dots.call( ctx, config.color, points );
+            break;
+            
+            case "polyline":
+                draw.path.call( ctx, config.color, points );
+            break;
+        }
+    }
+
+    // snap vector to grid
+    function snap( vector )
+    {
+        if ( module.record.grid.snap )
+            vector = convert.toSnap( vector );
+
+        return vector;
+    }
+
+    // save to database, convert to pixels and plot
+    async function update()
+    {
+        await handlers.updateData();
+        handlers.convertData();
+        plot();
+    }
+
+    // point to vector
+    function unview( point )
+    {
+        switch ( local.view )
+        {
+            case "top":
+                return snap( { x: point[ 0 ], y: 0, z: point[ 1 ] } );
+        }
+    }
+
+    // vector to point
+    function view( vector )
+    {
+        switch ( local.view )
+        {
+            case "top":
+                return { x: vector.x, y: vector.z };
+        }
+    }
+
+    /****************************************************************/
     // menu
-    async function tree()
+    async function menu()
     {
         let array = module.record.layers || [];
         
-        let tree = await this.addComponent( { id: module.record.project, type: "tree", format: "block" } );
-            tree.subscription.add( { event: "addBranch", handler: listen } );    
-            tree.subscription.add( { event: "selectBranch", handler: listen } );
-            tree.update( { array: array } ); 
+        tree = await this.addComponent( { id: module.record.project, type: "tree", format: "block", output: "dual" } );
+        tree.subscription.add( { event: "addBranch", handler: listen } );    
+        tree.subscription.add( { event: "selectBranch", handler: listen } );
+        tree.update( { array: array } ); 
+    }
+
+    // submenu
+    async function color()
+    {
+        picker = await submenu.addComponent( { id: "picker", type: "color", format: "text", output: "hsl" } );
+        picker.subscription.add( { event: "update", handler: () =>
+        {
+            layer.config.color = picker.value;
+
+            let branch = tree.getBranch( layer );
+            let link = branch.detail.link;
+                link.style.borderLeftColor = layer.config.color;
+
+            update();
+        } } );   
     }
 
     // content
     async function output()
     {
         await grid.call( this );
-        await crosshairs.call( this );
+        await target.call( this );
     }
 
-    async function crosshairs()
+    // crosshairs / mouse listeners
+    async function target()
     {
-        let crosshairs = await this.addComponent( { id: "crosshairs", type: "canvas", format: "2d" } );
+        crosshairs = await this.addComponent( { id: "crosshairs", type: "canvas", format: "2d" } );
+
         let bbox = this.element.getBoundingClientRect();
         let element = crosshairs.element;
             element.style.pointerEvents = "auto";
             element.addEventListener( "mousemove", ( e ) => 
             {
-                self.x = e.clientX - bbox.left;
-                self.y = e.clientY - bbox.top;
+                mouse.x = e.clientX - bbox.left;
+                mouse.y = e.clientY - bbox.top;
 
-                draw.crosshairs.call( crosshairs.ctx, "rgba( 255, 255, 255, 0.5 )", { x: self.x, y: self.y } );
+                draw.crosshairs.call( crosshairs.ctx, "rgba( 255, 255, 255, 0.5 )", { x: mouse.x, y: mouse.y } );
 
-                /*if ( drawing )
-                    self.end = { x: self.x, y: self.y };
-
-                if ( !cleared && self.shape )
-                {   
-                    self.config = types[ self.shape ]( crosshairs.ctx );
-
-                    //console.log( self.config );
-
-                    //t2.common.output.object( self.config, submenu );
-                }*/
+                if ( config.shape )
+                    mouse[ e.type ][ config.shape ]();
             } );
+            element.addEventListener( "mousedown", ( e ) => 
+            {
+                if ( config.shape )
+                    mouse[ e.type ][ config.shape ]();
+            } )
     }
 
     async function grid()
@@ -239,7 +416,8 @@ const Panel = function( module )
 
         let x = Math.floor( grid.width / module.record.grid.x );
         let y = Math.floor( grid.height / module.record.grid.y );
-        let pixels = Math.min( x, y );
+
+        pixels = Math.min( x, y );
 
         draw.set( { pixels: { x: grid.width, y: grid.height } } );
         
@@ -250,7 +428,7 @@ const Panel = function( module )
             draw.horizontal.call( grid.ctx, "rgba( 255, 255, 255, 0.1 )", { x: grid.width, y: y } );  
     }
 
-    // subcontent
+    // subcontent: shape icons menu
     async function icons()
     {
         subcontent.clear();
@@ -263,15 +441,17 @@ const Panel = function( module )
         let e = t2.icons.init( { type: "polygon", height: 16, width: 16, points: "8,0 16,16 0,16", style: "fill: gray;" } );
         let f = t2.icons.init( { type: "polygon", height: 16, width: 16, points: "8,0 16,16 0,16", style: "stroke: gray;" } );
         let g = t2.icons.init( { type: "line", height: 16, width: 16, x1: 0, y1: 12, x2: 16, y2: 4, style: "stroke: gray;" } );
+        
+        
         let h = t2.icons.init( { type: "polyline", height: 16, width: 16, points: "0,0 16,4 4,8 8,12 6,16", style: "fill: none; stroke: gray;" } );
-        let i = t2.icons.init( { type: "dot", height: 16, width: 16, r: 3, style: "fill: yellow;" } );
+        let i = t2.icons.init( { type: "dot", height: 16, width: 16, r: 3, style: `fill: gray;` } );
 
-        let array = [ i, a, b, c, d, e, f, g, h ];
-
+        let array = [ h, i ];//[ a, b, c, d, e, f, g ];
+        let active = array.find( element => element.dataset.type == config.shape ) || array[ 0 ];
         let icons = await subcontent.addComponent( { id: "shapes", type: "icons", format: "flex" } );
             icons.addListener( { type: "click", handler: click } );
             icons.update( array );
-            icons.activate( array[ 0 ] );
+            icons.activate( active );
 
         function click()
         {
@@ -279,38 +459,39 @@ const Panel = function( module )
             let event  = arguments[ 1 ];
             let active = arguments[ 2 ];
 
-            self.shape = active.curr.dataset.link;
+            config.shape = active.curr.dataset.link;
+
+            update();
         }
     };
 
-    // margin
+    // margin: list
     async function input()
     { 
-        let array = self.layer.array;
+        let array = local.map.layer.array;
+        let step = module.record.grid.precision;
 
-        let list = await margin.addComponent( { id: "vectors", type: "list", format: "block" } );
-            //list.addRowListener( { type: "contextmenu", handler: highlight } );
-            list.subscription.add( { event: "addRow", handler: () => 
-            {
-                handlers.updateData();
-                handlers.plotData();
-            } } );
-            //list.subscription.add( { event: "removeRow", handler: () => update( array ) } );
-            //list.subscription.add( { event: "saveRow", handler: () => update( array ) } );
-            //list.subscription.add( { event: "renumber", handler: () => update( array ) } );
-            list.addColumn( { 
-                input: { name: "x", type: "number", step: 0.01, min: 0, required: "" }, 
-                cell: { css: {}, display: 3, modes: [ "read", "edit" ] },
-                format: [] } );
-            list.addColumn( { 
-                input: { name: "y", type: "number", step: 0.01, min: 0, required: "" }, 
-                cell: { css: {}, display: 3, modes: [ "read", "edit" ] },
-                format: [] } );
-            list.addColumn( { 
-                input: { name: "z", type: "number", step: 0.01, min: 0, required: "" }, 
-                cell: { css: {}, display: 3, modes: [ "read", "edit" ] },
-                format: [] } );
-            list.populate( { array: array } ); 
+        list = await margin.addComponent( { id: "vectors", type: "list", format: "block" } );
+        list.addRowListener( { type: "mouseover", handler: highlight } );
+        list.subscription.add( { event: "addRow", handler: update } );
+        list.subscription.add( { event: "removeRow", handler: update } );
+        list.subscription.add( { event: "saveRow", handler: update } );
+        list.subscription.add( { event: "renumber", handler: update } );
+        list.addColumn( { 
+            input: { name: "x", type: "number", step: step, min: 0, required: "" }, 
+            cell: { css: {}, display: 3, modes: [ "read", "edit" ] },
+            format: [] } );
+        list.addColumn( { 
+            input: { name: "y", type: "number", step: step, min: 0, required: "" }, 
+            cell: { css: {}, display: 3, modes: [ "read", "edit" ] },
+            format: [] } );
+        list.addColumn( { 
+            input: { name: "z", type: "number", step: step, min: 0, required: "" }, 
+            cell: { css: {}, display: 3, modes: [ "read", "edit" ] },
+            format: [] } );
+        list.populate( { array: array } ); 
+
+        self.initial = list.getRow( 0 );      
     }
 };
 

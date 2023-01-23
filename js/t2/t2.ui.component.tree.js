@@ -4,6 +4,7 @@ const Component = function()
 {
     let self = this;
     let active;
+    let lookup = new Map();
     let div = t2.common.el( "div", document.body );
         div.classList.add( "contextmenu" );
         div.classList.add( "hidden" );
@@ -14,6 +15,7 @@ const Component = function()
 
         this.uuid = t2.common.uuid();
         this.label = params.label;
+        this.config = params.config;
         this.element = t2.common.el( "ul", params.parent.element );
         this.detail = {};
         this.detail.uuid = this.uuid;
@@ -52,22 +54,64 @@ const Component = function()
                 self.array.push( { parent: this.label, label: params.label } );
 
             let branch = new Branch( Object.assign( params, { parent: this, path: path } ) );
+            let lid = `${ this.label }.${ params.label }`;
+
+            lookup.set( lid, branch );
 
             this.detail.branch = branch;
 
             return branch;
         };
 
+        this.getBranch = function( params )
+        {
+            let path = `${ params.parent }.${ params.label }`;
+
+            return lookup.get( path );
+        };
+
         this.selectBranch = function( link )
         {
-            link = link.detail ? link.detail.link : link;
-            link.classList.add( "active" );
+            switch ( self.output )
+            {
+                case "dual":
+                    this.visibility();
+                break;
 
-            if ( link !== active )
-                active?.classList.remove( "active" );
+                default:
+                    link.classList.add( "active" );
 
+                    if ( link !== active )
+                    {
+                        if ( active )
+                        {
+                            active.classList.remove( "active" );
+                        }
+                    }
+                break;
+            }
+ 
             active = link;
         };
+
+        this.visibility = function()
+        {
+            if ( !this.config )
+                return;
+
+            this.config.visible = !this.config.visible;
+            
+            if ( this.config.visible )
+            {
+                link.style.borderLeftColor = this.config.color;
+                link.classList.remove( "inactive" );
+            }
+            else
+            {
+                link.style.borderLeftColor = "#222";
+                link.classList.add( "inactive" );
+            } 
+        }
 
         // context menu
         this.modifyBranch = async function( e )
@@ -225,6 +269,9 @@ const Component = function()
         Handlers.call( this );
 
         Branch.call( this, { label: params.id, parent: this, path: [], root: true } );
+
+        if ( this.output.dual )
+            this.visibility();
     };
 
     this.object = {};
@@ -247,7 +294,7 @@ const Component = function()
                 a.forEach( node => 
                 { 
                     let path = find( node.label, [] )
-                    map.set( node.label, path.reverse() );
+                    map.set( node.label, { config: node.config, path: path.reverse() } );
                 } );
 
             // find the parent
@@ -283,8 +330,10 @@ const Component = function()
             let parents = new Map();
             let obj = {};
 
-            for ( let [ child, path ] of map )
+            for ( let [ child, obj ] of map )
             {
+                let path = obj.path;
+
                 // expand the object
                 assign( obj, path );
                 
@@ -301,7 +350,7 @@ const Component = function()
 
                         if ( !parents.get( label ) )
                         {
-                            let branch = parent.addBranch( { label: label } );
+                            let branch = parent.addBranch( { label: label, config: obj.config } );
                             parents.set( label, branch );
                         }
                     }   

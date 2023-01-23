@@ -205,6 +205,32 @@ const Component = function()
             row.classList.add( "disabled" );
     };
 
+    this.getRow = function( id )
+    {
+        let tr = this.element.querySelector( `[ data-id = "${ id }" ]` );
+
+        if ( !tr )
+            return;
+
+        let object = {};
+        let map = new Map();
+        let inputs = tr.querySelectorAll( "input:not( [ type = 'submit' ] )" );
+        let submits = tr.querySelectorAll( "input[ type = 'submit' ]" );
+
+        Array.from( inputs ).forEach( input => 
+        {
+            object[ input.name ] = t2.formats[ input.type ]( input.value );
+            map.set( input.name, input );
+        } );
+
+        Array.from( submits ).forEach( input => 
+        {
+            map.set( input.name, input );
+        } );
+
+        return { tr: tr, inputs: map, object: object };
+    };
+
     this.removeRow = function( record, index )
     {
         let row = this.element.querySelector( `[ data-index = "${ index }" ]` );
@@ -232,7 +258,8 @@ const Component = function()
         
         this.array.splice( index - 1, 1, record );
 
-        this.updateTotals();
+        if ( this.totals._display )
+            this.updateTotals();
     };
 
     this.updateRow = function( row, record, index )

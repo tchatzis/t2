@@ -68,6 +68,7 @@
     z-index: 150;
 
     transition: width 2s;
+    transition-delay: 1s;
 }
 
 #margin:hover

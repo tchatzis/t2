@@ -152,8 +152,8 @@
 .icon
 {
     align-items: center;
-    border-left: 1px solid #333;
-    border-right: 1px solid #333;
+    /*border-left: 1px solid #333;
+    border-right: 1px solid #333;*/
     color: silver;
     cursor: pointer;
     display: flex;
@@ -187,7 +187,8 @@
 
 .inactive
 {
-    border-left: 10px solid #600 !important;
+    border-left: 10px solid #111 !important;
+    color: #333 !important;
 }
 
 .key
@@ -373,6 +374,13 @@
 .picked:hover
 {
     background-color: #060;
+}
+
+.picker
+{
+    border-collapse: separate;
+    bottom: 0;
+    position: absolute;
 }
 
 .popup

@@ -53,8 +53,9 @@ const Template = function( module )
             }
         ];
         
-        let tree = await this.addComponent( { id: "tree", type: "tree", format: "block" } );
+        let tree = await this.addComponent( { id: "tree", type: "tree", format: "block", output: "dual" } );
             tree.subscription.add( { event: "selectBranch", handler: listen } );
+            tree.subscription.add( { event: "changeParent", handler: listen } );
             tree.update( { array: array } );
 
         function listen( e )

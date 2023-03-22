@@ -148,8 +148,9 @@ const Component = function()
     {
         this.reset();
 
-        this.array = args.orderBy ? t2.common.sort( args.array, args.orderBy ) : args.array;
+        this.array = args.orderBy ? t2.common.sort( args.array, args.orderBy, args.dir ) : args.array;
         this.orderBy = args.orderBy;
+        this.dir = args.dir;
 
         if ( !this.array.length )
         {
@@ -173,7 +174,7 @@ const Component = function()
 
     this.update = function( args )
     {
-        let _args = { array: args.array || this.array, orderBy: args.orderBy || this.orderBy };
+        let _args = { array: args.array || this.array, orderBy: args.orderBy || this.orderBy, dir: args.dir || this.dir };
 
         this.populate( _args );
         
@@ -201,12 +202,15 @@ const Component = function()
             row.setAttribute( "data-id", record.id );
             row.setAttribute( "data-index", index );
             row.setAttribute( "data-count", this.array.length );
+            row.scrollIntoView();
 
         helpers.listen( self, row, record, listeners, active, columns );
         this.updateRow( row, record, index );
 
         if ( record.disabled )
             row.classList.add( "disabled" );
+
+        this.footer.scrollIntoView();
     };
 
     this.removeRow = function( record )

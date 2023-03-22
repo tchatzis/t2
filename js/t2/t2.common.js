@@ -166,7 +166,21 @@ const Common = function()
         return new Promise( resolve => setTimeout( resolve, ms ) );
     };
     
-    this.sort = ( array, key ) => array.sort( ( a, b ) => ( key ? a[ key ] > b[ key ] : a > b ) ? 1 : -1 );
+    this.sort = ( array, key, dir ) => 
+    {
+        let c = [ "asc", "desc" ].indexOf( dir );
+
+        if ( c == -1 )
+            c = 1;
+        else if ( c == 0 )
+            c = 1;
+        else
+            c = -1;
+
+        let d = -c;
+
+        return array.sort( ( a, b ) => ( key ? a[ key ] > b[ key ] : a > b ) ? c : d );
+    };
 
     this.svg = function( tag )
     {

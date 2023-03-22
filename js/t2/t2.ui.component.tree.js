@@ -1,9 +1,11 @@
+import DND from "../modules/dnd.js";
 import Handlers from "./t2.component.handlers.js";
 
 const Component = function()
 {
     let self = this;
     let active;
+    let dnd = new DND();
     let lookup = new Map();
     let div = t2.common.el( "div", document.body );
         div.classList.add( "contextmenu" );
@@ -30,18 +32,25 @@ const Component = function()
         let link = t2.common.el( "div", this.element );
             link.textContent = params.label;
             link.classList.add( "link" );
+            link.setAttribute( "data-label", params.label );
             link.setAttribute( "data-uuid", this.uuid );
+            link.setAttribute( "data-parent", params.parent.label );
             link.setAttribute( "data-path", path.join( delimiter ) );
             link.addEventListener( "contextmenu", ( e ) => this.modifyBranch( e ) );
-            link.addEventListener( "click", () => this.selectBranch( link ) );
+            link.addEventListener( "click", ( e ) => 
+            {
+                this.selectBranch( link );
+            } );
 
         this.detail.link = link;
-
+  
         if ( params.root )
         {
             this.element.setAttribute( "root", true );
             this.detail.root = true;
+
             link.setAttribute( "root", true );
+            link.setAttribute( "data-disabled", true );
         }
         
         this.addBranch = function( params )
@@ -49,7 +58,7 @@ const Component = function()
             let existing = self.array.find( item => ( item.parent == this.label && item.label == params.label ) );
 
             if ( existing )
-                return existing;
+                return this;
             else
                 self.array.push( { parent: this.label, label: params.label } );
 
@@ -61,6 +70,42 @@ const Component = function()
             this.detail.branch = branch;
 
             return branch;
+        };
+
+        this.changeParent = function( args )
+        {
+            let dropUL = args.parent;
+            let dragUL = args.element;
+            let dropDIV = getLink( dropUL );
+            let dragDIV = getLink( dragUL );
+
+            if ( !dropDIV || !dragDIV )
+                return;
+
+            let parent = dropDIV.dataset.label;
+            let original = dragDIV.dataset.parent;
+            let label  = dragDIV.dataset.label;
+            let map = unroll( self.array );
+            let params = map.get( parent );
+                params.path.push( label );
+
+            dragDIV.dataset.parent = parent;
+            dragDIV.dataset.path = params.path.join( "." );
+
+            this.detail.original = original;
+            this.detail.parent = parent;
+            this.detail.label = label;
+  
+            function getLink( ul )
+            {
+                for ( let i = 0; i < ul.children.length; i++ )
+                {
+                    let div = ul.children[ i ];
+    
+                    if ( div.tagName == "DIV" )
+                        return div;
+                } 
+            }
         };
 
         this.getBranch = function( params )
@@ -94,25 +139,6 @@ const Component = function()
             active = link;
         };
 
-        this.visibility = function()
-        {
-            if ( !this.config )
-                return;
-
-            this.config.visible = !this.config.visible;
-            
-            if ( this.config.visible )
-            {
-                link.style.borderLeftColor = this.config.color;
-                link.classList.remove( "inactive" );
-            }
-            else
-            {
-                link.style.borderLeftColor = "#222";
-                link.classList.add( "inactive" );
-            }  
-        }
-
         // context menu
         this.modifyBranch = async function( e )
         {
@@ -122,7 +148,7 @@ const Component = function()
             let link = e.target;
             let bbox = link.getBoundingClientRect();
 
-            this.selectBranch( link );
+            //this.selectBranch( link );
 
             div.classList.remove( "hidden" );
             div.style.position = "absolute";
@@ -160,8 +186,30 @@ const Component = function()
                     hide();
                 } );
 
+            let select = t2.common.el( "div", div );
+                select.textContent = "Select";
+                select.classList.add( "link" );
+                select.addEventListener( "click", ( e ) => 
+                {
+                    e.stopPropagation();
+
+                    this.selectBranch( link );
+                    hide();
+                } );
+
             if ( this.element.hasAttribute( "root" ) )
                 return;
+
+            let parent = t2.common.el( "div", div );
+                parent.textContent = "Change Parent";
+                parent.classList.add( "link" );
+                parent.addEventListener( "click", ( e ) => 
+                {
+                    e.stopPropagation();
+
+                    this.changeParent( link );
+                    hide();
+                } );                
 
             let remove = t2.common.el( "div", div );
                 remove.textContent = "Remove";
@@ -173,6 +221,10 @@ const Component = function()
                     this.removeBranch( link );
                     hide();
                 } );
+
+            let path = t2.common.el( "div", div );
+                path.textContent = link.dataset.path;
+                path.classList.add( "link" );
         };
 
         this.childBranch = function()
@@ -199,7 +251,13 @@ const Component = function()
                     self.array.splice( index, 1 );
                     
                     let children = self.array.filter( item => ( item.parent == label ) );
-                        children.forEach( child => removeItem( child.label ) );
+                    let length = chilren.length;
+
+                    for ( let i = 0; i < length; i++ )
+                    {       
+                        let child = children[ i ];
+                        removeItem( child.label )
+                    }
                 }
             }
 
@@ -215,11 +273,50 @@ const Component = function()
             if ( !renamed )
                 return;
 
+            let delimiter = ".";
+ 
+            let item = self.array.find( item => ( item.parent == link.dataset.parent && item.label == link.textContent ) );
+                item.label = renamed;
+
+            this.detail.label = renamed;
+            this.detail.original = link.textContent;
+            this.detail.parent = link.dataset.parent;
+
+            let path = this.detail.path.split( delimiter );
+                path.pop();
+                path.push( renamed );
+            this.detail.path = path.join( delimiter );
+
             let children = self.array.filter( item => ( item.parent == this.label ) );
-                children.forEach( child => child.parent = renamed );
+                children.forEach( child => 
+                {
+                    child.parent = renamed;
+                    link.dataset.parent = renamed;
+                } );
 
             link.textContent = renamed;
         };
+
+        this.visibility = function()
+        {
+            if ( !this.config )
+                return;
+
+            if ( this.config.visible )
+            {
+                link.style.borderLeftColor = this.config.color;
+                link.classList.remove( "inactive" );
+            }
+            else
+            {
+                link.style.borderLeftColor = "#222";
+                link.classList.add( "inactive" );
+            }  
+
+            //this.config.visible = !this.config.visible;
+        }
+
+        this.visibility();
 
         const subscription =
         {
@@ -283,34 +380,14 @@ const Component = function()
         if ( !params.array )
             return;
 
-        let array = this.array.concat( params.array );
+        let array = params.refresh ? params.array : this.array.concat( params.array );
+        let i = 0;
 
         function tree( array )
         {
-            let map = new Map();
+            let map = unroll( array );
 
-            // create the path from array
-            let a = [ ...array ];
-                a.forEach( node => 
-                { 
-                    let path = find( node.label, [] )
-                    map.set( node.label, { config: node.config, path: path.reverse() } );
-                } );
-
-            // find the parent
-            function find( label, path )
-            {
-                path.push( label );
-                
-                let parent = array.find( node => node.label == label )?.parent;
-
-                if ( parent )
-                    find( parent, path );
-
-                return path;
-            }
-
-            // define the object
+            /* define the object
             function assign( obj, path ) 
             {
                 let last = path.length;
@@ -324,44 +401,63 @@ const Component = function()
 
                     obj = obj[ key ] ;
                 }
-             }
 
-            // get / set the parent node and render            
+               return obj;
+            }*/
+
+            // get / set the parent node and render      
             let parents = new Map();
-            let obj = {};
+                parents.set( self.label, self );
 
             for ( let [ child, obj ] of map )
             {
                 let path = obj.path;
+                let index = path.findIndex( item => item == child );
+                let prev = String( path[ index - 1 ] );
+                let parent = parents.get( prev );
 
-                // expand the object
-                assign( obj, path );
-                
-                path.forEach( ( label, index ) =>
+                if ( parent )
                 {
-                    if ( label == self.label )
-                    {
-                        parents.set( label, self );     
-                    }
-                    else
-                    {
-                        let previous = path[ index - 1 ];
-                        let parent = parents.get( previous );
+                    let branch = parent.addBranch( { label: child, config: obj.config } );
+                    parents.set( child, branch );
 
-                        if ( !parents.get( label ) )
-                        {
-                            let branch = parent.addBranch( { label: label, config: obj.config } );
-                            parents.set( label, branch );
-                        }
-                    }   
-                } );   
+                    dnd.branch( i, branch.element, "UL", array, ( e, args ) => branch.changeParent( args ) );
+  
+                    i++;
+                }
             }
-
-            self.object = obj;
         }
         
-        tree( array );
+        tree( array ); 
     };
+
+    function unroll( array )
+    {
+        let map = new Map();
+
+        // create the path from array
+        let a = [ ...array ];
+            a.forEach( node => 
+            { 
+                let path = find( String( node.label ), [] );
+                map.set( String( node.label ), { config: node.config, path: path.reverse() } );
+            } );
+
+        // find the parent
+        function find( label, path )
+        {
+            path.push( label );
+            
+            let parent = array.find( node => String( node.label ) == label )?.parent;
+
+            if ( parent )
+                find( parent, path );
+
+            return path;
+        }
+    
+        return map;
+    }
 };
 
 export default Component;

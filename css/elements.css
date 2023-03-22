@@ -41,6 +41,7 @@ table
     border-collapse: collapse;
     border-spacing: 0;
     height: 0;
+    scroll-behavior: smooth;
     user-select: none;
 }
 

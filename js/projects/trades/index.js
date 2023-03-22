@@ -51,7 +51,7 @@ const Trades = function()
 
         let view = t2.navigation.components.view;
             view.setModule( self );
-            view.update( [ "Day", "Symbol", "Summary", "Search", "Fix", "Deposits" ] );
+            view.update( [ "Date", "Symbol", "Summary", "Search", "Fix", "Deposits" ] );//"Day", 
             view.activate( view.array[ 0 ].toLowerCase() );
 
         await t2.ui.layout.init( { name: "all", preserve: [ "header", "footer" ] } );
@@ -177,7 +177,7 @@ const Trades = function()
         let message = new Message();
             await message.init();
         let record = await t2.db.tx.update( self.q.table, Number( data.id ), new Data( data ) );
-
+        
         await this.queries();
 
         if ( table )

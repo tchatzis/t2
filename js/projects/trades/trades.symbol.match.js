@@ -133,10 +133,12 @@ const Panel = function( module )
                 format: [ "dollar" ],
                 formula: ( args ) => 
                 {
-                    args.totals.value += args.value;
+                    let value = args.record.action == "DIV" ? 0 : args.value;
+                    
+                    args.totals.value += value;
                     args.totals.price = args.totals.value / args.totals.qty;
- 
-                    return args.value;
+
+                    return value;
                 } } );
             transactions.addColumn( { 
                 input: { name: "brokerage", type: "hidden" }, 
@@ -212,12 +214,8 @@ const Panel = function( module )
             
             actions.forEach( action =>
             {
-                let data = group[ action ];
+                let data = group[ action ]; 
                 let value = data.qty * data.price * data.sign;
-
-                totals.qty += -data.qty * data.sign;
-                totals.price += data.price * data.sign;
-                totals.value += value;
 
                 grouped.push( data );
 
@@ -227,11 +225,22 @@ const Panel = function( module )
                         previous = { action: data.action, value: value };           
                     break;
 
+                    case "DIV":   
+                        data.qty *= -1;
+                        data.price *= -1;
+                        previous = { action: data.action, value: -value };   
+                        value = 0;        
+                    break;
+
                     case "SELL":
                         percent = -Math.round( ( ( previous.value + value ) / previous.value ) * 10000 ) / 100;
                         previous = { action: data.action, value: 0 };
                     break;
                 }
+
+                totals.price += data.price * data.sign;
+                totals.qty += -data.qty * data.sign;
+                totals.value += value;
             } );
 
             let id = t2.common.uuid();
@@ -285,9 +294,11 @@ const Panel = function( module )
                 format: [ "dollar" ],
                 formula: ( args ) => 
                 {
+                    let value = args.value;
+                    
                     if ( args.record.action == "GAIN" )
                     {
-                        args.totals[ args.column ] += args.value; 
+                        args.totals[ args.column ] += value; 
 
                         if ( args.record.notes )
                         {
@@ -296,8 +307,12 @@ const Panel = function( module )
                             transactions.hsl( args.record.id, hue );
                         }
                     }
+                    else if ( args.record.action == "DIV" )
+                    {
+                        value = 0;
+                    }
 
-                    return args.value;
+                    return value;
                 } } );
             transactions.addColumn( { 
                 input: { name: "brokerage", type: "hidden" }, 

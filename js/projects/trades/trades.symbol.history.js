@@ -34,7 +34,7 @@ const Panel = function( module )
             { id: "submargin", functions: [ { ignore: "clear" }, { clear: null } ] },
             { id: "menu", functions: [ { ignore: "clear" } ] },
             { id: "content", functions: [ { ignore: "clear" } ] },
-            { id: `content.panels.${ self.id }`, functions: [ { clear: null }, { invoke: [ { f: history, args: null }, { f: week, args: null } ] } ] },
+            { id: `content.panels.${ self.id }`, functions: [ { clear: null }, { invoke: [ { f: week, args: null }, { f: history, args: null } ] } ] },
             { id: "margin", functions: [ { ignore: "clear" } ] }
         ] );
     }
@@ -45,9 +45,9 @@ const Panel = function( module )
 
         table = await this.addComponent( { id: "transactions", type: "table" } );
         table.addRowListener( { type: "contextmenu", handler: table.edit } );
-        table.addRowListener( { type: "click", handler: ( data, config, row ) => 
+        table.addRowListener( { type: "click", handler: ( args ) => 
         { 
-            row.classList.toggle( "pairing" ); 
+            args.row.classList.toggle( "pairing" ); 
         } } );
         table.addSubmitListener( { type: "submit", handler: async function ( args )
         { 

@@ -4,6 +4,12 @@ const Template = function( module )
     let max = Math.max.apply( null, module.data.all.map( record => new Date( record.datetime ) ) );
     let sum = ( a, b ) => a + b;
     let previous = { cell: null, popup: null };
+    const round = ( value, decimals ) => 
+    {
+        const precision = Math.pow( 10, decimals || 4 );
+        
+        return Math.round( value * precision ) / precision;
+    };
 
     this.init = async function()
     {
@@ -35,6 +41,8 @@ const Template = function( module )
                 { f: chart, args: null },
                 { f: brokerages, args: null },
                 { f: balances, args: null },
+                { f: gains, args: null },
+                { f: winners, args: null },
                 { f: losses, args: null },
                 { f: problems, args: null },
                 { f: week, args: null },
@@ -100,10 +108,13 @@ const Template = function( module )
     {
         let deposits = await t2.db.tx.retrieve( "deposits" );
 
-        let transactions = module.data.all.filter( record => record.action !== "DIV" );
+        let transactions = module.data.all;//.filter( record => record.action !== "DIV" );
 
         self.closed = [];
         self.closed.push( { name: "\u25f9", value: 0 } );
+
+        self.gains = [];
+        self.gains.push( { name: "\u25f9", value: 0 } );
 
         self.losses = [];
         self.losses.push( { name: "\u25f9", value: 0 } );
@@ -121,7 +132,7 @@ const Template = function( module )
 
             let data = {};
                 data.symbol = symbol;
-                data.qty = set.map( record => record.qty * record.sign ).reduce( sum, 0 );
+                data.qty = round( set.map( record => record.qty * record.sign ).reduce( sum, 0 ) );
                 data.value = set.map( record => record.value * record.sign ).reduce( sum, 0 );
 
             if ( data.qty )
@@ -133,6 +144,11 @@ const Template = function( module )
             {
                 object.closed.push( data.value );
                 self.closed.push( { name: symbol, value: data.value } );
+
+                if ( data.value < 0 )
+                    self.losses.push( { name: symbol, qty: data.qty, spread: 0, trade: 0, value: data.value } );
+                else
+                    self.gains.push( { name: symbol, qty: data.qty, spread: 0, trade: 0, value: data.value } );
             }
 
             object.cash.push( data.value );
@@ -155,7 +171,7 @@ const Template = function( module )
     {
         let split = {};
 
-        [ "BUY", "SELL" ].forEach( action =>
+        [ "BUY", "SELL", "DIV" ].forEach( action =>
         {
             let actions = array.filter( record => record.action == action );
 
@@ -163,14 +179,11 @@ const Template = function( module )
             split[ action ].average = split[ action ].qty ? split[ action ].value / split[ action ].qty : 0;
         } );
 
-        let total   = split.SELL.value - split.BUY.value;
-        let qty     = split.BUY.qty - split.SELL.qty;
+        let total   = split.SELL.value - split.BUY.value - split.DIV.value;
+        let qty     = split.BUY.qty - split.SELL.qty + split.DIV.qty;
         let trade   = -total / qty;
         let spread  = split.BUY.average - trade;
         let value   = spread * qty;
-
-        if ( spread < 0 )
-            self.losses.push( { name: symbol, qty: qty, spread: spread, trade: trade, value: value } );
 
         return value;
     }
@@ -329,7 +342,29 @@ const Template = function( module )
         let container = await this.addContainer( { id: "losses", type: "box", format: "inline-block" } );
             container.scale();
         let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
-            title.set( `Underperforming \u00BB ${ module.date }` );
+            title.set( `Closed Losses \u00BB ${ module.date }` );
+
+        let chart = await container.addComponent( { id: "underperformers", type: "chart", format: "flex" } );
+            chart.addLayer( { color: "hsl( 0, 70%, 30% )", font: "12px sans-serif", type: "bar",
+                data: array,
+                axes:
+                { 
+                    "0": { axis: "name", settings: { mod: ( p ) => !( p % 1 ), axis: true, format: "text", step: 1, colored: { axis: true, data: true } } },
+                    "1": { axis: "value", settings: { mod: ( p ) => !( p % 10 ), axis: true } } 
+                } } );
+    }
+
+    // winners chart
+    async function gains()
+    {
+        self.gains.push( { name: "\u25fa", value: 0 } );
+        
+        let array = self.gains;
+
+        let container = await this.addContainer( { id: "gains", type: "box", format: "inline-block" } );
+            container.scale();
+        let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
+            title.set( `Closed Gains \u00BB ${ module.date }` );
 
         let chart = await container.addComponent( { id: "underperformers", type: "chart", format: "flex" } );
             chart.addLayer( { color: "hsl( 0, 70%, 30% )", font: "12px sans-serif", type: "bar",
@@ -349,7 +384,7 @@ const Template = function( module )
         let container = await this.addContainer( { id: "problems", type: "box", format: "inline-block" } );
             container.scale();
         let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
-            title.set( `Underperforming Stocks \u00BB ${ module.date }` );
+            title.set( `Closed Losses \u00BB ${ module.date }` );
 
         let table = await container.addComponent( { id: "problematic", type: "table" } );
             table.addColumn( { 
@@ -357,29 +392,36 @@ const Template = function( module )
                 cell: { css: {}, display: 4, modes: [ "read" ] },
                 format: [ "uppercase" ] } )
             table.addColumn( { 
-                input: { name: "qty", type: "number", step: 0.0001 }, 
-                cell: { css: { class: "info" }, display: 3, modes: [ "read" ] },
-                format: [ "auto" ] } );
-            table.addColumn( { 
-                input: { name: "trade", type: "number", step: 0.0001 }, 
-                cell: { css: { class: "value" }, display: 4, modes: [ "read" ] },
+                input: { name: "value", type: "number", readonly: "" }, 
+                cell: { css: { class: "value" }, display: 6, modes: [ "read" ] },
                 format: [ "dollar" ],
-                formula: ( args ) => 
+                formula: ( args ) =>
                 {
-                    args.totals[ args.column ] = 0; 
+                    let value = args.record[ args.column ];
+                    
+                    args.totals[ args.column ] += value;
 
-                    return args.value;
+                    return value;
                 } } );
+            table.populate( { array: array, orderBy: "name" } );
+            table.setTotals();
+    }
+
+    // winners table
+    async function winners()
+    {
+        let array = self.gains.filter( record => record.name.charCodeAt( 0 ) < 256 );
+
+        let container = await this.addContainer( { id: "problems", type: "box", format: "inline-block" } );
+            container.scale();
+        let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
+            title.set( `Closed Losses \u00BB ${ module.date }` );
+
+        let table = await container.addComponent( { id: "problematic", type: "table" } );
             table.addColumn( { 
-                input: { name: "spread", type: "number", step: 0.0001 }, 
-                cell: { css: { class: "value" }, display: 4, modes: [ "read" ] },
-                format: [ "dollar" ],
-                formula: ( args ) => 
-                {
-                    args.totals[ args.column ] = 0; 
-
-                    return args.value;
-                } } );
+                input: { name: "name", type: "text" }, 
+                cell: { css: {}, display: 4, modes: [ "read" ] },
+                format: [ "uppercase" ] } )
             table.addColumn( { 
                 input: { name: "value", type: "number", readonly: "" }, 
                 cell: { css: { class: "value" }, display: 6, modes: [ "read" ] },

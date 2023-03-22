@@ -81,19 +81,6 @@ const Component = function()
             row?.classList.remove( "highlight" );
     };
 
-    // DND
-    this.find = function( e )
-    {
-        let node = e.target;
-
-        while ( node.tagName !== "TR" )
-        {
-            node = node.parentNode;
-        }
-
-        return node;
-    };
-
     // data 
     this.change = function( args )
     {
@@ -114,7 +101,7 @@ const Component = function()
         this.array = args.array;
         this.array.forEach( ( record, index ) => this.addRow( record, index + 1 ) );
 
-        dnd.init( this.element, this.find, this.array, () => this.renumber.call( this ) );
+        dnd.init( this.element, "TR", this.array, () => this.renumber.call( this ) );
         dnd.disable( 0 );
 
         helpers.resize( self );
@@ -231,6 +218,8 @@ const Component = function()
         return { tr: tr, inputs: map, object: object };
     };
 
+    this.readOnly = ( bool ) => this.readonly = bool;
+
     this.removeRow = function( record, index )
     {
         let row = this.element.querySelector( `[ data-index = "${ index }" ]` );
@@ -318,13 +307,15 @@ const Component = function()
     // add controls
     function controls()
     {
+        let display = self.readonly ? 0 : 4;
+        
         self.addColumn( { 
             input: { name: "add", type: "submit", value: "+" }, 
-            cell: { css: {}, display: 4, modes: [ "read", "edit" ] },
+            cell: { css: {}, display: display, modes: [ "read", "edit" ] },
             format: [] } );
         self.addColumn( { 
             input: { name: "remove", type: "submit", value: "-" }, 
-            cell: { css: {}, display: 4, modes: [ "read", "edit" ] },
+            cell: { css: {}, display: display, modes: [ "read", "edit" ] },
             format: [] } );
     }
 

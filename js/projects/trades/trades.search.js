@@ -67,7 +67,7 @@ const Template = function( module )
                 cell: { css: {}, display: 5 },
                 format: [] } );
             form.addField( { 
-                input: { name: "notes", label: "notes", type: "select" }, 
+                input: { name: "notes", label: "notes", type: "datalist" }, 
                 cell: { css: {}, display: 6 },
                 format: [ "uppercase" ],
                 options: [ "", "SHORT", "COVER", "PARTIAL" ] } );

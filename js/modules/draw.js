@@ -2,6 +2,29 @@ const Draw = function()
 {
     let self = this;
 
+    self.bezier = function( color, vectors )
+    {
+        this.strokeStyle = color;
+        this.beginPath();
+
+        let length = 4;
+        let values = [];
+        
+        for ( let i = 0; i < length; i++ )
+        {
+            let v = i % length;
+            let vector = vectors[ v ];
+
+            if ( i == 0 )
+                this.moveTo( vector.x, vector.y );
+            else
+                values.push( vector.x, vector.y );
+        }
+
+        this.bezierCurveTo( ...values );
+        this.stroke();
+    };
+
     self.circle = function( color, vector, radius )
     {
         this.strokeStyle = color;
@@ -104,10 +127,10 @@ const Draw = function()
     
     self.quadratic = function( color, vectors )
     {
-        this.fillStyle = color;
+        this.strokeStyle = color;
         this.beginPath();
 
-        let length = vectors.length;
+        let length = 3;
         let values = [];
         
         for ( let i = 0; i < length; i++ )

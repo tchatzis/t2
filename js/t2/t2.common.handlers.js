@@ -48,16 +48,22 @@ const Common = function()
 
     this.show = () => this.element.classList.remove( "hidden" );   
 
-    this.scale = () => 
+    this.scale = ( amount ) => 
     {
+        let a = amount || 0.5;
+            a = a >= 1 ? 1 : a;
+            a = a < 0 ? 0 : a;
+            a = a == 1 ? 0 : a;
+        
         const scale = () => 
-        {
+        {   
             for ( let [ name, component ] of this.parent.children )
-                if ( component !== this )
+                if ( component !== this && a )
                     component.element.classList.add( "scaled" );
         };
-        
-        this.element.classList.add( "scaled" );
+
+        if ( a )
+            this.element.classList.add( "scaled" );
 
         this.element.addEventListener( "click", ( e ) => 
         {

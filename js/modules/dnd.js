@@ -28,17 +28,34 @@ const DND = function()
         e.stopPropagation();
 
         var el = scope.find( e ); 
+        var args = {};
 
         if ( el.hasAttribute( "data-disabled" ) )
             return false;
 
-        if ( scope.element !== el )  
+        if ( scope.parent )
         {
-            scope.parent.insertBefore( scope.element, el );
+            if ( scope.element !== el )  
+            {
+                scope.parent.insertBefore( scope.element, el );
 
-            scope.reorder( el );
-            scope.callback( el );
+                args.parent = scope.parent;
+                args.element = scope.element;
+
+                scope.reorder( el );
+                scope.callback( el, args );
+            }
         }
+        else
+        {
+            args.parent = el;
+            args.element = scope.element;
+
+            if ( args.parent !== args.element )  
+                el.appendChild( scope.element );
+        }
+
+        this.callback( e, args );
 
         return false;
     };
@@ -60,17 +77,40 @@ const DND = function()
         el.classList.add( "over" );
     };
 
+    this.find = function( e )
+    {
+        let node = e.target;
+
+        while ( node.tagName !== this.tag )
+        {
+            node = node.parentNode;
+        }
+
+        return node;
+    };
+
     this.leave = ( e ) =>
     {
         var el = scope.find( e );   
             el.classList.remove( "over" );
     };
 
-    this.init = ( parent, find, values, callback ) =>
+    this.branch = ( index, element, tag, values, callback ) =>
+    {
+        scope.callback = callback || function(){};
+        scope.element = element;
+        scope.element.setAttribute( "data-index", index );
+        scope.tag = tag;
+        scope.values = values;
+
+        this.enable( scope.element, index );
+    };
+
+    this.init = ( parent, tag, values, callback ) =>
     {
         scope.callback = callback || function(){};
         scope.parent = parent;
-        scope.find = find;
+        scope.tag = tag;
         scope.items = Array.from( scope.parent.children );
         scope.values = values;
 

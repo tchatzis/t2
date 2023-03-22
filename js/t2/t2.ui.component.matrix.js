@@ -184,6 +184,18 @@ const Matrix = function()
                     td.classList.add( css( config.cell, column, data.data ) );
                     td.classList.add( ...config.format );
                     td.textContent = value;
+
+                listeners.cell.forEach( listener =>
+                {
+                    td.addEventListener( listener.type, ( e ) => 
+                    { 
+                        e.preventDefault(); 
+                        e.stopPropagation();
+
+                        td.classList.add( "highlight" );
+                        listener.handler( td, key, column, data );
+                    } );
+                } );
             } );
         } );
     };

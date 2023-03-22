@@ -25,11 +25,15 @@ const Template = function( module )
     async function output()
     {
         let d = 50;
-        
-        let select = t2.icons.init( { type: "select", height: d, width: d, style: "stroke: gray;" } );
-        let snap = t2.icons.init( { type: "snap", height: d, width: d, style: "stroke: gray;" } );
+        let array = [];
+        let types = Object.keys( t2.icons.library );
+            types.forEach( type => 
+            {
+                let icon = t2.icons.init( { type: type, height: d, width: d, style: "stroke: gray;" } );
 
-        let array = [ select, snap ];
+                if ( icon )
+                    array.push( icon );
+            } );
         
         let box = await this.addContainer( { id: "box", type: "box", format: "block" } );
         let icons = await box.addComponent( { id: "icons", type: "icons", format: "flex" } );

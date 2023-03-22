@@ -6,19 +6,18 @@ const Panel = function( module )
     let self = this;
     let use = {};
     let axes = [ "x", "y", "z" ];
-    let panel;
+    
     let draw = new Draw();
-    let cleared = false;
     let drawing = false;
     let pixels;
     let list;
     let tree;
+    let panel;
     let crosshairs;
     let picker;
     let submenu = t2.ui.children.get( "submenu" );
     let margin = t2.ui.children.get( "margin" );
     let subcontent = t2.ui.children.get( "subcontent" );
-    let layer;
     let map = new Map();
 
     this.init = async function( parent, params )
@@ -66,6 +65,19 @@ const Panel = function( module )
 
     const convert =
     {
+        fromVector: ( vector ) =>
+        {
+            switch ( use.view )
+            {
+                case "top":
+                    return { x: vector.x, y: vector.z };
+            }
+        }, 
+        snapPixel: ( value ) => Math.round( convert.toUnit( value ) ) * pixels,
+        snapPixels: ( array ) =>
+        {
+            return array.map( value => convert.snapPixel( value ) );
+        },
         toPixel: ( value ) => value * pixels,
         toPixels: ( vector ) => 
         {
@@ -95,7 +107,43 @@ const Panel = function( module )
 
             return converted;
         },
-        toUnit: ( value ) => value / pixels
+        toUnit: ( value ) => 
+        {
+            let precision = module.record.grid.precision;
+            let pow = 1 / precision;
+            
+            return Math.round( pow * value / pixels ) / pow;
+        },
+        toVector: ( point ) =>
+        {
+            switch ( use.view )
+            {
+                case "top":
+                    return snap( { x: point[ 0 ], y: 0, z: point[ 1 ] } );
+            }
+        },
+        rect: ( points ) => 
+        {
+            let point = [];
+            let vectors = [];
+
+            points.forEach( ( value, i ) => 
+            {
+                let _x = Math.floor( i / 2 );
+                let _y = ( ( _x + i ) % 2 );
+                let x = _x * 2;
+                let y = _y * 2 + 1;
+                let offset = [ points[ 0 ] * _x, points[ 1 ] * _y ];
+
+                point = [ points[ x ] + offset[ 0 ], points[ y ] + offset[ 1 ] ];
+
+                vectors.push( convert.toVector( point ) );
+            } );
+
+            vectors.push( vectors[ 0 ] );
+
+            return vectors;
+        }
     };
 
     // component handlers switch
@@ -112,6 +160,7 @@ const Panel = function( module )
         {
             module.record.layers = module.record.layers || [];
 
+            let layer;
             let existing = module.record.layers.find( item => ( item.parent == detail.label && item.label == detail.branch.label ) );
             let d = { ...detail.branch.detail };
             let uuid = d.uuid;
@@ -120,7 +169,7 @@ const Panel = function( module )
 
             if ( existing )
             {
-                layer = new Layer( existing ); 
+                layer = existing; 
             }
             else
             {
@@ -128,10 +177,24 @@ const Panel = function( module )
 
                 module.record.layers.push( layer );
                 
-                await t2.db.tx.update( module.q.table, Number( module.record.id ), module.record );
+                await handlers.updateData();
             }
 
             map.set( uuid, { canvas: canvas, detail: d, layer: layer } );  
+        },
+        changeParent: async ( detail ) =>
+        {
+            console.warn( detail );
+        },
+        renameBranch: async ( detail ) =>
+        {
+            let item = module.record.layers.find( item => ( item.parent == detail.parent && item.label == detail.original ) );
+                item.label = detail.label;
+
+            let children = module.record.layers.filter( item => ( item.parent == detail.original ) );
+                children.forEach( child => child.parent = detail.label );
+
+            await handlers.updateData();
         },
         selectBranch: async ( detail ) => 
         {
@@ -139,7 +202,6 @@ const Panel = function( module )
             subcontent.clear();
 
             use.map = map.get( detail.uuid );
-            console.log( detail.label, use );
 
             if ( !detail.root && use.map.layer )
             {   
@@ -150,6 +212,24 @@ const Panel = function( module )
             }
             else
                 submenu.hide();
+
+            /*
+            let layers = [ ...module.record.layers ];
+            let length = layers.length;
+
+            while ( length > 0 )
+            {
+                length--;
+
+                let item = module.record.layers[ length ];
+
+                if ( [ "counters", "post stairwell" ].includes( item.label ) )
+                {
+                    module.record.layers.splice( length, 1 );
+                } 
+            }
+
+            handlers.updateData();*/
         },
         // data
         convertData: () => use.map.converted = use.map.layer.array.map( vector => convert.toPixels( vector ) ),
@@ -159,109 +239,117 @@ const Panel = function( module )
     // mouse event handlers
     const mouse = 
     {
+        start: { x: 0, y: 0 },
+        end: { x: 0, y: 0 },
+        points: [],
+        
         mousedown:
         {
-            dot:      () => self.initial.inputs.get( "add" ).click(),
-            polyline: () => self.initial.inputs.get( "add" ).click()
+            dot:        () => self.initial.inputs.get( "add" ).click(),
+            polyline:   () => self.initial.inputs.get( "add" ).click(),
+            rect:       () => 
+            {
+                mouse.start = { x: mouse.x, y: mouse.y };
+
+                drawing = true;  
+            }
         },
         
         mousemove:
-        {
+        {     
             dot:      broadcast,
-            polyline: broadcast
+            polyline: broadcast,
+            rect: () =>
+            {
+                if ( drawing )
+                {
+                    mouse.end = { x: mouse.x, y: mouse.y };
+
+                    mouse.points = plot();
+
+                    broadcast( [ mouse.end.x - mouse.start.x, mouse.end.y - mouse.start.y ] );
+                }
+            }
+        },
+
+        mouseup:
+        {
+            circle: () =>
+            {
+                mouse.end = { x: mouse.x, y: mouse.y };
+
+                drawing = false;
+
+                list.readOnly( true );
+                list.update( { array: [ convert.toVector( [ mouse.start.x, mouse.start.y ] ), convert.toVector( [ mouse.end.x, mouse.end.y ] ) ] } );
+
+                broadcast( [ 0, 0 ] );
+
+                use.map.layer.array = list.array;
+
+                update();
+            },
+            polyline: () =>
+            {
+                drawing = false;
+            },
+            rect: () =>
+            {
+                mouse.end = { x: mouse.x, y: mouse.y };
+
+                drawing = false;
+
+                list.readOnly( true );
+                list.update( { array: convert.rect( mouse.points ) } );
+
+                broadcast( [ mouse.end.x - mouse.start.x, mouse.end.y - mouse.start.y ] );
+
+                use.map.layer.array = list.array;
+
+                update();
+            }
         }
     };
 
-    const shapes =
+    mouse.mousedown.bezier = mouse.mousedown.polyline;
+    mouse.mousemove.bezier = mouse.mousemove.polyline;
+    mouse.mouseup.bezier = mouse.mouseup.polyline;
+
+    mouse.mousedown.circle = mouse.mousedown.rect;
+    mouse.mousemove.circle = mouse.mousemove.rect;
+
+    mouse.mousedown.quadratic = mouse.mousedown.polyline;
+    mouse.mousemove.quadratic = mouse.mousemove.polyline;
+    mouse.mouseup.quadratic = mouse.mouseup.polyline;
+
+    // mouse position to vector
+    function broadcast( position )
     {
-        circle: ( ctx ) =>
-        {
-            let radius = Math.sqrt( Math.pow( ( self.start.x - self.end.x ), 2 ) + Math.pow( ( self.start.y - self.end.y ), 2 ) );
-            
-            draw.circle.call( ctx, "white", self.start, radius );
+        let point = position ? [ position[ 0 ], position[ 1 ] ] : [ mouse.x, mouse.y ];
+        let vector = convert.toVector( point );
 
-            return { x: self.start.x, y: self.start.y, radius: radius };
-        },
+        display( vector );
+    }
 
-        clear: ( ctx ) =>
-        {
-            draw.clear.call( ctx );
+    // display vector on list, first row
+    function display( vector )
+    {
+        self.initial = list.getRow( 0 ); 
 
-            cleared = true;
-
-            ctx.close();
-
-            return { x: 0, x0: 0, x1: 0, y: 0, y0: 0, y1: 0, radius: 0 };
-        },
-
-        dot: ( ctx ) =>
-        {
-            let radius = 3;
-            
-            draw.dot.call( ctx, "white", self.start, radius );
-
-            return { x: self.start.x, y: self.start.y, radius: radius };
-        },
+        let step = module.record.grid.precision;
         
-        rect: ( ctx ) =>
-        {
-            let x0 = 0;
-            let x1 = 0;
-            let y0 = 0;
-            let y1 = 0;
-            
-            if ( self.start.x <= self.end.x )
-            {
-                x0 = self.start.x;
-                x1 = self.end.x - self.start.x;
-            }
-            else
-            {
-                x0 = self.end.x;
-                x1 = self.start.x - self.end.x;
-            }
-            
-            if ( self.start.y <= self.end.y )
-            {
-                y0 = self.start.y;
-                y1 = self.end.y - self.start.y;
-            }
-            else
-            {
-                y0 = self.end.y;
-                y1 = self.start.y - self.end.y;
-            }
-            
-            draw.rect.call( ctx, "white", [ x0, y0, x1, y1 ] );
-
-            return { x0: x0, y0: y0, x1: x1, y1: y1 };
-        }
-    };
-
-    // mouse position updates list, first row
-    function broadcast()
-    {
-        if ( !self.initial )
-            return;
-
-        let point = [ mouse.x, mouse.y ];
-        let vector = unview( point );
-
         for ( let [ key, value ] of Object.entries( vector ) )
         {
             let input = self.initial.inputs.get( key );
-                input.value = value;
+                input.value = convert.toUnit( value );
+                input.step = step;
         }
-
-        use.vector = vector;
-
-        return vector;
     }
 
     // set crosshairs on vector when rolling over list
     function highlight( args )
     {
-        let pixels = view( convert.toPixels( args.data ) );
+        let pixels = convert.fromVector( convert.toPixels( args.data ) );
 
         draw.crosshairs.call( crosshairs.ctx, "rgba( 0, 255, 255, 1 )", pixels );
     }
@@ -270,9 +358,12 @@ const Panel = function( module )
     function plot()
     {
         use.view = "top";
+
+        if ( !use.map )
+            return;
         
         let ctx = use.map.canvas.ctx;
-        let points = use.map.converted.map( vector => view( vector ) );
+        let points = [];
         let layer = use.map.layer;
 
         draw.clear.call( ctx );
@@ -280,15 +371,70 @@ const Panel = function( module )
         if ( !layer.config.visible )
             return;
 
+        //console.warn( "plot", layer.config.shape, use.map.converted, mouse )
+
         switch ( layer.config.shape )
         {
+            case "bezier":
+                points = use.map.converted.map( vector => convert.fromVector( vector ) );
+                draw.bezier.call( ctx, layer.config.color, points );
+                return points;
+            
+            case "circle":
+                let radius = Math.sqrt( Math.pow( ( mouse.start.x - mouse.end.x ), 2 ) + Math.pow( ( mouse.start.y - mouse.end.y ), 2 ) );
+                points = [ mouse.start ]; 
+                draw.circle.call( ctx, layer.config.color, mouse.start, radius );
+
+                return points;
+            
             case "dot":
+                points = use.map.converted.map( vector => convert.fromVector( vector ) );
                 draw.dots.call( ctx, layer.config.color, points );
-            break;
+                return points;
             
             case "polyline":
+                points = use.map.converted.map( vector => convert.fromVector( vector ) );
                 draw.path.call( ctx, layer.config.color, points );
-            break;
+                return points;
+
+            case "quadratic":
+                points = use.map.converted.map( vector => convert.fromVector( vector ) );
+                draw.quadratic.call( ctx, layer.config.color, points );
+                return points;
+
+            case "rect":
+                let x0 = 0;
+                let x1 = 0;
+                let y0 = 0;
+                let y1 = 0;
+                
+                if ( mouse.start.x <= mouse.end.x )
+                {
+                    x0 = mouse.start.x;
+                    x1 = mouse.end.x - mouse.start.x;
+                }
+                else
+                {
+                    x0 = mouse.end.x;
+                    x1 = mouse.start.x - mouse.end.x;
+                }
+                
+                if ( mouse.start.y <= mouse.end.y )
+                {
+                    y0 = mouse.start.y;
+                    y1 = mouse.end.y - mouse.start.y;
+                }
+                else
+                {
+                    y0 = mouse.end.y;
+                    y1 = mouse.start.y - mouse.end.y;
+                }
+
+                points = convert.snapPixels( [ x0, y0, x1, y1 ] );
+                
+                draw.rect.call( ctx, layer.config.color, points );
+
+                return points;
         }
     }
 
@@ -309,26 +455,6 @@ const Panel = function( module )
         plot();
     }
 
-    // point to vector
-    function unview( point )
-    {
-        switch ( use.view )
-        {
-            case "top":
-                return snap( { x: point[ 0 ], y: 0, z: point[ 1 ] } );
-        }
-    }
-
-    // vector to point
-    function view( vector )
-    {
-        switch ( use.view )
-        {
-            case "top":
-                return { x: vector.x, y: vector.z };
-        }
-    }
-
     /****************************************************************/
     // menu
     async function menu()
@@ -337,6 +463,8 @@ const Panel = function( module )
         
         tree = await this.addComponent( { id: module.record.project, type: "tree", format: "block", output: "dual" } );
         tree.subscription.add( { event: "addBranch", handler: listen } );    
+        tree.subscription.add( { event: "changeParent", handler: listen } );
+        tree.subscription.add( { event: "renameBranch", handler: listen } );
         tree.subscription.add( { event: "selectBranch", handler: listen } );
         tree.update( { array: array } ); 
     }
@@ -381,14 +509,21 @@ const Panel = function( module )
 
                 draw.crosshairs.call( crosshairs.ctx, "rgba( 255, 255, 255, 0.5 )", { x: mouse.x, y: mouse.y } );
 
-                if ( layer.config.shape )
-                    mouse[ e.type ][ layer.config.shape ]();
+                ready( e );   
             } );
-            element.addEventListener( "mousedown", ( e ) => 
-            {
-                if ( layer.config.shape )
-                    mouse[ e.type ][ layer.config.shape ]();
-            } )
+            element.addEventListener( "mousedown", ready );
+            element.addEventListener( "mouseup", ready );
+
+        function ready( e )
+        {
+            let layer = use.map?.layer;
+
+            if ( !layer )
+                return false;
+
+            if ( layer.config.shape )
+                mouse[ e.type ][ layer.config.shape ]();
+        }
     }
 
     async function grid()
@@ -426,24 +561,23 @@ const Panel = function( module )
         subcontent.clear();
         subcontent.element.style.justifyContent = "start";
 
-        let a = t2.icons.init( { type: "rect", height: 16, width: 16, style: "fill: gray;" } );
-        let b = t2.icons.init( { type: "rect", height: 16, width: 16, style: "stroke: gray;" } );
-        let c = t2.icons.init( { type: "circle", height: 16, width: 16, r: 8, style: "fill: gray;" } );
-        let d = t2.icons.init( { type: "circle", height: 16, width: 16, r: 8, style: "stroke: gray;"} );
-        let e = t2.icons.init( { type: "polygon", height: 16, width: 16, points: "8,0 16,16 0,16", style: "fill: gray;" } );
-        let f = t2.icons.init( { type: "polygon", height: 16, width: 16, points: "8,0 16,16 0,16", style: "stroke: gray;" } );
-        let g = t2.icons.init( { type: "line", height: 16, width: 16, x1: 0, y1: 12, x2: 16, y2: 4, style: "stroke: gray;" } );
-        
-        
-        let h = t2.icons.init( { type: "polyline", height: 16, width: 16, points: "0,0 16,4 4,8 8,12 6,16", style: "fill: none; stroke: gray;" } );
-        let i = t2.icons.init( { type: "dot", height: 16, width: 16, r: 3, style: `fill: gray;` } );
+        let rect =      t2.icons.init( { type: "rect",      height: 16, width: 16, style: "fill: transparent; stroke: gray;" } );
+        let circle =    t2.icons.init( { type: "circle",    height: 16, width: 16, style: "fill: transparent; stroke: gray;"} );
+        let line =      t2.icons.init( { type: "line",      height: 16, width: 16, style: "stroke: gray;" } );
+        let quadratic = t2.icons.init( { type: "quadratic", height: 16, width: 16, style: "fill: transparent; stroke: gray;" } );
+        let bezier =    t2.icons.init( { type: "bezier",    height: 16, width: 16, style: "fill: transparent; stroke: gray;" } );
+        let polyline =  t2.icons.init( { type: "polyline",  height: 16, width: 16, style: "fill: transparent; stroke: gray;" } );
+        let dot =       t2.icons.init( { type: "dot",       height: 16, width: 16, style: "fill: gray;" } );
 
-        let array = [ h, i ];//[ a, b, c, d, e, f, g ];
+        let layer = use.map.layer;
+        let array = [ polyline, dot, line, rect, circle, quadratic, bezier ];
         let active = array.find( element => element.dataset.type == layer.config.shape ) || array[ 0 ];
         let icons = await subcontent.addComponent( { id: "shapes", type: "icons", format: "flex" } );
             icons.addListener( { type: "click", handler: click } );
             icons.update( array );
             icons.activate( active );
+
+        layer.config.shape = active.dataset.type;
 
         function click()
         {

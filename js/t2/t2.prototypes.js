@@ -47,10 +47,12 @@ export function extend()
             if ( before instanceof Function )
                 before();
             
-            that.apply( this, arguments ); 
+            let result = that.apply( this, arguments ); 
 
             if ( after instanceof Function )
                 after();
+
+            return result;
         };
 
         return extended;

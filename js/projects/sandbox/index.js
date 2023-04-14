@@ -22,7 +22,7 @@ const Sandbox = function()
 
         let view = t2.navigation.components.view;
             view.setModule( self );
-            view.update( [ "tree", "gl", "apollonian", "icons", "list", "panels", "table" ] );
+            view.update( [ "gl", "particles", "tree", "apollonian", "icons", "list", "panels", "table" ] );
             view.activate( view.array[ 0 ] );
 
         await t2.ui.layout.init( { name: "minimal", preserve: [ "header", "footer" ] } );

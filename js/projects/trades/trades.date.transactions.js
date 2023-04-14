@@ -234,7 +234,7 @@ const Panel = function( module, array, source )
                 input: { type: "submit", value: "UPDATE" }, 
                 cell: { css: {}, display: 4, modes: [ "edit" ] },
                 format: [] } );
-            table.populate( { array: array, orderBy: "datetime", dir: "asc" } );
+            table.populate( { array: array, orderBy: "datetime", dir: "desc" } );
             table.setTotals();
 
         source[ brokerage ] = table;

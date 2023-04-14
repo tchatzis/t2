@@ -158,7 +158,9 @@ const Trades = function()
         if ( !table )
             return;
 
-        table.addRow( data, table.array.length );
+        let insert = table.dir == "desc";
+
+        table.addRow( data, table.array.length, insert );
         table.parent.unscale();
         table.highlight( data.id );
         table.setTotals();

@@ -196,21 +196,32 @@ const Component = function()
     };
 
     // row
-    this.addRow = function( record, index )
+    this.addRow = function( record, index, insert )
     {
-        let row = el( "tr", self.element );
+        let row = document.createElement( "tr" );
             row.setAttribute( "data-id", record.id );
             row.setAttribute( "data-index", index );
             row.setAttribute( "data-count", this.array.length );
+
+        if ( this.dir !== "desc" )
+        { 
             row.scrollIntoView();
+        }
+
+        if ( !insert )
+        {
+            this.element.appendChild( row );
+        }
+        else
+        {
+            this.element.insertBefore( row, this.element.firstChild );              
+        }
 
         helpers.listen( self, row, record, listeners, active, columns );
         this.updateRow( row, record, index );
 
         if ( record.disabled )
             row.classList.add( "disabled" );
-
-        this.footer.scrollIntoView();
     };
 
     this.removeRow = function( record )

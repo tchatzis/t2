@@ -1,11 +1,11 @@
 const Data = function( data )
 {
     if ( data.symbol )
-        this.symbol = data.symbol;
+        this.symbol = data.symbol.toUpperCase();
 
     if ( data.action )   
     { 
-        this.action = data.action;
+        this.action = data.action.toUpperCase();
         this.sign = ( data.action == "BUY" ) ? -1 : 1;
     }
 

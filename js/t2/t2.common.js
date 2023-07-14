@@ -65,6 +65,23 @@ const Common = function()
         return el; 
     };
 
+    this.Fulfill = function()
+    {
+        let promises = [];
+
+        this.add = ( promise ) => promises.push( promise );
+
+        this.resolve = async ( callback ) => 
+        {
+            let result = await Promise.all( promises );
+
+            if ( callback )
+                callback();
+
+            return result;
+        };
+    };
+
     this.getCSS = function( el, prop )
     {
         let style = getComputedStyle( el );

@@ -99,6 +99,12 @@ const Common = function()
 
     const format =
     {
+        code: function( content )
+        {
+            this.element.classList.add( "pre" );
+            this.element.textContent = content;
+        },
+
         fragment: function( content )
         {
             this.element.appendChild( content );
@@ -154,26 +160,99 @@ const Common = function()
         let value = content[ key ];
         let type = typeof value;
 
+        function array()
+        {
+            let string = [ `[ ${ value.toString().replace( /,/g, ", " ) } ]`, `[ ${ value.length } ]` ];
+                    
+            if ( value.length > 16 )
+            {
+                let index = 1;
+                
+                parent.textContent = string[ index ];
+                parent.addEventListener( "click", function()
+                {
+                    index = 1 - index;
+
+                    parent.textContent = string[ index ]; 
+                    parent.classList.toggle( "field" );
+                }, false );
+            }
+            else
+            {
+                parent.textContent = string[ 0 ];
+            }
+
+            type = "array";
+        }
+
         switch ( type )
         {
             case "object":
                 if ( Array.isArray( value ) )
-                {
-                    parent.textContent = `[ ${ value.length } ]`;
-                    type = "array";
-                }
+                    array();
                 else
                 {
-                    let container = new Container();
-                    let root = await container.root( parent );
-                    let tuple = await root.addComponent( { id: key, type: "tuple", format: "block", output: "object" } );
-                        tuple.set( value );
+                    let prototype = Object.prototype.toString.call( value ).slice( 8, -1 );
+                    let subtype = prototype;
+                        subtype = subtype.includes( "Element" ) ? "Element" : subtype;
+                        subtype = subtype.includes( "Array" ) ? "Array" : subtype;
+
+                    switch( subtype )
+                    {
+                        case "Element":
+                            parent.textContent = `< ${ prototype } >`;
+                            parent.style.color = "blue";
+                        break;
+                        
+                        case "Array":
+                            array();
+                        break;
+
+                        case "Map":
+                            parent.textContent = `Map( ${ [ ...value.keys() ] } )`;
+                            parent.style.color = "fuchsia";
+                        break;
+
+                        case "Object":
+                            let container = new Container();
+                            let root = await container.root( parent );
+                            let tuple = await root.addComponent( { id: key, type: "tuple", format: "block", output: "object" } );
+                                tuple.set( value );
+                        break;
+
+                        default:
+                            parent.textContent = `{ ${ subtype } }`
+                        break;
+                    }
                 }
             break;
+
+            case "function":
+                let f = value.toString();
+                let exp = /\((.*?)\)/;
+                let args = f.match( exp )[ 1 ];
+                let string = [ f, `f(${ args})` ];
+                let index = 1;
+                        
+                parent.textContent = string[ index ];
+                parent.addEventListener( "click", function()
+                {
+                    index = 1 - index;
+
+                    parent.textContent = string[ index ]; 
+                    parent.classList.toggle( "field" );
+                }, false );
+            break;
  
+            case "boolean":
             case "number":
             case "string":
                 parent.textContent = value;
+            break;
+
+            default:
+                parent.textContent = type;
+                parent.style.color = "red";
             break;
         }
 

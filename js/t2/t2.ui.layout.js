@@ -57,6 +57,17 @@ const Layout = function()
     {
         await container.addElement( { id: "modal", parent: document.body } );
     };
+
+    layout.simple = async function()
+    {
+        await container.addElement( { id: "wrapper", parent: document.body } );
+        await container.addElement( { id: "message", parent: document.body } );
+
+        await container.addElement( { id: "menu", parent: t2.ui.children.get( "wrapper" ).element } );
+        await container.addElement( { id: "middle", parent: t2.ui.children.get( "wrapper" ).element } );
+        await container.addElement( { id: "content", parent: t2.ui.children.get( "middle" ).element } );
+        await container.addElement( { id: "margin", parent: t2.ui.children.get( "wrapper" ).element } );
+    };
 };
 
 export default Layout;

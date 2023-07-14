@@ -32,6 +32,21 @@ const Handlers = function()
         return container;
     };
 
+    this.addFunction = async function( params )
+    {
+        params.type = "content";
+        params.format = "block";
+
+        let panel = await this.addComponent( params );
+            panel.id = params.id;
+            panel.parent = this;
+            panel.path = new Map();
+            panel.path.set( params.id, this.path.get( this.id ).concat( params.id ) );
+            panel.refresh = async () => await params.config.function.apply( this, params.config.arguments );
+            
+        return panel;
+    };
+
     this.addModule = async function( params )
     {
         let module    = await import( params.config.src );

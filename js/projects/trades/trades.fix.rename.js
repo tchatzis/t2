@@ -1,7 +1,6 @@
 import Common from "../../t2/t2.container.handlers.js";
 import details from "./trades.fix.details.js";
 import handlers from "./trades.fix.handlers.js";
-import Message from "../../t2/t2.ui.message.js";
 
 const Panel = function( module )
 {
@@ -56,28 +55,23 @@ const Panel = function( module )
             cell: { css: {}, display: 4 },
             format: [ "uppercase" ] } );
         form.addField( { 
-            input: { type: "submit", value: "TEST" }, 
+            input: { type: "submit", value: "RENAME" }, 
             cell: { css: {}, display: 4 },
             format: [] } );
 
-        async function test( data )
+        async function test( submit )
         {
-            let records = await t2.db.tx.filter( module.table, [ { key: "symbol", operator: "==", value: data.symbol } ] );
-                records.fields = data;
+            let records = await t2.db.tx.filter( module.q.table, [ { key: "symbol", operator: "==", value: submit.data.symbol } ] );
+                records.fields = submit;
 
-            await details( panel, records );
+            await details( panel, records.data );
 
             let confirmed = await t2.common.delay( () => confirm( "OK to rename?" ), 1000 );
 
             if ( !confirmed )
                 return;
 
-            let message = new Message();
-                message.init();    
-
-            await handlers.rename( module.table, records.data, data );
-
-            message.set( "Success" );        
+            await handlers.rename( module.q.table, records.data, submit.data );   
         };
     };
 };

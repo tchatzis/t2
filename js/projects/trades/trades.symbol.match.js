@@ -65,8 +65,8 @@ const Panel = function( module )
             } ); 
 
         let { accepted, rejected } = await scan( "BUY", "highlight", delay );
-
-        execute( accepted );
+        
+        await execute( accepted );
 
         // split buys and sells
         async function sort( records )
@@ -77,7 +77,7 @@ const Panel = function( module )
             {
                 let actions =
                 {
-                    BUY: [ "BUY", "DIV" ],
+                    BUY: [ "BUY" ], //, "DIV"
                     SELL: [ "SELL" ]
                 };
 
@@ -237,6 +237,7 @@ const Panel = function( module )
                         previous = { action: data.action, value: 0 };
                     break;
                 }
+
 
                 totals.price += data.price * data.sign;
                 totals.qty += -data.qty * data.sign;

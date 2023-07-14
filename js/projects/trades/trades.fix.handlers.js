@@ -1,4 +1,5 @@
 import Data from "./trades.data.js";
+import Message from "../../t2/t2.ui.message.js";
 
 const handlers = 
 {
@@ -21,15 +22,25 @@ const handlers =
         //data.forEach( async ( record ) => await t2.db.tx.update( table, record.id, new Data( record ) ) );
     },
 
-    rename: function( table, data, params )
+    rename: async function( table, data, params )
     {
+        let message = new Message();
+        let fulfill = new t2.common.Fulfill();
+        let from;
+        let to;
+        
+        await message.init();   
+        
         data.forEach( async ( record ) => 
         {
-            record.symbol = params.to.toUpperCase();
-            console.log( record );
+            from = record.symbol;
+            
+            to = record.symbol = params.to.toUpperCase();
 
-            //await t2.db.tx.update( table, record.id, record );
+            fulfill.add( await t2.db.tx.update( table, record.id, record ) );
         } );
+
+        fulfill.resolve( await message.set( `${ from } renamed to ${ to }` ) );
     },
 
     repair: function( table, data, params )

@@ -18,6 +18,13 @@
     border-left: 10px solid #060 !important;
 }
 
+.array
+{
+    max-width: 50vw;
+    white-space: pre-wrap;
+    word-wrap: normal;
+}
+
 .block
 {
     display: block;
@@ -25,7 +32,7 @@
 
 .boolean
 {
-    color: magenta !important;
+    color: olive !important;
     font-weight: bold;
 }
 
@@ -60,6 +67,8 @@
 .content
 {
     padding: 10px;
+    height: 100%;
+    overflow-y: auto;
 }
 
 .create
@@ -305,7 +314,6 @@
 .object
 {
     color: orange;
-    font-weight: bold;
 }
 
 .outline
@@ -391,6 +399,15 @@
     font-size: 1em;
     font-weight: normal;  
     padding: 2px 5px 2px 5px; 
+}
+
+.pre, .code, .function
+{
+    color: lime;
+    font-family: monospace;
+    white-space: pre;
+    height: 100%;
+    width: 100%;
 }
 
 .row

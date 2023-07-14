@@ -21,6 +21,7 @@ const Component = function()
             panel.show();
 
         let module = this.panels.get( id );
+        if ( module.refresh )
             module.refresh();
 
         active.curr = tab;

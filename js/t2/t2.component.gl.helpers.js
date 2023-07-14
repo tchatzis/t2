@@ -5,19 +5,19 @@ const helpers =
         switch( params.class )
         {
             case "float":
-                return { func: "uniform1f", args: [ params.value || 0.0 ], size: 1 };
+                return { name: params.name, func: "uniform1f", args: [ params.value || 0.0 ], size: 1 };
     
             case "mat4":
-                return { func: "uniformMatrix4fv", args: [ false, params.value ], size: 16 };
+                return { name: params.name, func: "uniformMatrix4fv", args: [ false, params.value ], size: 16 };
     
             case "vec2":
-                return { func: "uniform2fv", args: [ params.value || [ 0.0, 0.0 ] ], size: 2 };
+                return { name: params.name, func: "uniform2fv", args: [ params.value || [ 0.0, 0.0 ] ], size: 2 };
     
             case "vec3":
-                return { func: "uniform3fv", args: [ params.value || [ 0.0, 0.0, 0.0 ] ], size: 3 }; 
+                return { name: params.name, func: "uniform3fv", args: [ params.value || [ 0.0, 0.0, 0.0 ] ], size: 3 }; 
     
             case "vec4":
-                return { func: "uniform4fv", args: [ params.value || [ 0.0, 0.0, 0.0, 0.0 ] ], size: 4 };
+                return { name: params.name, func: "uniform4fv", args: [ params.value || [ 0.0, 0.0, 0.0, 0.0 ] ], size: 4 };
     
             default:
                 throw( `${ params.name } ${ params.type } ${ params.class } is not defined` );

@@ -4,19 +4,8 @@ import helpers from "./t2.component.gl.helpers.js";
 const Child = function( ctx )
 {
     let self = this;
-    let buffers = {};
     let gl = ctx.gl;
-    let arrays = new Map();
-    let attributes = new Map();
-    let uniforms = new Map();
-    let varyings = new Map();
-    let shaders = {};
-
-    this.geometry = {};
-
-    this.transformations = {};
-
-    this.uuid = t2.common.uuid();
+    var arrays, attributes, buffers, shaders, uniforms, varyings;
 
     this.add = 
     {
@@ -24,7 +13,7 @@ const Child = function( ctx )
         {
             createBuffer( params );
 
-            arrays.set(  params.name, params );
+            arrays.set( params.name, params );
         },
         
         attribute: ( params ) =>
@@ -61,38 +50,74 @@ const Child = function( ctx )
         for ( let [ name, params ] of attributes )
         { 
             gl.bindBuffer( gl[ params.target ], buffers[ name ].buffer );
-            gl.vertexAttribPointer( params.location, 2, gl.FLOAT, false, 0, 0 );
+            gl.vertexAttribPointer( params.location, params.components, gl.FLOAT, false, 0, 0 );
             gl.enableVertexAttribArray( params.location );
         };
     };
 
+    this.delete = 
+    {
+        animation: ( name ) => delete this.animations[ name ]
+    };
+
+    this.reset = () =>
+    {
+        arrays = new Map();
+        attributes = new Map();
+        buffers = {};
+        shaders = {};
+        uniforms = new Map();
+        varyings = new Map();
+        
+        this.animations = {};
+
+        this.geometry = {};
+    
+        this.transformations = 
+        {
+            translate: [],
+            scale: [],
+            rotate: []
+        };
+    
+        this.uuid = t2.common.uuid();
+    };
+
+    this.reset();
+
     this.set = 
     {
+        animation: ( params ) => this.animations[ params.name ] = params,
+        
         fragment: new helpers.Type( "fragment" ),
 
-        geometry: ( type ) => 
+        geometry: ( params ) => 
         {
-            this.geometry = geometries[ type ];
-
-            let count = this.geometry.array.length / this.geometry.components;
+            this.geometry = geometries( params )[ params.type ];
+            this.geometry.array = this.geometry.vertices();
+            this.geometry.count = this.geometry.array.length / this.geometry.components;
 
             this.add.attribute( { name: "vertices", class: `vec${ this.geometry.components }`, target: "ARRAY_BUFFER", type: "Float32Array", value: this.geometry.array } );
-            this.add.array( { name: "indices", class: "int", target: "ELEMENT_ARRAY_BUFFER", type: "Uint16Array", value: indices( count ) } );
+            this.add.attribute( { name: "color", class: `vec4`, target: "ARRAY_BUFFER", type: "Float32Array", value: params.colors || colors( this.geometry.count ) } );
+            this.add.array( { name: "indices", class: "int", target: "ELEMENT_ARRAY_BUFFER", type: "Uint16Array", value: indices( this.geometry.count ) } );
         },
 
         rotate: function()
         {
-            self.transformations.rotate = [ ...arguments ];
+            let rotation = Math.PI * arguments[ 0 ] / 180;
+            let axes = [ arguments[ 1 ], arguments[ 2 ], arguments[ 3 ] ];
+
+            self.transformations.rotate.push( [ rotation, axes ] );
         },
 
         scale: function()
         {
-            self.transformations.scale = [ ...arguments ];
+            self.transformations.scale.push( [ [ ...arguments ] ] );
         },
         
         translate: function()
         {
-            self.transformations.translate = [ [ ...arguments ] ];
+            self.transformations.translate.push( [ [ ...arguments ] ] );
         },
 
         vertex: new helpers.Type( "vertex" )
@@ -100,19 +125,45 @@ const Child = function( ctx )
 
     this.get =
     {
-        attributes: () => attributes.entries(),
+        animations: () => this.animations,
+        
+        attribute: ( name ) => attributes.get( name ),
+        
+        attributes: () => Object.fromEntries( attributes ),
 
         buffer: ( attribute ) => buffers[ attribute ],
+
+        children: () => 
+        {
+            let children = {};
+            
+            for ( let [ uuid, params ] of ctx.children )
+            {
+                children[ params.params.id ] = { uuid: uuid, params: params.geometry.params };
+            }
+
+            return children;
+        },
+
+        context: () => ctx,
         
         fragment: this.set.fragment.code,
 
+        geometry: () => this.geometry,
+
+        geometries: () => geometries().types,
+
+        indices: () => arrays.get( "indices" ).value,
+
         program: () => this.program,
 
-        uniforms: () => uniforms.entries(),
+        transformations: () => this.transformations,
 
-        varyings: () => varyings.entries(),
+        uniforms: () => Object.fromEntries( uniforms ),
 
-        vertex: this.set.vertex.code
+        varyings: () => Object.fromEntries( varyings ),
+
+        vertex: this.set.vertex.code,  
     };
 
     this.init = () =>
@@ -123,7 +174,7 @@ const Child = function( ctx )
 
         createAndLinkProgram();
         
-        attributeBuffers();
+        setAttribute();
 
         logAttributes();
 
@@ -143,7 +194,7 @@ const Child = function( ctx )
 
         gl.bufferData( gl[ params.target ], array, gl.STATIC_DRAW );
 
-        buffers[ params.name ] = { array: array, attribute: params.name, buffer: buffer, target: params.target };
+        buffers[ params.name ] = { array: array, attribute: params.name, buffer: buffer, components: params.components, target: params.target };
     }
 
     function createAndCompileShaders()
@@ -184,7 +235,7 @@ const Child = function( ctx )
         gl.useProgram( self.program );
     }
 
-    function attributeBuffers()
+    function setAttribute()
     {
         attributes.forEach( params => 
         {
@@ -192,8 +243,10 @@ const Child = function( ctx )
 
             let lkp = helpers.lookup( params );
 
+            params.components = lkp.size;
+
             //arguments: ( index, size, type, normalized, stride, offset )
-            gl.vertexAttribPointer( params.location, lkp.size, gl.FLOAT, false, 0, 0 );
+            gl.vertexAttribPointer( params.location, params.components, gl.FLOAT, false, 0, 0 );
             gl.enableVertexAttribArray( params.location );  
         } );  
     }
@@ -201,13 +254,15 @@ const Child = function( ctx )
     function locateUniforms()
     {
         uniforms.forEach( ( params, name ) => 
-        {
+        {   
             params.location = gl.getUniformLocation( self.program, name );
 
             // if there is a value then set the uniform
             if ( ctx.uniforms.hasOwnProperty( name ) )
             {
                 let lkp = helpers.lookup( params );
+
+                params.func = lkp.func;
 
                 gl[ lkp.func ]( params.location, ...lkp.args );
             }
@@ -234,9 +289,10 @@ const Child = function( ctx )
         };
     }
 
+    // attributes
     function indices( count )
     {
-        let vertices = [];
+        let indices = [];
         
         for ( let i = 0; i < count; i += 2 )
         {
@@ -244,12 +300,39 @@ const Child = function( ctx )
             let o = ( i / 2 ) % 2;
             let p = n * 4;
 
-            vertices.push( p );
-            vertices.push( p + 1 + o );
-            vertices.push( p + 2 + o );
+            indices.push( p );
+            indices.push( p + 1 + o );
+            indices.push( p + 2 + o );
         }
 
-        return vertices;
+        return indices;
+    }
+
+    function colors( count )
+    {
+        const HSLToRGB = ( c ) => 
+        {
+            let h = 360 * c / count;
+            let s = 1;
+            let l = 0.5;
+            
+            const k = n => ( n + h / 30 ) % 12;
+            const a = s * Math.min( l, 1 - l );
+            const f = n => l - a * Math.max( -1, Math.min( k ( n ) - 3, Math.min( 9 - k( n ), 1 ) ) );
+
+            return [ f( 0 ), f( 8 ), f( 4 ) ];
+        };
+        
+        let colors = [];
+
+        for ( let c = 0; c < count / 4; c++ ) 
+        {
+            let color = HSLToRGB( c * 4 ).concat( 1 );
+
+            colors = colors.concat( color, color, color, color );
+        }
+
+        return colors;
     }
 };
 

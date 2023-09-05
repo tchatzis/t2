@@ -82,7 +82,7 @@ const Panel = function( module )
             formula: ( args ) =>
             {
                 let value = args.record[ args.column ] * -args.record.sign;
-                
+
                 args.totals[ args.column ] += value;
 
                 return value;

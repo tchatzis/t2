@@ -75,7 +75,7 @@ const Template = function( module )
                 input: { name: "action", label: "action", type: "select" }, 
                 cell: { css: {}, display: 4 },
                 format: [ "uppercase" ],
-                options: [ "", ...module.data.actions ] } );
+                options: [ "", ...module.data.actions, "INT" ] } );
             form.addField( { 
                 input: { type: "submit", value: "FILTER" }, 
                 cell: { css: {}, display: 4 },

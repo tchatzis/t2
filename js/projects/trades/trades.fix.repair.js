@@ -58,9 +58,9 @@ const Panel = function( module )
                 cell: { css: {}, display: 4 },
                 format: [] } ); 
 
-        async function repair( data )
+        async function repair( submit )
         {
-            let records = await t2.db.tx.filter( module.table, [ { key: "id", operator: "==", value: data.id } ] );
+            let records = await t2.db.tx.filter( module.q.table, [ { key: "id", operator: "==", value: Number( submit.data.id ) } ] );
             let record = records.data[ 0 ];
 
             outline.hide();
@@ -83,7 +83,12 @@ const Panel = function( module )
                     input: { name: "symbol", label: "symbol", type: "datalist", value: record.symbol || "" }, 
                     cell: { css: {}, display: 4 },
                     format: [ "uppercase" ],
-                    options: module.data.symbol } );
+                    options: module.q.data.symbol } );                    
+                form.addField( { 
+                    input: { name: "action", label: "action", type: "datalist", value: record.action || "" }, 
+                    cell: { css: {}, display: 4 },
+                    format: [ "uppercase" ],
+                    options: module.q.data.actions } );
                 form.addField( { 
                     input: { name: "qty", label: "quantity", type: "number", value: record.qty || 0, min: 0, step: 0.0001, required: "" }, 
                     cell: { css: {}, display: 4 },
@@ -100,26 +105,26 @@ const Panel = function( module )
                     input: { name: "brokerage", label: "brokerage", type: "select", value: record.brokerage || "", }, 
                     cell: { css: {}, display: 9 },
                     format: [],
-                    options: module.data.brokerage } );  
+                    options: module.q.data.brokerage } );  
                 form.addField( { 
                     input: { type: "submit", value: "REPAIR" }, 
                     cell: { css: {}, display: 4 },
                     format: [] } );            
         }
 
-        async function execute( data )
+        async function execute( submit )
         {
-            let record = new Data( data );
-                record.id = Number( data.id );
+            let record = new Data( submit.data );
+                record.id = Number( submit.data.id );
 
             await details( panel, record, "Updated" );
 
             let message = new Message();
-                message.init();  
+            await message.init();  
 
-            await handlers.repair( module.table, new Data( data ), data );
+            let response = await handlers.repair( module.q.table, record, submit.data );
 
-            message.set( `Repaired ID: ${ record.id }` );         
+            message.set( `Repaired ID: ${ response.id }` );         
         }
     };
 };

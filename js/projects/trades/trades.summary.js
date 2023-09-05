@@ -38,6 +38,7 @@ const Tabs = function( module )
             await panels.add( "Module", { id: "closed", label: "closed", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.summary.closed.js" } } );
             await panels.add( "Module", { id: "data", label: "data", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.summary.data.js" } } );
             await panels.add( "Module", { id: "dividends", label: "dividends", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.summary.dividends.js" } } );
+            await panels.add( "Module", { id: "interest", label: "interest", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.summary.interest.js" } } );
             panels.setControls( 
             { 
                 breadcrumbs: { index: 2, component: t2.navigation.components.breadcrumbs },

@@ -29,7 +29,7 @@ const Template = function( module )
         
         let records = await t2.db.tx.retrieve( self.table );
 
-        this.data = records.data;
+        this.data = records.data.filter( record => record.action == "DEP" );
         this.data.forEach( record => record.date = Math.round( new Date( record.datetime ).getTime() * day ) / day );
     };
 
@@ -90,7 +90,7 @@ const Template = function( module )
             input: { name: "action", type: "select" }, 
             cell: { css: {}, display: 3, modes: [ "read", "edit" ] },
             format: [],
-            options: [ "DEP", "WD" ] } );
+            options: [ "DEP", "WD", "INT" ] } );
         table.addColumn( { 
             input: { name: "amount", type: "number", step: 0.01, min: 0 }, 
             cell: { css: {}, display: 3, modes: [ "read", "edit" ] },
@@ -136,7 +136,9 @@ const Template = function( module )
 
                 message.set( `Added ${ record.id }` );
 
-                self.refresh();
+                await self.refresh();
+
+                submit.removeAttribute( "disabled" );
             } } );
             form.addField( { 
                 input: { name: "datetime", type: "datetime", value: t2.formats.datetime( new Date() ) },
@@ -166,6 +168,10 @@ const Template = function( module )
                 format: [] } );
             form.addField( { 
                 input: { type: "submit", value: "WD" }, 
+                cell: { css: {}, display: 3 },
+                format: [] } ); 
+            form.addField( { 
+                input: { type: "submit", value: "INT" }, 
                 cell: { css: {}, display: 3 },
                 format: [] } ); 
     };

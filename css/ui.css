@@ -490,6 +490,35 @@
     margin-top: auto;
 }
 
+.tile
+{
+    border: 1px solid #222;
+    border-left: 10px solid #222;
+    border-radius: 1em;
+    display: block;
+    min-width: 5%;
+    min-height: 10%;
+    padding: 10px;
+}
+
+.tile.closed
+{
+    border-left-color: red !important;
+}
+
+.tile.open
+{
+    border-left-color: green;
+}
+
+.tiles
+{
+    border: none;
+    flex-flow: row wrap;
+    max-width: calc( 100% - 16px );
+    padding: 10px;
+}
+
 .title
 {
     border-bottom: 1px dotted #222;

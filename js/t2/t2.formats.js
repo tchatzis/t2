@@ -5,8 +5,12 @@ const formats =
     absolute:   ( value ) => Math.abs( value ),
     auto:       ( value ) => 
                 {
-                    let exp = 5;
+                    let exp = 4;
                     let pow = Math.pow( 10, exp );
+
+                    if ( Math.abs( value ) < 1 / pow )
+                        return 0;
+
                     let int = parseInt( value );
                     let dec = Math.round( ( value - int ) * pow ) / pow;
                     let string = String( dec );

@@ -1,5 +1,7 @@
 const Chart = function( module )
 {
+    return null;
+    
     let self = this;
     let x = 0;
     let y = 1;

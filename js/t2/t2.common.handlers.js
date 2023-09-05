@@ -105,9 +105,11 @@ const Common = function()
             this.element.textContent = content;
         },
 
-        fragment: function( content )
+        data: function( content )
         {
-            this.element.appendChild( content );
+            console.error( content );
+            
+            //this.element.appendChild( content );
         },        
         
         html: function( content )
@@ -157,6 +159,8 @@ const Common = function()
 
     async function check( key, content, parent )
     {
+        console.error( key, content, parent );
+        
         let value = content[ key ];
         let type = typeof value;
 

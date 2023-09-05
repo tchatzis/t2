@@ -89,6 +89,7 @@ const Tabs = function( module )
             await panels.add( "Module", { id: "transactions", label: "transactions", format: "block", config: { arguments: [ module, array, self ], src: "../projects/trades/trades.date.transactions.js" } } );
             await panels.add( "Module", { id: "balances", label: "balances", format: "block", config: { arguments: [ module, balance ], src: "../projects/trades/trades.date.balances.js" } } );
             await panels.add( "Module", { id: "open", label: "open", format: "block", config: { arguments: [ module, array, self.symbols ], src: "../projects/trades/trades.date.open.js" } } );
+            await panels.add( "Module", { id: "details", label: "details", format: "block", config: { arguments: [ module, array, self.symbols ], src: "../projects/trades/trades.date.details.js" } } );
             await panels.add( "Module", { id: "gains", label: "gains", format: "block", config: { arguments: [ module, self.gains ], src: "../projects/trades/trades.date.gains.js" } } );
             await panels.add( "Module", { id: "losses", label: "losses", format: "block", config: { arguments: [ module, self.losses ], src: "../projects/trades/trades.date.losses.js" } } );
             
@@ -123,9 +124,11 @@ const Tabs = function( module )
     // balances data
     async function balances()
     {
-        let deposits = await t2.db.tx.retrieve( "deposits" );
+        let balances = await t2.db.tx.retrieve( "deposits" );
+        let deposits = balances.data.filter( record => record.action == "DEP" );
+        let interest = balances.data.filter( record => record.action == "INT" );
 
-        let transactions = module.data.all;//.filter( record => record.action !== "DIV" );
+        let transactions = module.data.all;
 
         self.gains = [];
         self.gains.push( { name: "\u25f9", value: 0 } );
@@ -136,18 +139,24 @@ const Tabs = function( module )
         let object = {};
             object.cost = [];
             object.closed = [];
-            object.deposits = deposits.data.map( record => Number( record.amount ) );
-            object.dividends = module.data.all.filter( record => record.action == "DIV" ).map( record => record.value );
+            object.deposits = deposits.map( record => Number( record.amount ) );
+            object.interest = interest.map( record => -Number( record.amount ) );
+
+        let dividends = transactions.filter( record => record.action == "DIV" );
+            object.dividends = dividends.map( record => record.value );
             object.invested = [ ...object.deposits, ...object.dividends ];
-            object.margin = [ ...object.invested ];
+            object.margin = [ ...object.invested, ...object.interest ];
 
         module.data.symbol.forEach( symbol => 
         {
-            let set = transactions.filter( record => record.symbol == symbol );
+            let set = transactions.filter( record => record.symbol == symbol ).filter( record => record.action !== "DIV" );
+
+            let div = dividends.filter( record => record.symbol == symbol );
+            let divs = round( div.map( record => record.qty * record.sign ).reduce( sum, 0 ) );
 
             let data = {};
                 data.symbol = symbol;
-                data.qty = round( set.map( record => record.qty * record.sign ).reduce( sum, 0 ) );
+                data.qty = round( set.map( record => record.qty * record.sign ).reduce( sum, 0 ) ) - divs;
                 data.value = set.map( record => record.value * record.sign ).reduce( sum, 0 );
 
             if ( data.qty )
@@ -168,12 +177,12 @@ const Tabs = function( module )
             object.margin.push( data.value );
         } );
 
-        object.value = [ ...object.invested, ...object.closed ];
+        object.value = [ ...object.invested, ...object.interest, ...object.closed ];
 
         let array = [];
             array.push( { name: "\u25f9", value: 0 } );
 
-        [ "deposits", "cost", "closed", "dividends", "invested", "margin", "value" ].forEach( name => array.push( { name: name, value: object[ name ].reduce( sum, 0 ) } ) );
+        [ "deposits", "interest", "cost", "closed", "dividends", "invested", "margin", "value" ].forEach( name => array.push( { name: name, value: object[ name ].reduce( sum, 0 ) } ) );
 
         array.push( { name: "\u25fa", value: 0 } );
 

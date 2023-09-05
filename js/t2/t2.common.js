@@ -178,6 +178,8 @@ const Common = function()
         } );
     };
 
+    this.round = ( value, precision ) => Math.round( ( value * Math.pow( 10, precision ) / Math.pow( 10, precision ) ) );
+
     this.sleep = function( ms )  
     {
         return new Promise( resolve => setTimeout( resolve, ms ) );
@@ -224,7 +226,7 @@ const Common = function()
         } );
 
         return uuid;
-    }
+    };
 };
 
 export default Common;

@@ -43,11 +43,11 @@ const handlers =
         fulfill.resolve( await message.set( `${ from } renamed to ${ to }` ) );
     },
 
-    repair: function( table, data, params )
+    repair: async function( table, data )
     {
-        console.log( data );
-        
-        //await t2.db.tx.overwrite( table, params.id, data );
+        let record = await t2.db.tx.update( table, Number( data.id ), new Data( data ) );
+
+        return record;
     }
 };
 

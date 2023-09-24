@@ -66,10 +66,19 @@ const Panel = function( module, array, symbols )
 
     async function tiles()
     {
-        let tiles = await self.addComponent( { id: "tiles", type: "tiles", format: "flex", output: template } );
-            tiles.addBreadcrumbs( 2, t2.navigation.components.breadcrumbs );   
+        let tiles = await self.addComponent( { id: "tiles", type: "tiles", format: "flex", output: template } );  
             tiles.update( module.q.data.symbol );
-            tiles.highlight( module.symbol );
+            tiles.addListener( { type: "click", handler: async function() 
+            { 
+                let e = arguments[ 0 ];
+                let event = arguments[ 1 ];
+                let link = arguments[ 2 ].curr;
+                let symbol = link.dataset.link.toUpperCase();
+                
+                module.setSymbol( symbol );
+
+                await t2.navigation.path( `/symbol/${ symbol }` );
+            } } );  
     }
 
     const template = function( link )

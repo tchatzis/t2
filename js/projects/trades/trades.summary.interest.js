@@ -1,4 +1,5 @@
 import Common from "../../t2/t2.container.handlers.js";
+import Message from "../../t2/t2.ui.message.js";
 
 const Panel = function( module )
 {
@@ -33,8 +34,9 @@ const Panel = function( module )
         
         let records = await t2.db.tx.retrieve( self.table );
 
-        this.data = records.data.filter( record => record.action == "INT" );
+        this.data = records.data.filter( record => record.action == "INT" );  
         this.data.forEach( record => record.date = Math.round( new Date( record.datetime ).getTime() * day ) / day );
+        this.data.sort( ( a, b ) => Number( b.date ) - Number( a.date ) );
 
         await navigation();
     };
@@ -57,17 +59,16 @@ const Panel = function( module )
     {
         let table = await this.addComponent( { id: "interest", type: "table" } );
             table.addRowListener( { type: "contextmenu", handler: table.edit } );
-            table.addSubmitListener( { type: "submit", handler: async function ( data )
+            table.addSubmitListener( { type: "submit", handler: async function ( submit )
             { 
                 let form = this;
-    
-                let d = new Data( data );
-    
-                let record = await t2.db.tx.update( self.table, d.id, d );
-    
-                let message = await panel.addComponent( { id: "message", type: "message", format: "block", output: "text" } );
-                    message.set( `Updated ${ data.action }` );   
-    
+                let message = new Message();
+                let d = new Data( submit.data );
+
+                await t2.db.tx.update( self.table, d.id, d );
+                await message.init();
+                await message.set( `Updated ${ d.id }` )
+
                 self.refresh();
             } } ); 
             table.addColumn( { 
@@ -75,9 +76,9 @@ const Panel = function( module )
                 cell: { css: {}, display: 0, modes: [ "edit" ] },
                 format: [] } );
             table.addColumn( { 
-                input: { name: "datetime", type: "text" }, 
+                input: { name: "datetime", type: "datetime" }, 
                 cell: { css: { class: "date" }, display: 12, modes: [ "read", "edit" ] },
-                format: [ "date&time" ] } );
+                format: [] } );
             table.addColumn( { 
                 input: { name: "action", type: "text", readonly: true }, 
                 cell: { css: { value: "action" }, display: 4, modes: [ "read", "edit" ] } } );

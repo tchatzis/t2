@@ -48,7 +48,38 @@ const handlers =
         let record = await t2.db.tx.update( table, Number( data.id ), new Data( data ) );
 
         return record;
-    }
+    },
+
+    split: async function( table, data, params )
+    {
+        let message = new Message();
+        let fulfill = new t2.common.Fulfill();
+
+        await message.init(); 
+        
+        const split = Number( params.split );
+
+        //const _data = data.filter( record => record.qty < 100 );
+
+        const directions = 
+        {
+            REVERSE: ( record ) => { record.qty /= split; record.price *= split; },
+            SPLIT: ( record ) => { record.qty *= split; record.price /= split; }
+        };
+
+        //console.log( _data );
+
+        //return;
+
+        data.forEach( async ( record ) => 
+        {
+            directions[ params.direction ]( record );
+
+            fulfill.add( await t2.db.tx.update( table, record.id, new Data( record ) ) );
+        } );
+
+        fulfill.resolve( await message.set( `${ params.direction } completed` ) );
+    },
 };
 
 function fix()

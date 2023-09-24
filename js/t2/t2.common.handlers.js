@@ -159,7 +159,7 @@ const Common = function()
 
     async function check( key, content, parent )
     {
-        console.error( key, content, parent );
+        //console.error( key, content, parent );
         
         let value = content[ key ];
         let type = typeof value;

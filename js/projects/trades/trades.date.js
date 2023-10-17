@@ -87,6 +87,7 @@ const Tabs = function( module )
     {
         let panels = await this.addComponent( { id: "panels", type: "panels", format: "block", output: "vertical" } );
             await panels.add( "Module", { id: "transactions", label: "transactions", format: "block", config: { arguments: [ module, array, self ], src: "../projects/trades/trades.date.transactions.js" } } );
+            await panels.add( "Module", { id: "snapshot", label: "snapshot", format: "block", config: { arguments: [ module, balance ], src: "../projects/trades/trades.date.snapshot.js" } } );
             await panels.add( "Module", { id: "balances", label: "balances", format: "block", config: { arguments: [ module, balance ], src: "../projects/trades/trades.date.balances.js" } } );
             await panels.add( "Module", { id: "open", label: "open", format: "block", config: { arguments: [ module, array, self.symbols ], src: "../projects/trades/trades.date.open.js" } } );
             await panels.add( "Module", { id: "details", label: "details", format: "block", config: { arguments: [ module, array, self.symbols ], src: "../projects/trades/trades.date.details.js" } } );

@@ -5,7 +5,8 @@ const Container = function()
     this.init = function( params )
     {
         this.element = t2.common.el( "div", this.parent.element );
-        this.element.classList.add( "container" );
+
+        params.css?.forEach( className => this.element.classList.add( className ) );
 
         Object.assign( this, params );
 

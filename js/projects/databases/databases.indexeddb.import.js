@@ -7,7 +7,7 @@ const Panel = function()
     
     this.init = async function( parent, params )
     {
-        panel = await parent.addContainer( { id: "panel", type: "panel", format: "flex-left" } );
+        panel = await parent.addContainer( { id: "panel", type: "box", format: "flex-left", css: [ "panel" ] } );
 
         this.element = panel.element;
         this.type = panel.type;

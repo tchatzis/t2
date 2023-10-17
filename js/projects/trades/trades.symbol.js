@@ -66,6 +66,7 @@ const Tabs = function( module )
     {
         let panels = await this.addComponent( { id: "panels", type: "panels", format: "block", output: "vertical" } );
             await panels.add( "Module", { id: "history", label: "history", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.history.js" } } );
+            await panels.add( "Module", { id: "transactions", label: "transactions", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.transactions.js" } } );
             await panels.add( "Module", { id: "match", label: "match", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.match.js" } } );
             await panels.add( "Module", { id: "totals", label: "totals", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.totals.js" } } );
             await panels.add( "Module", { id: "price", label: "price", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.price.js" } } );

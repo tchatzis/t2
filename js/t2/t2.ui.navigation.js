@@ -58,7 +58,7 @@ const Navigation = function()
             {
                 for ( let f in set )
                 {
-                    component[ f ]( set[ f ] );  
+                    component?.[ f ]( set[ f ] );  
                 }
             }
 

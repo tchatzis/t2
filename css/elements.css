@@ -71,6 +71,7 @@ th
     font-weight: normal;
     padding: 2px 0 2px 0;
     text-transform: capitalize;
+    white-space: nowrap;
 }
 
 ul

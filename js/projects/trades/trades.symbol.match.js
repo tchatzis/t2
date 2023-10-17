@@ -17,7 +17,7 @@ const Panel = function( module )
 
     this.init = async function( parent, params )
     {
-        panel = await parent.addContainer( { id: "panel", type: "panel", format: "flex-left" } );
+        panel = await parent.addContainer( { id: "panel", type: "box", format: "flex-left", css: [ "panel" ] } );
 
         this.element = panel.element;
         this.type = panel.type;
@@ -260,7 +260,7 @@ const Panel = function( module )
         let transactions = await outline.addComponent( { id: "grouped", type: "table" } );
             transactions.addColumn( { 
                 input: { name: "action", type: "text" }, 
-                cell: { css: { value: "action" }, display: 3, modes: [ "read" ] },
+                cell: { css: {}, display: 3, modes: [ "read" ] },
                 format: [ "uppercase" ] } );
             transactions.addColumn( { 
                 input: { name: "notes", type: "text" }, 

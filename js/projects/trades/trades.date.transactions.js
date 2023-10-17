@@ -9,7 +9,7 @@ const Panel = function( module, array, source )
 
     this.init = async function( parent, params )
     {
-        panel = await parent.addContainer( { id: "panel", type: "panel", format: "flex" } );
+        panel = await parent.addContainer( { id: "panel", type: "box", format: "flex", css: [ "panel" ] } );
  
         this.element = panel.element;
         this.type = panel.type;
@@ -66,7 +66,7 @@ const Panel = function( module, array, source )
     // charted balances of transactions
     async function chart()
     {
-        let container = await this.addContainer( { id: "values", type: "box", format: "block" } );
+        let container = await this.addContainer( { id: "values", type: "box", format: "block", css: [ "container" ] } );
             container.scale();
         let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
             title.set( `Transactions \u00BB ${ module.date }` );
@@ -158,7 +158,7 @@ const Panel = function( module, array, source )
     // date's transactions table
     async function transactions( array, brokerage )
     {
-        let container = await this.addContainer( { id: brokerage.toLowerCase(), type: "box", format: "block" } );
+        let container = await this.addContainer( { id: brokerage.toLowerCase(), type: "box", format: "block", css: [ "container" ] } );
             container.scale( 1 );
         let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
             title.set( `${ brokerage } \u00BB ${ module.date }` );
@@ -243,7 +243,7 @@ const Panel = function( module, array, source )
     // this week at a glance component
     async function week()
     {
-        let container = await this.addContainer( { id: "week", type: "box", format: "block" } );
+        let container = await this.addContainer( { id: "week", type: "box", format: "block", css: [ "container" ] } );
             container.scale();
         let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
             title.set( `Week at a Glance` );
@@ -271,7 +271,7 @@ const Panel = function( module, array, source )
     {
         let array = module.data.all.filter( record => !record.qty || !record.price );
 
-        let container = await this.addContainer( { id: "zero", type: "box", format: "inline-block" } );
+        let container = await this.addContainer( { id: "zero", type: "box", format: "inline-block", css: [ "container" ] } );
             container.scale();
         let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
             title.set( "Zero Entries" );

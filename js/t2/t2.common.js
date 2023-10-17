@@ -51,6 +51,11 @@ const Common = function()
         return dates;
     };
 
+    this.debug = function( string, color )
+    {
+        console.log( `%c ${ string }`, `background: ${ color };` );
+    },
+
     this.delay = async function( fn, ms, ...args ) 
     {
         await this.sleep( ms );
@@ -67,16 +72,16 @@ const Common = function()
 
     this.Fulfill = function()
     {
-        let promises = [];
+        this.promises = [];
 
-        this.add = ( promise ) => promises.push( promise );
+        this.add = ( promise ) => this.promises.push( promise );
 
         this.resolve = async ( callback ) => 
         {
-            let result = await Promise.all( promises );
+            let result = await Promise.all( this.promises );
 
             if ( callback )
-                callback();
+                callback( result );
 
             return result;
         };

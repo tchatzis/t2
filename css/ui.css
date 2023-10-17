@@ -13,7 +13,12 @@
     border-left: 4px solid #00B624;
 }
 
-.active
+.xyz
+{
+    transform-style: preserve-3d;
+}
+
+.link.active, .tab.active, .gain
 {
     border-left: 10px solid #060 !important;
 }
@@ -25,7 +30,7 @@
     word-wrap: normal;
 }
 
-.block
+.block, .vertical
 {
     display: block;
 }
@@ -36,9 +41,52 @@
     font-weight: bold;
 }
 
+.border
+{
+    border: 1px solid #222;
+}
+
+.button
+{
+    background-color: #000;
+    border: 1px solid #222;
+    border-radius: 4px;
+    color: lime;
+    font-family: monospace;
+    font-size: 11px;
+    cursor: pointer;
+    height: 19px;
+    line-height: 19px;
+    min-width: 32px;
+    padding: 5px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.button:hover
+{
+    background-color: #333;
+    border: 1px solid #666;
+}
+
+.button.active
+{
+    background-color: #060;
+    border: 1px solid #999;
+}
+
 .buy, .open
 {
     color: lightgreen !important;
+}
+
+.carousel
+{
+    height: calc( 100% - 10px );
+    position: absolute;
+    transform-style: preserve-3d;
+    transition: transform 1s;
+    width: 100%;
 }
 
 .checked
@@ -108,9 +156,20 @@
     pointer-events: none !important;
 }
 
+.enabled
+{
+    opacity: 1;
+    pointer-events: auto !important;
+}
+
 .array, .div, .edit
 {
     color: yellow;
+}
+
+.faded
+{
+    opacity: 0.5;
 }
 
 .field
@@ -120,7 +179,13 @@
     white-space: nowrap;
 }
 
-.flex
+.fit
+{
+    height: 100%;
+    width: 100%;
+}
+
+.flex, .horizontal
 {
     display: flex;
     justify-content: space-between;
@@ -156,6 +221,11 @@
 {
     background-color: #033;
     transition: background-color 1000ms linear;
+}
+
+.highlighted
+{
+    background-color: #111;
 }
 
 .icon
@@ -237,6 +307,16 @@
 {
     filter: brightness( 0.5 );
     pointer-events: none;
+}
+
+.loss
+{
+    border-left: 10px solid #600 !important;
+}
+
+.margin
+{
+    margin: 10px;
 }
 
 .match
@@ -374,6 +454,12 @@
     padding: 4px 1em 4px 1em;
 }
 
+.perspective
+{
+    /*position: relative;
+    perspective: 400vw;*/
+}
+
 .picked
 {
     background-color: #060;
@@ -408,6 +494,11 @@
     white-space: pre;
     height: 100%;
     width: 100%;
+}
+
+.round
+{
+    border-radius: 10px;
 }
 
 .row
@@ -446,9 +537,27 @@
     text-transform: uppercase;
 }
 
+.selected
+{
+    background-color: #333;
+    color: silver;
+}
+
 .sell, .closed
 {
     color: red !important;
+}
+
+.side
+{
+    background-color:rgba( 16, 16, 16, 0.1 );
+    position: absolute;
+    height: 100%;
+    left: 0;
+    padding: 10px;
+    pointer-events: none;
+    top: 0;
+    width: 100%;
 }
 
 .string

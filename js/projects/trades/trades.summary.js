@@ -36,7 +36,7 @@ const Tabs = function( module )
             await panels.add( "Module", { id: "gains", label: "gains", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.summary.gains.js" } } );
             await panels.add( "Module", { id: "symbols", label: "symbols", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.summary.symbols.js" } } );
             await panels.add( "Module", { id: "closed", label: "closed", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.summary.closed.js" } } );
-            await panels.add( "Module", { id: "data", label: "data", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.summary.data.js" } } );
+            //await panels.add( "Module", { id: "data", label: "data", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.summary.data.js" } } );
             await panels.add( "Module", { id: "dividends", label: "dividends", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.summary.dividends.js" } } );
             await panels.add( "Module", { id: "interest", label: "interest", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.summary.interest.js" } } );
             panels.setControls( 

@@ -20,6 +20,7 @@ const formats =
                     return Number( int + decimal );
                 },
     boolean:    ( value ) => !!value,
+    capitalize: ( value ) => value.replace( /(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase() ),
     date:       ( value ) => new Date( value ).toLocaleDateString(),
     datetime:   ( value ) => 
                 {

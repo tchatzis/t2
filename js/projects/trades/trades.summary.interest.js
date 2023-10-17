@@ -18,7 +18,7 @@ const Panel = function( module )
     {
         this.table = "deposits";
 
-        panel = await parent.addContainer( { id: "panel", type: "panel", format: "flex" } );
+        panel = await parent.addContainer( { id: "panel", type: "box", format: "flex", css: [ "panel" ] } );
  
         this.element = panel.element;
         this.type = panel.type;

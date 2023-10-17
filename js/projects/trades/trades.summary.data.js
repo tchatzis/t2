@@ -8,7 +8,7 @@ const Panel = function( module )
 
     this.init = async function( parent, params )
     {
-        panel = await parent.addContainer( { id: "panel", type: "panel", format: "flex" } );
+        panel = await parent.addContainer( { id: "panel", type: "box", format: "flex", css: [ "panel" ] } );
  
         this.element = panel.element;
         this.type = panel.type;
@@ -42,10 +42,10 @@ const Panel = function( module )
     {
         let array = [];
 
-        reset();
-
         module.data.symbol.forEach( symbol => 
         {
+            reset();
+            
             let records = module.data.all.filter( record => record.symbol == symbol );
 
             array.push( aggregate( symbol, records ) );

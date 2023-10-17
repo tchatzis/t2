@@ -51,6 +51,7 @@ const Component = function()
             
             case "datalist":
                 input = t2.common.el( "input", div ); 
+                input.setAttribute( "id", id );
                 input.setAttribute( "list", id );
                 input.setAttribute( "type", attributes.type );
 
@@ -69,12 +70,14 @@ const Component = function()
 
             case "datetime":
                 input = t2.common.el( "input", div );
+                input.setAttribute( "id", id );
                 input.setAttribute( "type", "datetime-local" ); 
                 input.setAttribute( "step", 1 ); 
             break;
             
             case "select":
                 input = t2.common.el( "select", div );
+                input.setAttribute( "id", id );
 
                 params.options.forEach( option => 
                 {
@@ -96,15 +99,18 @@ const Component = function()
                 }
 
                 input = t2.common.el( "input", div );  
+                input.setAttribute( "id", id );
                 input.setAttribute( "type", attributes.type );          
             break;            
 
             case "textarea":
                 input = t2.common.el( "textarea", div );
+                input.setAttribute( "id", id );
             break;
 
             default:
-                input = t2.common.el( "input", div );  
+                input = t2.common.el( "input", div ); 
+                input.setAttribute( "id", id ); 
                 input.setAttribute( "type", attributes.type );  
                 input.setAttribute( "placeholder", attributes.name );        
             break;

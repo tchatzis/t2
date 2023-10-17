@@ -8,6 +8,7 @@ const Component = function()
     let el = t2.common.el;
     let columns = new Map();
     let listeners = { row: [], column: [], submit: [] };
+    let modifiers = { row: [] };
     let active = { highlight: null };
 
     // initialize
@@ -32,6 +33,11 @@ const Component = function()
     this.addRowListener = function( listener )
     {
         listeners.row.push( listener );
+    };
+
+    this.addRowModifier = function( f )
+    {
+        modifiers.row.push( f );
     };
 
     this.addSubmitListener = function( listener )
@@ -75,7 +81,7 @@ const Component = function()
             let display = helpers.show( columns, column );
 
             let th = el( "th", this.header );
-                th.textContent = column;
+                th.textContent = column?.replace( /_/g, " " );
                 th.style.display = display;
 
             let tf = el( "th", this.footer );
@@ -240,6 +246,8 @@ const Component = function()
         let th = el( "th", row );
             th.style.width = "2em";
             th.textContent = index + 1;
+
+        modifiers.row.forEach( f => f( row, record, index ) );
         
         self.columns.forEach( column => 
         {

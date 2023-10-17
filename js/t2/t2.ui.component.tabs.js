@@ -15,10 +15,10 @@ const Component = function()
             tab?.classList.add( "active" );
 
         let title = get( "title" );
-            title.set( tab?.textContent || this.parent.id || this.id );
+            title?.set( tab?.textContent || this.parent.id || this.id );
 
         let panel = get( id );
-            panel.show();
+            panel?.show();
 
         let module = this.panels.get( id );
         if ( module.refresh )

@@ -29,14 +29,17 @@ async function totals( module )
         module.data.actions.forEach( action => 
         {
             let div = action == "DIV" ? 1 : -1;
+            let _records = records.filter( record => ( record.action == action && record.brokerage == brokerage ) );
+            let prices = _records.map( record => record.price );
             
             object.data[ action ] = {};
-            object.data[ action ].records = records.filter( record => ( record.action == action && record.brokerage == brokerage ) );
-           
-            object.data[ action ].transactions = object.data[ action ].records.length;
-            object.data[ action ].qty   = round( object.data[ action ].records.map( record => record.qty * record.sign * div ).reduce( sum, 0 ) );
-            object.data[ action ].value = round( object.data[ action ].records.map( record => record.value * record.sign * div ).reduce( sum, 0 ) );
+            object.data[ action ].records = _records;
+            object.data[ action ].transactions = _records.length;
+            object.data[ action ].qty   = round( _records.map( record => record.qty * record.sign * div ).reduce( sum, 0 ) );
+            object.data[ action ].value = round( _records.map( record => record.value * record.sign * div ).reduce( sum, 0 ) );
             object.data[ action ].price = round( object.data[ action ].value / object.data[ action ].qty );
+            object.data[ action ].low   = Math.min.apply( null, prices );
+            object.data[ action ].high   = Math.max.apply( null, prices );
 
             if ( last )
                 output.data[ "last price" ] = round( last.price );
@@ -64,7 +67,11 @@ async function totals( module )
         output.data[ "dividend" ] = object.data.DIV.value;
         output.data[ "deposits" ] = object.data.DIV.transactions; 
 
-        output.data[ "qty" ] = round( object.data.TOTAL.qty + object.data.DIV.qty );
+        object.data.TOTAL.qty = round( object.data.TOTAL.qty + object.data.DIV.qty );
+
+        output.data[ "qty" ] = object.data.TOTAL.qty;
+        output.data[ "low" ] = Math.min( object.data.BUY.low, object.data.SELL.low );
+        output.data[ "high" ] = Math.max( object.data.BUY.high, object.data.SELL.high );
 
         if ( object.data.TOTAL.qty ) 
         {

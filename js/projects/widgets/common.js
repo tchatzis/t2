@@ -79,7 +79,7 @@ const Common = function()
     {
         array: [],
         count: () => this.data.array.length,
-        define: ( data ) => this.data.value = data,
+        //define: ( data ) => this.data.value = data,
         delete: async ( record ) => {},
         filter: ( key, operator, value ) => 
         {

@@ -2,7 +2,9 @@ const Template = function( module )
 {
     this.init = async () => 
     {
-        let menu = await t2.widget.invoke( { id: "menu", type: "menu" } );  
+        const parent = t2.ui.children.get( "content" );
+        
+        /*let menu = await t2.widget.create( { id: "menu", type: "menu" } );  
             menu.action.attach( t2.ui.children.get( "content" ) );
             // very important 
             menu.data.refresh = async () => menu.data.set( [ { id: 0, name: "zero" }, { id: 1, name: "one" }, { id: 2, name: "two" }, { id: 3, name: "three" }, { id: 4, name: "four" } ] );//await menu.data.get( "projects" );
@@ -15,7 +17,7 @@ const Template = function( module )
             } );
             await menu.init();
 
-        let carousel = await t2.widget.invoke( { id: "carousel", type: "carousel" } );  
+        let carousel = await t2.widget.create( { id: "carousel", type: "carousel" } );  
             carousel.action.attach( t2.ui.children.get( "content" ) );
             // very important 
             carousel.data.refresh = async () => await carousel.data.share( menu );
@@ -30,7 +32,7 @@ const Template = function( module )
         menu.handlers.disable( { index: 4 } );
         menu.handlers.flag( { display: "Three", css: "open" } );
 
-        let multi = await t2.widget.invoke( { id: "multi", type: "multi" } );  
+        let multi = await t2.widget.create( { id: "multi", type: "multi" } );  
             multi.action.attach( t2.ui.children.get( "content" ) );
             // very important 
             multi.data.refresh = async () => multi.data.set( [ { id: 0, name: "zero" }, { id: 1, name: "one" }, { id: 2, name: "two" }, { id: 3, name: "three" }, { id: 4, name: "four" } ] );
@@ -41,9 +43,22 @@ const Template = function( module )
                 orientation: "horizontal",
                 type: "button"
             } );
-            await multi.init();
+            await multi.init();*/
 
-        console.log( multi );
+        let meter = await t2.widget.create( { id: "meter", type: "meter" } );
+            meter.action.attach( parent );
+            meter.data.refresh = async () => await meter.data.get( "deposits" );
+            meter.display.set(
+            { 
+                label: { value: "amount", format: "auto" },
+                orientation: "horizontal",
+                //type: "button"
+                size: { height: "32px", width: "400px" },
+
+            } );
+            await meter.init();
+
+        console.log( meter );
     }; 
 
 };

@@ -33,7 +33,7 @@ const T2 = function()
 
         this.widget = {};
         this.widget.children = new Map();
-        this.widget.invoke = async ( params ) => 
+        this.widget.create = async ( params ) => 
         {
             let module = await import( `../projects/widgets/${ params.type }.js` );
 

@@ -41,11 +41,6 @@
     font-weight: bold;
 }
 
-.border
-{
-    border: 1px solid #222;
-}
-
 .button
 {
     background-color: #000;
@@ -164,7 +159,7 @@
 
 .array, .div, .edit
 {
-    color: yellow;
+    color: yellow !important;
 }
 
 .faded
@@ -174,6 +169,7 @@
 
 .field
 {
+    color: silver;
     font-size: 1em;
     line-height: 21px; 
     white-space: nowrap;
@@ -454,12 +450,6 @@
     padding: 4px 1em 4px 1em;
 }
 
-.perspective
-{
-    /*position: relative;
-    perspective: 400vw;*/
-}
-
 .picked
 {
     background-color: #060;
@@ -539,8 +529,9 @@
 
 .selected
 {
-    background-color: #333;
+    background-color: rgba( 16, 16, 16, 0.9 ) !important;
     color: silver;
+    transition: background-color 1s linear;
 }
 
 .sell, .closed
@@ -552,12 +543,12 @@
 {
     background-color:rgba( 16, 16, 16, 0.1 );
     position: absolute;
-    height: 100%;
+    height: calc( 100% - 20px );
     left: 0;
     padding: 10px;
     pointer-events: none;
     top: 0;
-    width: 100%;
+    width: calc( 100% - 20px );
 }
 
 .string

@@ -1,0 +1,43 @@
+.border
+{
+    border: 1px solid #222;
+}
+
+.handle
+{
+    background-color: #666;
+    height: 100%;
+    position: absolute;
+    width: 8px;
+}
+
+.handle:hover, .move
+{
+    background-color: white;
+}
+
+.m10
+{
+    margin: 10px;
+}
+
+.meter
+{
+    background: linear-gradient( to left, red, yellow, blue );
+    position: relative;
+}
+
+.p10
+{
+    padding: 10px;
+}
+
+.r4
+{
+    border-radius: 4px; 
+}
+
+.r10
+{
+    border-radius: 10px;
+}

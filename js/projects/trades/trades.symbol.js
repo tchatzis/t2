@@ -91,6 +91,7 @@ const Tabs = function( module )
     async function summary()
     {
         let result = await totals( module );
+        let gain = { predicate: { conditions: [ { name: "gain", operator: "<", value: 0 } ], options: [ "sell", "buy" ] } }; 
 
         let matrix = await this.addComponent( { id: "matrix", type: "matrix", format: "table-body" } );
             matrix.addRow( { 
@@ -142,6 +143,16 @@ const Tabs = function( module )
                 format: [ "number" ]
             } );     
             matrix.addRow( { 
+                input: { name: "low", type: "number" }, 
+                cell: { css: { class: "sell" }, display: 4, modes: [ "read", "edit" ] },
+                format: [ "number" ] 
+            } );
+            matrix.addRow( { 
+                input: { name: "high", type: "number" }, 
+                cell: { css: { class: "buy" }, display: 4, modes: [ "read", "edit" ] },
+                format: [ "number" ] 
+            } );
+            matrix.addRow( { 
                 input: { name: "trade", type: "number" }, 
                 cell: { css: {}, display: 4, modes: [ "read", "edit" ] },
                 format: [ "number" ] 
@@ -163,7 +174,7 @@ const Tabs = function( module )
             } );
             matrix.addRow( { 
                 input: { name: "gain", type: "number" }, 
-                cell: { css: {}, display: 4, modes: [ "read" ] },
+                cell: { css: gain, display: 4, modes: [ "read" ] },
                 format: [ "number" ]
             } );            
             matrix.populate(

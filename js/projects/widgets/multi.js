@@ -20,7 +20,7 @@ const Multi = function( params )
 
         await this.data.populate( async ( record, index ) => 
         {
-            let link = await t2.widget.invoke( { id: record[ this.display.config.label.value ], type: "box" } );
+            let link = await t2.widget.create( { id: record[ this.display.config.label.value ], type: "box" } );
             let value = record[ this.display.config.label.value ];
             let text = record[ this.display.config.label.text ];
             let display = t2.formats[ this.display.config.label.format ]( text );
@@ -36,6 +36,7 @@ const Multi = function( params )
             let click = new this.event.Packet( packet );
             let contextmenu = new this.event.Packet( packet );
 
+            link.data.packet = click;
             link.css.add( this.display.config.type );
             link.content.add( display );
             link.event.broadcaster.add( { type: "click", packet: click } );

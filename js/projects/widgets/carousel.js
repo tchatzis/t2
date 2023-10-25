@@ -21,10 +21,9 @@ const Carousel = function( params )
     {
         await this.data.refresh();
 
-        this.css.add( "perspective" );
         this.css.add( "fit" );
 
-        box = await t2.widget.invoke( { id: "box", type: "box" } );
+        box = await t2.widget.create( { id: "box", type: "box" } );
         box.css.add( "carousel" );
  
         if ( this.display?.config.orientation )
@@ -55,13 +54,23 @@ const Carousel = function( params )
 
         await this.data.populate( async ( record, index ) => 
         {
-            let panel = await t2.widget.invoke( { id: index, type: "box" } );
-                panel.css.add( "side" );
-                panel.css.add( "border" );
-                panel.css.add( "round" );
-                panel.content.add( index );
-                panel.data.define( record );
-                panel.element.style.transform = `${ orientations.rotate }( ${ calculations.angle * index }deg ) ${ orientations.translate }( ${ calculations.radius }px )`;
+            let panel = await t2.widget.create( { id: index, type: "box" } );
+            let label = 
+            {
+                config: this.display?.config?.label || {},
+                display: null,
+                index: index,
+                text: null,
+                value: null
+            };
+            let packet = new this.event.Packet( { broadcaster: this, index: index, label: label, value: index, record: record, widget: panel } );
+
+            panel.css.add( "side" );
+            panel.css.add( "border" );
+            panel.css.add( "round" );
+            panel.content.add( index );
+            panel.data.packet = packet;
+            panel.element.style.transform = `${ orientations.rotate }( ${ calculations.angle * index }deg ) ${ orientations.translate }( ${ calculations.radius }px )`;
 
             box.action.init( { widget: panel, parent: box } );
 
@@ -85,6 +94,7 @@ const Carousel = function( params )
         {
             previous.css.remove( "selected" );
             previous.event.state = false;
+            this.data.value.delete( previous.data.packet.value );
         }
 
         let copy = new this.event.Packet( packet );
@@ -97,6 +107,8 @@ const Carousel = function( params )
         previous = copy.widget;
         
         box.element.style.transform = `${ orientations.translate }( ${ -calculations.radius }px ) ${ orientations.rotate }( ${ -calculations.angle * copy.index }deg )`;
+
+        this.data.value.add( copy.value );
 
         this.event.broadcaster.add( { type: copy.type, packet: copy } );
         this.event.broadcaster.dispatch( { type: copy.type, packet: copy } );

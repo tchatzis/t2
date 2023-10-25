@@ -41,7 +41,8 @@ const Panel = function( module )
 
     async function history()
     {  
-        let links = module.data.filtered.slice( -6 ).map( record => record.datetime ).reverse();
+        let records = module.data.filtered.sort( ( a, b ) => new Date( a.datetime ) - new Date( b.datetime ) );
+        let links = records.slice( -6 ).map( record => record.datetime ).reverse();
 
         let tiles = await this.addComponent( { id: "tiles", type: "tiles", format: "flex", output: template } );  
             tiles.update( links );
@@ -55,6 +56,7 @@ const Panel = function( module )
         let output = 
         [
             { label: "symbol", text: record.symbol, css: "string" },
+            { label: "brokerage", text: record.brokerage, css: record.brokerage.toLowerCase() },
             { label: "datetime", text: t2.formats[ "date&time" ]( record.datetime ), css: "date" },
             { label: "quantity", text: t2.formats.auto( record.qty ), css: "number" },
             { label: "action", text: record.action, css: record.action.toLowerCase() },
@@ -76,7 +78,7 @@ const Panel = function( module )
                     label.textContent = obj.label;
 
                 let text = t2.common.el( "div", row );
-                    text.classList.add( "field" );  
+                    text.classList.add( "field" ); 
                     text.classList.add( obj.css );
                     text.textContent = obj.text;
             }

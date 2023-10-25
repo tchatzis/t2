@@ -93,6 +93,7 @@ const Tabs = function( module )
             await panels.add( "Module", { id: "details", label: "details", format: "block", config: { arguments: [ module, array, self.symbols ], src: "../projects/trades/trades.date.details.js" } } );
             await panels.add( "Module", { id: "gains", label: "gains", format: "block", config: { arguments: [ module, self.gains ], src: "../projects/trades/trades.date.gains.js" } } );
             await panels.add( "Module", { id: "losses", label: "losses", format: "block", config: { arguments: [ module, self.losses ], src: "../projects/trades/trades.date.losses.js" } } );
+            await panels.add( "Module", { id: "pending", label: "pending", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.date.pending.js" } } );
             
             panels.setControls( 
             { 

@@ -95,6 +95,7 @@ const Component = function()
                 if ( this.element.classList.contains( "block" ) )
                 {
                     let label = t2.common.el( "label", div );
+                        label.setAttribute( "for", id );
                         label.classList.add( "label" );
                 }
 

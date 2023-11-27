@@ -1,6 +1,6 @@
-import Internals from "../widgets/widget.internals.js";
+import Internals from "./widget.internals.js";
 
-const Box = function( params )
+const Text = function( params )
 { 
     // required
     this.element = document.createElement( "div" );
@@ -9,11 +9,13 @@ const Box = function( params )
     Internals.call( this, params );
 
     // widget specific
-    let content;
-    
+    let text;
+
+    this.set.config( "primitive", true );
+
     this.render = async () =>
     {
-        content = await this.refresh();
+        text = await this.refresh();
 
         this.populate();
 
@@ -22,9 +24,8 @@ const Box = function( params )
 
     this.populate = () =>
     {
-        // TODO: switch according to content;
-        console.log( content );
+        this.element.textContent = text;
     };
 };
 
-export default Box;
+export default Text;

@@ -31,7 +31,7 @@ const Panel = function( module )
         [ 
             { id: "submenu", functions: [ { ignore: "clear" }, { clear: null } ] }, 
             { id: "subcontent", functions: [ { ignore: "clear" } ] },
-            { id: "submargin", functions: [ { ignore: "clear" }, { clear: null } ] },
+            { id: "submargin", functions: [ { ignore: "clear" } ] },
             { id: "menu", functions: [ { ignore: "clear" } ] },
             { id: "content", functions: [ { ignore: "clear" } ] },
             { id: `content.panels.${ self.id }`, functions: [ { clear: null }, { invoke: [ { f: history, args: null }, { f: week, args: null } ] } ] },
@@ -74,8 +74,9 @@ const Panel = function( module )
                     row.classList.add( "flex-left" );
                     row.classList.add( "underline" );
 
-                let label = t2.common.el( "label", row );
+                let label = t2.common.el( "div", row );
                     label.textContent = obj.label;
+                    label.classList.add( "label" );
 
                 let text = t2.common.el( "div", row );
                     text.classList.add( "field" ); 

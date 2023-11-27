@@ -4,6 +4,7 @@ async function totals( module )
 
     let sum = ( a, b ) => a + b;
     let round = ( value ) => Math.round( value * 10000 ) / 10000;
+    let sort = ( a, b ) => new Date( a.datetime ) - new Date( b.datetime );
 
     let records = module.data.filtered;
     let brokerage = new Set( records.map( record => record.brokerage ) );
@@ -16,7 +17,7 @@ async function totals( module )
         let output = {};
             output.brokerage = brokerage;
             output.data = {};
-        let _last = records.filter( record => ( record.brokerage == brokerage ) );
+        let _last = records.filter( record => ( record.brokerage == brokerage ) ).sort( sort );
         let last = _last[ _last.length - 1 ];
         
         let object = {};
@@ -29,7 +30,7 @@ async function totals( module )
         module.data.actions.forEach( action => 
         {
             let div = action == "DIV" ? 1 : -1;
-            let _records = records.filter( record => ( record.action == action && record.brokerage == brokerage ) );
+            let _records = records.filter( record => ( record.action == action && record.brokerage == brokerage ) ).sort( sort );
             let prices = _records.map( record => record.price );
             
             object.data[ action ] = {};
@@ -77,10 +78,13 @@ async function totals( module )
         {
             output.data[ "trade" ] = round( object.data.TOTAL.value / object.data.TOTAL.qty );
             output.data[ "status" ] = "OPEN";
-            output.data[ "spread" ] = round( object.data.BUY.price - output.data[ "trade" ] );
+            output.data[ "spread" ] = round( output.data[ "trade" ] - object.data.BUY.price );
             output.data[ "trend" ] = round( ( output.data[ "last price" ] - output.data[ "trade" ] ) * object.data.TOTAL.qty );  
             output.data[ "value" ] = round( object.data.TOTAL.value );
-            output.data[ "gain" ] = round( output.data[ "spread" ] * ( output.data[ "qty" ] || output.data[ "buy qty" ] ) );
+            output.data[ "cost per share" ] = output.data[ "trade" ];
+            output.data[ "current value" ] = object.data.TOTAL.qty * output.data[ "last price" ];
+            output.data[ "gain" ] = round( output.data[ "current value" ] - ( object.data.SELL.value + object.data.BUY.value ) );
+            output.data[ "percent" ] = round( ( output.data[ "gain" ] / object.data.BUY.value ) * 100 );
         }
         else
         {
@@ -88,10 +92,13 @@ async function totals( module )
             output.data[ "status" ] = "CLOSED";
             output.data[ "spread" ] = round( object.data.SELL.price - object.data.BUY.price );
             output.data[ "trend" ] = 0;
+            output.data[ "cost per share" ] = output.data[ "trade" ];
+            output.data[ "current value" ] = object.data.TOTAL.qty * output.data[ "last price" ];
             output.data[ "gain" ] = round( 0 - object.data.TOTAL.value );
+            output.data[ "percent" ] = round( ( output.data[ "gain" ] / object.data.BUY.value ) * 100 );
         }
 
-        output.data[ "percent" ] = round( ( output.data.gain / object.data.BUY.value ) * 100 );
+        
 
         result.push( output ); 
     } );

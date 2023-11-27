@@ -1,6 +1,6 @@
 import Internals from "../widgets/widget.internals.js";
 
-const Menu = function( params )
+const Accordion = function( params )
 { 
     // required
     this.element = document.createElement( "div" );
@@ -9,61 +9,69 @@ const Menu = function( params )
     Internals.call( this, params );
 
     // extend externals
-    this.add.link = async ( record ) =>
+    this.add.panel = ( record ) =>
     {
         const uuid = t2.common.uuid();
-        const link = document.createElement( "div" );
-        this.element.appendChild( link );
+        const count = this.get.count();
+        const size = 98 - count;
+        const div = document.createElement( "div" );
+        this.element.appendChild( div );
 
         record.uuid = uuid;
 
         for ( let column in schema )
         {
             let config = schema[ column ];
-                config.display = !!config.primaryKey;
-
-            if ( config.display )
-            {
-                let load = async () =>
+            
+            if ( config.display && record[ config.key ] )
+            { 
+                const shrink = ( count - index ) * 2;
+                
+                let load = async ( index ) =>
                 {      
                     let widget = await this.add.widget( { id: record[ config.key ], path: params.path, widget: config.widget, config: config, record: record } );
                         widget.set.source( () => t2.formats[ config.format ]( record[ config.key ] ) );
                         widget.set.config( "record", record );
-                        widget.set.element( link );
+                        widget.add.css( "side" );
+                        widget.add.css( "border" );
+                        widget.add.css( "round" );
+                        widget.set.element( div );
+                        widget.element.style[ "width" ] = `${ size - shrink }%`;
+                        widget.element.style[ "right" ] = `${ shrink }%`;
+                        widget.element.style.zIndex = index;
+                        widget.set.config( "index", index );
+                        widget.set.config( "shrink", shrink );
+                        widget.set.config( "width", size - shrink );
 
                     config.classes.forEach( cls => widget.add.css( cls ) );
 
                     return widget;
                 };
 
-                fulfill.add( load() );
+                fulfill.add( load( count - index ) );
+
+                index++;
             }
         }
     };
 
     this.handlers.click = ( args ) => this.event.send( { channel: args.channel || "select", widget: args.widget } );
 
-    this.set.active = ( widget ) => this.handlers.click( { channel: "activate", widget: widget } );
-    this.set.inactive = ( widget ) => this.deactivate( { detail: { widget: widget } } );
-
-    this.set.enabled = ( widget ) => this.enable( { detail: { widget: widget } } );
-    this.set.disabled = ( widget ) => this.disable( { detail: { widget: widget } } );
-
     // widget specific
     let array;
     let fulfill;
+    let index = 0;
     let previous = null;
     let schema;
-    
+
     this.render = async () =>
     {
+        this.set.from.columns();
+        
         schema = this.get.schema();
     
         array = await this.refresh();
         this.set.data( array );
-
-        if ( this.config.orientation )
-            this.add.css( this.config.orientation );
 
         await this.populate();
 
@@ -78,7 +86,7 @@ const Menu = function( params )
 
         if ( this.config.sort )
             array = this.get.copy().sort( this.sort[ this.config.sort.direction ] );
-            array.forEach( record => this.add.link( record ) );
+            array.forEach( record => this.add.panel( record ) );
 
         const completed = new t2.common.Fulfill();
 
@@ -92,30 +100,28 @@ const Menu = function( params )
     this.activate = ( e ) =>
     {
         let widget = e.detail.widget;
-            widget.add.css( "active" );
+        let index = widget.config.index;
+        
+        this.children.forEach( child =>
+        {
+            let clicked = child == widget;
+            let width = child == widget ? `${ child.config.width }%` : `${ child.config.shrink }%`;
 
-        this.set.inactive( previous );
+            if ( clicked )
+            {
+                child.element.style[ "width" ] = width;
+                previous = child;
+            }
 
-        previous = widget;
-    };
+            if ( child.config.index > index )
+            {
+                child.element.style[ "width" ] = width;
+                child.element.style.transition = "width 1s ease-in-out";
+            }
 
-    this.deactivate = ( e ) =>
-    {
-        let widget = e.detail.widget;
-            widget?.remove.css( "active" );
-    };
-
-    this.enable = ( e ) =>
-    {
-        let widget = e.detail.widget;
-            widget.remove.css( "disabled" );
-    };
-
-    this.disable = ( e ) =>
-    {
-        let widget = e.detail.widget;
-            widget.add.css( "disabled" );
+            child.set.config( "clicked", clicked );
+        } );
     };
 };
 
-export default Menu;
+export default Accordion;

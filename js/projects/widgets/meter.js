@@ -5,7 +5,8 @@ const Meter = function( params )
     let previous = null;
     let calculations = {};
     let orientations = {};
-    let box;
+    let types = {};
+    let track;
     let handle;
     
     this.listening = false;
@@ -24,16 +25,16 @@ const Meter = function( params )
     {
         await this.data.refresh();
 
-        box = await t2.widget.create( { id: "box", type: "box" } );
-        box.css.add( "meter" );
-        box.css.add( "m10" );
-        box.css.add( "border" );
-        box.css.add( "r4" );
+        track = await t2.widget.create( { id: "track", type: "box" } );
+        track.css.add( "meter" );
+        track.css.add( "m10" );
+        track.css.add( "border" );
+        track.css.add( "r4" );
 
         if ( this.display?.config?.size )
         {
             for ( let prop in this.display?.config?.size )
-                box.element.style[ prop ] =  this.display.config.size[ prop ];
+                track.element.style[ prop ] =  this.display.config.size[ prop ];
         }
 
         if ( this.display?.config.orientation )
@@ -56,16 +57,35 @@ const Meter = function( params )
             }
         }  
 
+        if ( this.display?.config.type )
+        {
+            types.config = this.display.config.type;
+            
+            switch( types.config )
+            {
+                case "bar":
+                    types.offset = "dimension";
+                    types.track = "direction";
+                break;
+                
+                default: 
+                    typse.offset = "direction";
+                    types.track = "dimension";  
+                break;
+            }
+        }
+
+
         handle = await t2.widget.create( { id: "handle", type: "box" } );
         handle.css.add( "handle" );
         handle.css.add( "r4" );
         handle.element.addEventListener( "mousedown", this.handlers.mousedown ); 
 
-        box.action.add( handle );
-        this.action.add( box );
+        track.action.add( handle );
+        this.action.add( track );
 
         let value = this.display.config.label.value;
-        const bbox = box.dom.dimensions();
+        const btrack = track.dom.dimensions();
 
         this.data.array = this.data.raw.map( record => Number( record[ value ] ) );
 
@@ -76,9 +96,9 @@ const Meter = function( params )
         calculations.range = calculations.max - calculations.min;
         calculations.average = calculations.sum / calculations.count;
         calculations.mid = calculations.range / 2;
-        calculations.height = Math.round( bbox.height - 2 );
-        calculations.width = Math.round( bbox.width - 2 );
-        calculations.track = calculations[ orientations.dimension ] - handle.element[ `offset${ t2.formats.capitalize( orientations.dimension ) }` ];
+        calculations.height = Math.round( btrack.height - 2 );
+        calculations.width = Math.round( btrack.width - 2 );
+        calculations.track = calculations[ orientations.dimension ] - handle.element[ `offset${ t2.formats.capitalize( orientations[ types.track ] ) }` ];
     };
 
     this.handlers =
@@ -94,24 +114,34 @@ const Meter = function( params )
         {
             if ( this.listening )
             {
-                calculations.offset = Math.round( handle.element.offsetLeft ) + e[ `movement${ orientations.axis }` ];
+                calculations.offset = Math.round( handle.element[ `offset${ t2.formats.capitalize( orientations[ types.offset ] ) }` ] ) + e[ `movement${ orientations.axis }` ];
                 calculations.offset = Math.max( 0, calculations.offset );
                 calculations.offset = Math.min( calculations.offset, calculations.track );
                 calculations.normalized = calculations.offset / calculations.track;
                 calculations.value = calculations.normalized * calculations.range + calculations.min;
 
-                handle.element.style[ orientations.direction ] = calculations.offset + "px";
+                switch( types.config )
+                {
+                    case "bar":
+                        handle.element.style[ orientations[ types.track ] ] = 0;
+                    break;
+                }
+                
+                handle.css.add( "move" );
                 handle.element.style.cursor = orientations.cursor;
+                handle.element.style[ orientations[ types.offset ] ] = calculations.offset + "px";
             }
         },
         mouseup: ( e ) => 
         {
             this.listening = false;
+
             handle.css.remove( "move" );
+            handle.element.style.cursor = "auto";
+
             window.removeEventListener( "mousedown", this.handlers.listen );
-            window.addEventListener( "mouseup", this.handlers.mouseup );
+            window.removeEventListener( "mouseup", this.handlers.mouseup );
             window.removeEventListener( "mousemove", this.handlers.mousemove );
-            console.warn( calculations )
         }
     };
 };

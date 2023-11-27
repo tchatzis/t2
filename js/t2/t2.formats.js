@@ -70,6 +70,7 @@ const formats =
     isoDate:    ( value ) => formats.datetime( value ).split( "T" )[ 0 ],
     isoTime:    ( value ) => formats.datetime( value ).split( "T" )[ 1 ],
     lowercase:  ( value ) => String( value ).toLowerCase(),
+    none:       ( value ) => value,
     number:     ( value ) => Number( value ) || 0,
     precision:  ( value ) => value.toFixed( 4 ),
     negate:     ( value ) => -Number( value ),

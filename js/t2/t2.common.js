@@ -59,6 +59,7 @@ const Common = function()
     this.delay = async function( fn, ms, ...args ) 
     {
         await this.sleep( ms );
+
         return fn( ...args );
     };
 

@@ -117,6 +117,13 @@ const Common = function()
             this.element.appendChild( content );
         },
 
+        large: function( content )
+        {
+            let div = t2.common.el( "div", this.element );
+                div.textContent = content;
+                div.classList.add( "large" );
+        },
+
         object: async function( content, root )
         {
             for ( let key in content )

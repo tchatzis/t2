@@ -1,6 +1,6 @@
 import Internals from "../widgets/widget.internals.js";
 
-const Menu = function( params )
+const Buttons = function( params )
 { 
     // required
     this.element = document.createElement( "div" );
@@ -9,11 +9,11 @@ const Menu = function( params )
     Internals.call( this, params );
 
     // extend externals
-    this.add.link = async ( record ) =>
+    this.add.button = async ( record ) =>
     {
         const uuid = t2.common.uuid();
-        const link = document.createElement( "div" );
-        this.element.appendChild( link );
+        const button = document.createElement( "div" );
+        this.element.appendChild( button );
 
         record.uuid = uuid;
 
@@ -29,7 +29,14 @@ const Menu = function( params )
                     let widget = await this.add.widget( { id: record[ config.key ], path: params.path, widget: config.widget, config: config, record: record } );
                         widget.set.source( () => t2.formats[ config.format ]( record[ config.key ] ) );
                         widget.set.config( "record", record );
-                        widget.set.element( link );
+                        widget.set.element( button );
+                        widget.add.css( "button" );
+                    
+                    if ( record[ config.key ] == this.config.record[ config.key ] )
+                    {
+                        widget.add.css( "active" ); 
+                        previous = widget;
+                    }
 
                     config.classes.forEach( cls => widget.add.css( cls ) );
 
@@ -57,6 +64,8 @@ const Menu = function( params )
     
     this.render = async () =>
     {
+        //this.config.orientation
+        
         schema = this.get.schema();
     
         array = await this.refresh();
@@ -78,7 +87,7 @@ const Menu = function( params )
 
         if ( this.config.sort )
             array = this.get.copy().sort( this.sort[ this.config.sort.direction ] );
-            array.forEach( record => this.add.link( record ) );
+            array.forEach( record => this.add.button( record ) );
 
         const completed = new t2.common.Fulfill();
 
@@ -118,4 +127,4 @@ const Menu = function( params )
     };
 };
 
-export default Menu;
+export default Buttons;

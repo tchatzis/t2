@@ -91,6 +91,7 @@ const Tabs = function( module )
             await panels.add( "Module", { id: "balances", label: "balances", format: "block", config: { arguments: [ module, balance ], src: "../projects/trades/trades.date.balances.js" } } );
             await panels.add( "Module", { id: "open", label: "open", format: "block", config: { arguments: [ module, array, self.symbols ], src: "../projects/trades/trades.date.open.js" } } );
             await panels.add( "Module", { id: "details", label: "details", format: "block", config: { arguments: [ module, array, self.symbols ], src: "../projects/trades/trades.date.details.js" } } );
+            await panels.add( "Module", { id: "revisit", label: "revisit", format: "block", config: { arguments: [ module, array, self.symbols ], src: "../projects/trades/trades.date.revisit.js" } } );
             await panels.add( "Module", { id: "gains", label: "gains", format: "block", config: { arguments: [ module, self.gains ], src: "../projects/trades/trades.date.gains.js" } } );
             await panels.add( "Module", { id: "losses", label: "losses", format: "block", config: { arguments: [ module, self.losses ], src: "../projects/trades/trades.date.losses.js" } } );
             await panels.add( "Module", { id: "pending", label: "pending", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.date.pending.js" } } );
@@ -146,7 +147,7 @@ const Tabs = function( module )
 
         let dividends = transactions.filter( record => record.action == "DIV" );
             object.dividends = dividends.map( record => record.value );
-            object.invested = [ ...object.deposits, ...object.dividends ];
+            object.invested = [ ...object.deposits ];//, ...object.dividends
             object.margin = [ ...object.invested, ...object.interest ];
 
         module.data.symbol.forEach( symbol => 
@@ -184,7 +185,7 @@ const Tabs = function( module )
         let array = [];
             array.push( { name: "\u25f9", value: 0 } );
 
-        [ "deposits", "interest", "cost", "closed", "dividends", "invested", "margin", "value" ].forEach( name => array.push( { name: name, value: object[ name ].reduce( sum, 0 ) } ) );
+        [ "deposits", "interest", "cost", "closed", "dividends", "margin", "value" ].forEach( name => array.push( { name: name, value: object[ name ].reduce( sum, 0 ) } ) ); //"invested", 
 
         array.push( { name: "\u25fa", value: 0 } );
 

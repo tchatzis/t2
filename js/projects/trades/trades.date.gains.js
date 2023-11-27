@@ -44,8 +44,6 @@ const Panel = function( module, array )
     // chart
     async function chart()
     {
-        array.push( { name: "\u25fa", value: 0 } );
-
         let container = await this.addContainer( { id: "gains", type: "box", format: "inline-block" } );
         let title = await container.addComponent( { id: "title", type: "title", format: "block", output: "text" } );
             title.set( `Closed Gains \u00BB ${ module.date }` );

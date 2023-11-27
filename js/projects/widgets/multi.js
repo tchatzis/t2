@@ -1,4 +1,5 @@
 import Common from "../widgets/common.js";
+import Guts from "../widgets/guts.js";
 import Handlers from "../widgets/handlers.js";
 
 const Multi = function( params )
@@ -9,14 +10,14 @@ const Multi = function( params )
     this.params.class = this.constructor.name;
 
     // common
+    Guts.call( this );
     Common.call( this );
     Handlers.call( this );
 
-    Object.defineProperty( this.data, "output", { value: true, writeable: false } );
-
     this.init = async () =>
     {
-        await this.data.refresh();
+        this.populate();
+        /*
 
         await this.data.populate( async ( record, index ) => 
         {
@@ -50,7 +51,30 @@ const Multi = function( params )
         } );
 
         if ( this.display?.config.orientation )
-            this.css.add( this.display.config.orientation );
+            this.css.add( this.display.config.orientation );*/
+    };
+
+    this.populate = async () =>
+    {
+        const fulfill = new t2.common.Fulfill();
+        const array = await this.refresh();
+            array.forEach( item => 
+            {
+                const load = async () =>
+                {
+                    let link = await t2.widget.create( { id: item, type: "box" } );
+                        link.css.add( "button" );
+                        link.set.source( () => item );
+                        link.init();
+
+                    return link;
+                };
+
+                fulfill.add( load() );
+            } );
+
+        let links = await fulfill.resolve();
+            links.forEach( link => link.set.node( this.element ) );
     };
 };
 

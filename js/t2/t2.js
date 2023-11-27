@@ -35,10 +35,12 @@ const T2 = function()
         this.widget.children = new Map();
         this.widget.create = async ( params ) => 
         {
-            let module = await import( `../projects/widgets/${ params.type }.js` );
+            let module = await import( `../projects/widgets/${ params.widget }.js` );
 
             return new module.default( params );
         };
+        this.widget.get = ( path ) => this.widget.children.get( path );
+        
         await navigation();
     };
 

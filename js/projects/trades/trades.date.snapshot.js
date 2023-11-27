@@ -58,11 +58,13 @@ const Panel = function( module )
 
         // css
         let status = { predicate: { conditions: [ { name: "total_gain", operator: ">=", value: 0 } ], options: [ "gain", "loss" ] } };   
-        let qty = { predicate: { conditions: [ { name: "open_qty", operator: ">", value: 0 } ], options: [ "number", "data" ] } };    
+        let qty = { predicate: { conditions: [ { name: "open_qty", operator: "<", value: 0 } ], options: [ "short", "data" ] } };    
         let open = { predicate: { conditions: [ { name: "open_gain", operator: "<=", value: 0 } ], options: [ "sell", "buy" ] } };
         let gain = { predicate: { conditions: [ { name: "total_gain", operator: "<=", value: 0 } ], options: [ "sell", "buy" ] } };
+        let closed = { predicate: { conditions: [ { name: "closed_gain", operator: "<=", value: 0 } ], options: [ "sell", "buy" ] } };
+        let cost = { predicate: { conditions: [ { name: "open_qty", operator: ">=", value: 0 } ], options: [ "data", "short" ] } }; 
         let net = { predicate: { conditions: [ { name: "total_net", operator: "<=", value: 0 } ], options: [ "sell", "buy" ] } };
-        let div = { predicate: { conditions: [ { name: "div_value", operator: ">", value: 0 } ], options: [ "buy", "data" ] } };
+        let div = { predicate: { conditions: [ { name: "div_value", operator: ">", value: 0 } ], options: [ "div", "data" ] } };
 
         let table = await this.addComponent( { id: "aggregates", type: "table" } );  
             //table.addRowListener( { type: "contextmenu", handler: () => {} } );
@@ -91,39 +93,35 @@ const Panel = function( module )
             table.addColumn( { 
                 input: { name: "open_qty", type: "number", step: 1, min: 0 }, 
                 cell: { css: qty, display: 6, modes: [ "read" ] },
-                format: [ "auto" ] } );
+                format: [ "auto" ] } );           
             table.addColumn( { 
-                input: { name: "buy_price", type: "number", step: 0.001 }, 
+                input: { name: "share_price", type: "number", step: 0.001 }, 
                 cell: { css: {}, display: 6, modes: [ "read" ] },
-                format: [ "dollar" ],
-                formula: ( args ) =>
-                {
-                    args.totals[ args.column ] = 0;
-
-                    return args.value;
-                } } );
+                format: [ "dollar" ] } );
             table.addColumn( { 
-                input: { name: "open_price", type: "number", step: 0.001 }, 
+                input: { name: "last_price", type: "number", step: 0.001 }, 
                 cell: { css: {}, display: 6, modes: [ "read" ] },
                 format: [ "dollar" ] } );
             table.addColumn( { 
                 input: { name: "open_gain", type: "number", step: 0.001 }, 
                 cell: { css: open, display: 6, modes: [ "read" ] },
-                format: [ "dollar" ],
-                formula: ( args ) =>
-                {
-                    args.totals[ args.column ] = 0;
-
-                    return args.value;
-                } } );
+                format: [ "dollar" ] } );
             table.addColumn( { 
                 input: { name: "open_value", type: "number", step: 0.001 }, 
                 cell: { css: {}, display: 6, modes: [ "read" ] },
                 format: [ "dollar" ] } );
             table.addColumn( { 
+                input: { name: "closed_gain", type: "number", step: 0.001 }, 
+                cell: { css: closed, display: 6, modes: [ "read" ] },
+                format: [ "dollar" ] } );
+            table.addColumn( { 
                 input: { name: "div_value", type: "number", step: 0.001 }, 
                 cell: { css: div, display: 6, modes: [ "read" ] },
                 format: [ "dollar" ] } );
+            table.addColumn( { 
+                input: { name: "total_cost", type: "number", step: 0.001 }, 
+                cell: { css: cost, display: 6, modes: [ "read" ] },
+                format: [ "dollar" ] } ); 
             table.addColumn( { 
                 input: { name: "total_gain", type: "number", step: 0.001 }, 
                 cell: { css: gain, display: 6, modes: [ "read" ] },

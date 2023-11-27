@@ -29,7 +29,7 @@ const Tabs = function( module )
             [ 
                 { id: "submenu",    functions: [ { ignore: "clear" }, { clear: null }, { hide: null } ] }, 
                 { id: "subcontent", functions: [ { ignore: "clear" }, { clear: null }, { show: null }, { invoke: [ { f: module.transaction, args: self } ] } ] },
-                { id: "submargin",  functions: [ { ignore: "clear" }, { clear: null }, { show: null } ] },
+                { id: "submargin",  functions: [ { ignore: "clear" }, { clear: null }, { invoke: [ { f: symbol, args: null } ] } ] },
                 { id: "menu",       functions: [ { ignore: "clear" }, { show: null }, { invoke: [ { f: symbols, args: null } ] } ] },
                 { id: "content",    functions: [ { clear: null }, { invoke: [ { f: output, args: null } ] } ] },
                 { id: "margin",     functions: [ { clear: null }, { invoke: [ { f: summary, args: null } ] } ] }
@@ -55,7 +55,9 @@ const Tabs = function( module )
             symbols.highlight( module.symbol );
             symbols.addListener( { type: "click", handler: async function() 
             { 
-                module.setSymbol( symbols.activated.toUpperCase() );
+                let _symbol = symbols.activated.toUpperCase();
+                
+                module.setSymbol( _symbol );
 
                 self.init();
             } } );  
@@ -116,6 +118,10 @@ const Tabs = function( module )
                 cell: { css: {}, display: 4, modes: [ "read" ] },
                 format: [ "number" ] } );
             matrix.addRow( { 
+                input: { name: "dividend", type: "number" }, 
+                cell: { css: { class: "div" }, display: 4, modes: [ "read" ] },
+                format: [ "number" ] } ); 
+            matrix.addRow( { 
                 input: { name: "sell qty", type: "number" }, 
                 cell: { css: {}, display: 4, modes: [ "read" ] },
                 format: [ "number" ] } );
@@ -138,10 +144,10 @@ const Tabs = function( module )
                 format: [ "number" ]
             } );
             matrix.addRow( { 
-                input: { name: "percent", type: "number" }, 
-                cell: { css: {}, display: 4, modes: [ "read" ] },
+                input: { name: "cost per share", type: "number" }, 
+                cell: { css: gain, display: 4, modes: [ "read" ] },
                 format: [ "number" ]
-            } );     
+            } );   
             matrix.addRow( { 
                 input: { name: "low", type: "number" }, 
                 cell: { css: { class: "sell" }, display: 4, modes: [ "read", "edit" ] },
@@ -152,11 +158,11 @@ const Tabs = function( module )
                 cell: { css: { class: "buy" }, display: 4, modes: [ "read", "edit" ] },
                 format: [ "number" ] 
             } );
-            matrix.addRow( { 
+            /*matrix.addRow( { 
                 input: { name: "trade", type: "number" }, 
                 cell: { css: {}, display: 4, modes: [ "read", "edit" ] },
                 format: [ "number" ] 
-            } );
+            } );*/
             matrix.addRow( { 
                 input: { name: "spread", type: "number" }, 
                 cell: { css: {}, display: 4, modes: [ "read", "edit" ] },
@@ -168,15 +174,25 @@ const Tabs = function( module )
                 format: [ "number" ] 
             } );
             matrix.addRow( { 
+                input: { name: "current value", type: "number" }, 
+                cell: { css: gain, display: 4, modes: [ "read" ] },
+                format: [ "number", "dollar" ]
+            } );
+            matrix.addRow( { 
                 input: { name: "trend", type: "number" }, 
-                cell: { css: {}, display: 4, modes: [ "read", "edit" ] },
+                cell: { css: gain, display: 4, modes: [ "read", "edit" ] },
                 format: [ "number" ] 
             } );
             matrix.addRow( { 
                 input: { name: "gain", type: "number" }, 
                 cell: { css: gain, display: 4, modes: [ "read" ] },
-                format: [ "number" ]
-            } );            
+                format: [ "number", "dollar" ]
+            } );   
+            matrix.addRow( { 
+                input: { name: "percent", type: "number" }, 
+                cell: { css: gain, display: 4, modes: [ "read" ] },
+                format: [ "number", "dollar" ]
+            } );           
             matrix.populate(
             { 
                 data: result, 
@@ -184,6 +200,13 @@ const Tabs = function( module )
                 column: { name: "brokerage" },
                 row: { name: "data" }
             } );
+    }
+
+    // submargin
+    async function symbol()
+    {
+        let title = await this.addComponent( { id: "symbol", type: "title", format: "block", output: "large" } );
+            title.set( module.symbol );
     }
 };
 

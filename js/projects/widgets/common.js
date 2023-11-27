@@ -265,18 +265,18 @@ const Common = function()
     this.handlers = {};
 
     // utility functions
-    function datasetToArray( element, name )
+    const datasetToArray = ( element, name ) =>
     {
         let dataset = element.dataset?.[ name ];
 
         return dataset ? dataset.split( delim ) : [];
     }
 
-    function paramsToDataset()
+    const paramsToDataset = () =>
     {
         for ( let prop in self.params )
         {
-            self.element.dataset[ prop ] = self.params[ prop ];
+            this.element.dataset[ prop ] = self.params[ prop ];
         }
     }
 
@@ -295,7 +295,7 @@ const Common = function()
         }
     }
 
-    paramsToDataset();
+    //paramsToDataset();
 };
 
 export default Common;

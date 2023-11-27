@@ -24,8 +24,9 @@ const Panel = function( module )
         { brokerage: "JPMorganChase", symbol: "BKSY", action: "SELL", qty: 55, price: 2.82 },
 
         { brokerage: "JPMorganChase", symbol: "SOND", action: "SELL", qty: 10, price: 12.00 },
-        { brokerage: "JPMorganChase", symbol: "SOND", action: "SELL", qty: 15, price: 15.00 },
         { brokerage: "JPMorganChase", symbol: "SOND", action: "SELL", qty: 17, price: 45.00 },
+        { brokerage: "JPMorganChase", symbol: "SOND", action: "SELL", qty: 15, price: 15.00 },
+        //{ brokerage: "JPMorganChase", symbol: "SOND", action: "SELL", qty: 9, price: 16.00 },
 
         { brokerage: "JPMorganChase", symbol: "T", action: "SELL", qty: 20, price: 20.75 },
         { brokerage: "JPMorganChase", symbol: "T", action: "SELL", qty: 10, price: 20.85 },

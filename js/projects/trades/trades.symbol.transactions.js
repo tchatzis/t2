@@ -6,6 +6,7 @@ const Panel = function( module )
     let self = this;
     let panel;
     let table;
+    let sort = ( a, b ) => new Date( a.datetime ) - new Date( b.datetime );
     
     this.init = async function( parent, params )
     {
@@ -31,7 +32,7 @@ const Panel = function( module )
         [ 
             { id: "submenu", functions: [ { ignore: "clear" }, { clear: null } ] }, 
             { id: "subcontent", functions: [ { ignore: "clear" } ] },
-            { id: "submargin", functions: [ { ignore: "clear" }, { clear: null } ] },
+            { id: "submargin", functions: [ { ignore: "clear" } ] },
             { id: "menu", functions: [ { ignore: "clear" } ] },
             { id: "content", functions: [ { ignore: "clear" } ] },
             { id: `content.panels.${ self.id }`, functions: [ { clear: null }, { invoke: [ { f: transactions, args: null } ] } ] },
@@ -41,7 +42,7 @@ const Panel = function( module )
 
     async function transactions()
     {  
-        let records = module.data.filtered;
+        let records = module.data.filtered.sort( sort );
 
         table = await this.addComponent( { id: "transactions", type: "table" } );
         table.addRowListener( { type: "contextmenu", handler: table.edit } );
@@ -65,12 +66,12 @@ const Panel = function( module )
             format: [ "date&time" ] } );
         table.addColumn( { 
             input: { name: "symbol", type: "select" }, 
-            cell: { css: {}, display: 4, modes: [ "read", "edit" ] },
+            cell: { css: { value: "brokerage" }, display: 4, modes: [ "read", "edit" ] },
             format: [ "uppercase" ],
             options: module.data.symbol } );
         table.addColumn( { 
             input: { name: "action", type: "text" }, 
-            cell: { css: { value: "brokerage" }, display: 3, modes: [ "read", "edit" ] },
+            cell: { css: { value: "action" }, display: 3, modes: [ "read", "edit" ] },
             format: [ "uppercase" ] } );
         table.addColumn( { 
             input: { name: "notes", type: "text" }, 
@@ -118,7 +119,7 @@ const Panel = function( module )
             input: { type: "submit", value: "UPDATE" }, 
             cell: { css: {}, display: 4, modes: [ "edit" ] },
             format: [] } );
-        table.populate( { array: records, orderBy: "datetime" } );
+        table.populate( { array: records, orderBy: "datetime", dir: "desc" } );
         table.setTotals();
     }
 };

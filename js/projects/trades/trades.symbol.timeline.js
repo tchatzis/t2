@@ -29,7 +29,7 @@ const Panel = function( module )
         [ 
             { id: "submenu", functions: [ { ignore: "clear" }, { clear: null } ] }, 
             { id: "subcontent", functions: [ { ignore: "clear" } ] },
-            { id: "submargin", functions: [ { ignore: "clear" }, { clear: null } ] },
+            { id: "submargin", functions: [ { ignore: "clear" } ] },
             { id: "menu", functions: [ { ignore: "clear" } ] },
             { id: "content", functions: [ { ignore: "clear" } ] },
             { id: `content.panels.${ self.id }`, functions: [ { clear: null }, { invoke: [ { f: plot, args: null } ] } ] },

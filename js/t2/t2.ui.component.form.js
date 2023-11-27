@@ -31,13 +31,12 @@ const Component = function()
             div.setAttribute( "data-name", attributes.name || attributes.type );
             div.classList.add( "underline" );
 
-        if ( attributes.label && attributes.type !== "hidden" )
-        {
-            let label = t2.common.el( "label", div );
-                label.textContent = attributes.label;
-                label.setAttribute( "for", id );
-                label.classList.add( "label" );
-        }
+        let label = t2.common.el( "label", div );
+            label.textContent = attributes.label;
+            label.setAttribute( "for", id );
+            label.classList.add( "label" );
+        if ( !attributes.label || attributes.type == "hidden" )
+            label.classList.add( "hidden" );
 
         switch ( attributes.type )
         {

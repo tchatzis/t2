@@ -37,11 +37,14 @@ const aggregate = function( symbol, records )
         // OPEN
         aggregate.open_qty      = Math.round( ( aggregate.buy_qty + aggregate.div_qty - aggregate.sell_qty ) * 10000 ) / 10000;
         aggregate.open_value    = aggregate.open_qty * aggregate.last_price;
-        aggregate.open_price    = aggregate.open_value / aggregate.open_qty;
-        aggregate.open_gain     = ( aggregate.open_price - aggregate.buy_price ) * aggregate.open_qty;
+        // CLOSED
+        aggregate.closed_gain   = ( aggregate.sell_price - aggregate.buy_price ) * aggregate.sell_qty;
         // TOTAL
-        aggregate.total_gain   = ( aggregate.sell_value - aggregate.buy_value ) + aggregate.open_value;  
-        aggregate.total_net    = aggregate.total_gain + aggregate.div_value;
+        aggregate.total_cost    = -( aggregate.sell_value - aggregate.buy_value );
+        aggregate.share_price   = aggregate.open_qty ? Math.round( ( aggregate.total_cost / aggregate.open_qty ) * 10000 ) / 10000 : aggregate.sell_price;
+        aggregate.open_gain     = ( aggregate.last_price - aggregate.share_price ) * aggregate.open_qty;
+        aggregate.total_gain    = aggregate.open_gain + aggregate.closed_gain;  
+        aggregate.total_net     = aggregate.total_gain + aggregate.div_value;
         // BROKERAGE
         data.brokerage.forEach( brokerage => 
         {
@@ -56,25 +59,6 @@ const aggregate = function( symbol, records )
             
             aggregate[ brokerage ] = Math.round( ( qty.buy + qty.div - qty.sell ) * 10000 ) / 10000;
         } );
-
-    /*total.columns = [];
-    total.open      += Math.round( aggregate.qty ? aggregate.gain * 10000 : 0 ) / 10000;
-    total.closed    += Math.round( aggregate.qty ? 0 : aggregate.gain * 10000 ) / 10000;
-    total.buy       += aggregate.buy;
-    total.bought    += aggregate.bought;
-    total.div       += aggregate.div;
-    total.dividend  += aggregate.dividend;
-    total.sell      += Math.round( aggregate.sell * 10000 ) / 10000;
-    total.sold      += aggregate.sold;
-    total.qty       += aggregate.qty;
-    total.average   =  Math.round( total.qty ? ( total.open / total.qty ) * 10000 : ( total.sold / total.sell ) * 10000 ) / 10000;
-    total.gain      =  total.sold - total.bought + total.open;
-
-    for ( let key in total )
-    {
-        if ( total[ key ] )
-            total.columns.push( { [ key ]: total[ key ] } );
-    }*/
 
     return aggregate;
 };

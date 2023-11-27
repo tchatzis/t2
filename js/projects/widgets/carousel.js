@@ -1,34 +1,87 @@
-import Common from "../widgets/common.js";
+import Internals from "../widgets/widget.internals.js";
 
 const Carousel = function( params )
 { 
-    let previous = null;
-    let calculations = {};
-    let orientations = {};
-    let box;
-    
+    // required
     this.element = document.createElement( "div" );
-    
-    this.params = params;
-    this.params.class = this.constructor.name;
 
     // common
-    Common.call( this );
+    Internals.call( this, params );
 
-    Object.defineProperty( this.data, "output", { value: true, writeable: false } );
-
-    this.init = async () =>
+    // extend externals
+    this.add.panel = ( record ) =>
     {
-        await this.data.refresh();
+        const uuid = t2.common.uuid();
 
-        this.css.add( "fit" );
+        record.uuid = uuid;
 
-        box = await t2.widget.create( { id: "box", type: "box" } );
-        box.css.add( "carousel" );
- 
-        if ( this.display?.config.orientation )
+        for ( let column in schema )
         {
-            switch( this.display.config.orientation )
+            let config = schema[ column ];
+                config.display = !!config.primaryKey;
+
+            if ( config.display )
+            {
+                let load = async () =>
+                {      
+                    let widget = await this.add.widget( { id: record[ config.key ], path: params.path, widget: config.widget, config: config, record: record } );
+                        widget.set.source( () => t2.formats[ config.format ]( record[ config.key ] ) );
+                        widget.set.config( "record", record );
+                        widget.set.element( carousel );
+                        widget.add.css( "center" );
+                        widget.add.css( "side" );
+                        widget.add.css( "border" );
+                        widget.add.css( "round" );
+                        widget.element.style.transform = `${ orientations.rotate }( ${ calculations.angle * index }deg ) ${ orientations.translate }( ${ calculations.radius }px )`;
+
+                    config.classes.forEach( cls => widget.add.css( cls ) );
+
+                    index++;
+
+                    return widget;
+                };
+
+                fulfill.add( load() );
+            }
+        }
+    };
+
+    this.handlers.rotate = ( e ) =>
+    {  
+        let keys = Array.from( this.children.keys() );
+        let index = keys.indexOf( e.detail.value );
+        
+        carousel.style.transform = `${ orientations.translate }( ${ -calculations.radius }px ) ${ orientations.rotate }( ${ -calculations.angle * index }deg )`;
+    };
+
+    // widget specific
+    let array;
+    let fulfill;
+    let index = 0;
+    let previous = null;
+    let schema;
+    let carousel; 
+    let calculations = {};
+    let orientations = {};
+
+    this.set.config( "readonly", true );
+
+    this.render = async () =>
+    {
+        schema = this.get.schema();
+        
+        array = await this.refresh();
+        this.set.data( array );
+
+        this.add.css( "fit" );
+
+        carousel = document.createElement( "div" );
+        carousel.classList.add( "carousel" );
+        this.element.appendChild( carousel );
+
+        if ( this.config.orientation )
+        {
+            switch( this.config.orientation )
             {
                 case "horizontal":
                     orientations.dimension = "width";
@@ -44,74 +97,33 @@ const Carousel = function( params )
             }
         }       
 
-        calculations.count = this.data.count();
+        calculations.count = this.get.count();
         calculations.angle = 360 / calculations.count;
-        calculations.bbox = this.dom.dimensions();
+        calculations.bbox = this.get.bbox();
         calculations.radius = Math.round( ( calculations.bbox[ orientations.dimension ] / 2 ) / Math.tan( Math.PI / calculations.count ) );
         calculations.perspective = calculations.bbox[ orientations.dimension ] + "px";
 
-        this.action.add( box );
-
-        await this.data.populate( async ( record, index ) => 
-        {
-            let panel = await t2.widget.create( { id: index, type: "box" } );
-            let label = 
-            {
-                config: this.display?.config?.label || {},
-                display: null,
-                index: index,
-                text: null,
-                value: null
-            };
-            let packet = new this.event.Packet( { broadcaster: this, index: index, label: label, value: index, record: record, widget: panel } );
-
-            panel.css.add( "side" );
-            panel.css.add( "border" );
-            panel.css.add( "round" );
-            panel.content.add( index );
-            panel.data.packet = packet;
-            panel.element.style.transform = `${ orientations.rotate }( ${ calculations.angle * index }deg ) ${ orientations.translate }( ${ calculations.radius }px )`;
-
-            box.action.init( { widget: panel, parent: box } );
-
-            return panel;
-        } );
-
         this.element.style.perspective = calculations.perspective;
-        this.children = box.children;
-
-        box.element.style.transform = `${ orientations.translate }( ${ -calculations.radius }px )`;
+        carousel.style.transform = `${ orientations.translate }( ${ -calculations.radius }px )`;
+    
+        await this.populate();
     };
 
-    this.handlers.rotate = ( packet ) =>
-    {  
-        const widget = packet.widget;
-        
-        if ( previous == widget )
-            return;
+    this.populate = async () =>
+    {
+        fulfill = new t2.common.Fulfill();
 
-        if ( previous )
-        {
-            previous.css.remove( "selected" );
-            previous.event.state = false;
-            this.data.value.delete( previous.data.packet.value );
-        }
+        if ( this.config.sort )
+            array = this.get.copy().sort( this.sort[ this.config.sort.direction ] );
+            array.forEach( record => this.add.panel( record ) );
 
-        let copy = new this.event.Packet( packet );
-            copy.broadcaster = this;
-            copy.type = "selected";
-            copy.widget = this.children.get( packet.index );
-            copy.widget.css.add( "selected" );
-            copy.widget.event.state = true;
+        const completed = new t2.common.Fulfill();
 
-        previous = copy.widget;
-        
-        box.element.style.transform = `${ orientations.translate }( ${ -calculations.radius }px ) ${ orientations.rotate }( ${ -calculations.angle * copy.index }deg )`;
+        let widgets = await fulfill.resolve();
+            widgets.forEach( widget => completed.add( widget.render() ) );
 
-        this.data.value.add( copy.value );
-
-        this.event.broadcaster.add( { type: copy.type, packet: copy } );
-        this.event.broadcaster.dispatch( { type: copy.type, packet: copy } );
+        //const rendered = await completed.resolve();
+        //    rendered.forEach( ( widget, index ) => completed.add( widget.add.handler( { event: "click", handler: this.handlers.click, record: array[ index ] } ) ) );
     };
 };
 

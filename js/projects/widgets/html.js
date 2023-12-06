@@ -1,6 +1,6 @@
 import Internals from "../widgets/widget.internals.js";
 
-const Box = function( params )
+const HTML = function( params )
 { 
     // required
     this.element = document.createElement( "div" );
@@ -11,20 +11,14 @@ const Box = function( params )
     // widget specific
     this.render = async () =>
     {
-        this.value = await this.refresh();
+        this.value =await this.refresh();
 
         this.populate();
 
         return this;
     };
 
-    this.populate = () =>
-    {
-        //console.log( this.value );
-        
-        // TODO: switch according to content;
-        //console.log( content );
-    };
+    this.populate = () => this.element.innerHTML = this.value;
 };
 
-export default Box;
+export default HTML;

@@ -33,8 +33,10 @@ const Internals = function( params )
 {
     const self = this;
     const delim = ".";
-    const columns = new Map();
     const data = {};
+
+    let columns = new Map();
+    let debug = false;
 
     const Detail = function( params )
     {
@@ -42,9 +44,12 @@ const Internals = function( params )
         this.widget = params.widget;
         this.source = params.source || self;
 
-        this.key = this.source.config.primaryKey;
-        this.record = this.widget.config.record;
-        this.value = this.record[ this.key ];
+        if ( this.widget )
+        {
+            this.key = this.source.config.primaryKey || this.widget.attributes.id;
+            this.record = this.widget.config.record;
+            this.value = this.record[ this.key ];
+        }
     };
 
     this.config = {};
@@ -108,8 +113,11 @@ const Internals = function( params )
             let detail = new Detail( params );
             let event = new CustomEvent( this.attributes.uuid, { detail: detail } );
 
-            this.element.dispatchEvent( event );
-            this.set.config( "value", detail.value );
+            if ( detail.widget )
+            {
+                this.element.dispatchEvent( event );
+                this.set.config( "value", detail.value );
+            }
         },
         receive: ( params ) =>
         {
@@ -127,28 +135,19 @@ const Internals = function( params )
     this.get =
     {
         bbox: ( element ) => ( element || this.element ).getBoundingClientRect(),
-        collection: async ( name ) => 
-        {
-            let object = await t2.db.tx.retrieve( name );
-            
-            data.raw = object.data;
-            data.array = data.raw ? [ ...data.raw ] : [];
+        collection: async ( name ) =>
+        { 
+            let result = await t2.db.tx.retrieve( name );
 
-            this.set.config( "count", this.config.primitive ? 0 : data.array.length );
+            this.set.config( "dataset", true );
 
-            return data.array;
+            return result.data;
         },
         column: ( key ) => columns.get( key ),
         copy: () => [ ...data.array ],
-        count: () =>
-        {
-            let count = this.config.primitive ? 0 : data.array.length;
-            
-            this.set.config( "count", count );
-            
-            return count;
-        },
+        count: () => data.array.length,
         data: () => data.array,
+        html: async ( src ) => await ( await fetch( src ) ).text(),
         path: () => this.attributes.path.join( delim ),
         schema: () => Object.fromEntries( columns ),
         sort: () =>
@@ -158,11 +157,17 @@ const Internals = function( params )
 
             return column ? { direction: column.sort, key: column.key, type: column.type } : null;
         },
-        value: () => this.config.value,
+        value: () => this.config.values,
         widget:
         {
             by:
             {
+                child: ( id, global ) => 
+                {
+                    let map = global ? t2.widget.children : this.children;
+                        
+                    return map.get( id );
+                },
                 filter: ( filter, global ) =>
                 {
                     let map = global ? t2.widget.children : this.children;
@@ -178,6 +183,7 @@ const Internals = function( params )
                     }
                 },
                 id: ( id, global ) => this.get.widget.by.filter( { key: "id", value: id }, global ),
+                index: () => {}, // TODO:
                 path: ( path, global ) =>
                 {
                     let map = global ? t2.widget.children : this.children;
@@ -205,11 +211,10 @@ const Internals = function( params )
     this.set =
     {
         config: ( key, value ) => this.config[ key ] = value,
-        data: ( d ) => 
+        data: async ( d ) => 
         {
             data.raw = d;
-
-            this.set.upgrade();
+            data.array = data.raw ? [ ...data.raw ] : [];
         },
         detail: ( params ) =>
         {
@@ -239,23 +244,6 @@ const Internals = function( params )
                 }
             } );
         },
-        from:
-        {
-            columns: () => 
-            {
-                let records = [];
-                
-                columns.forEach( column =>
-                {
-                    let record = { id: column.key, label: column.label, [ column.key ]: column.key };
-                    
-                    records.push( record );
-                } );
-
-                this.set.source( () => records );
-            },
-            record: () => {}
-        },
         parent: ( parent ) => 
         {
             this.parent = parent;
@@ -264,17 +252,213 @@ const Internals = function( params )
         },
         path: () => 
         {
-            let id = this.attributes.id.split( delim );
+            let id = this.attributes.id.toString().split( delim );
 
             this.attributes.path = this.parent.attributes.path.concat( id );
         },
         source: async ( f ) => 
         {
-            this.refresh = f;
+            let pk = this.config.primaryKey || "value";
             
-            data.raw = await this.refresh();
+            // expected argument
+            if ( typeof f == "function" )
+                this.refresh = f;
+            // force to function
+            else
+                this.refresh = () => f;
 
-            this.set.config( "count", this.config.primitive ? 0 : data.raw.length );
+            const d = await this.refresh();
+            let data = d;
+
+            const Rules = function()
+            {
+                let normalized = [];
+
+                this.check =
+                {
+                    columns: ( d ) => 
+                    {
+                        let keys = Object.keys( self.get.schema() );
+                        let pass = !!keys.length;
+                        
+                        if ( !pass )
+                            throw( "columns must be added" );
+
+                        if ( d.every( record => !Object.keys( record ).find( key => keys.find( k => k == key ) ) ) )
+                            throw( `'${ keys }' cannot be found in record` );
+                        
+                        return pass;
+                    },
+                    dataset: () => !!self.config.dataset,
+                    primaryKey: ( d ) => 
+                    {
+                        if ( !self.config.primaryKey )
+                            throw( "primary key must be configured" );
+
+                        if ( d.every( record => !Object.keys( record ).find( key => key == self.config.primaryKey ) ) )
+                            throw( `'${ self.config.primaryKey }' cannot be found in record` );
+                        
+                        return !!self.config.primaryKey;
+                    }
+                };
+                
+                this.each =
+                {
+                    object: ( d ) =>
+                    {
+                        let resolved = [];
+                        
+                        d.forEach( ( item, index ) =>
+                        {
+                            let pass = this.is.object( item );
+                            resolved.push( pass );
+
+                            if ( pass )
+                            {
+                                self.add.column( { key: pk, display: true } );
+
+                                normalized.push( { index: index, key: pk, [ pk ]: item[ pk ] } );
+                            }
+                        } );
+
+                        return resolved.every( pass => pass );
+                    },
+                    primitive: ( d ) =>
+                    {
+                        let resolved = [];
+                        
+                        d.forEach( ( item, index ) =>
+                        {
+                            let pass = this.is.primitive( item );
+                            resolved.push( pass );
+                            
+                            if ( pass )
+                            {
+                                self.add.column( { key: pk, display: true } );
+
+                                normalized.push( { index: index, key: pk, [ pk ]: item } );
+                            }
+                        } );
+
+                        return resolved.every( pass => pass );
+                    }
+                };
+
+                this.get =
+                {
+                    normalized: () => normalized
+                };
+                
+                this.is =
+                {
+                    array: ( d ) => Array.isArray( d ),
+                    object: ( d ) => ( typeof d == "object" ) && this.not.array( d ),
+                    primitive: ( d ) => d !== Object( d ),
+                    resolved: () => !!normalized.length
+                };
+
+                this.not =
+                {
+                    array: ( d ) => !this.is.array( d ),
+                    dataset: () => !this.check.dataset(),
+                    object: ( d ) => !this.is.object( d ),
+                    primaryKey: () => 
+                    {
+                        delete self.config.primaryKey;
+                        
+                        return true;
+                    }
+                };
+
+                this.to =
+                {
+                    array: ( d ) => 
+                    {
+                        data = Object.values( d );
+
+                        return !!data.length;
+                    },
+                    object: ( d ) =>
+                    {
+                        self.add.column( { key: pk, display: true } );
+                        
+                        normalized.push( { index: 0, key: pk, [ pk ]: d } );
+
+                        return this.is.resolved();
+                    },
+                    unchanged: ( d ) => 
+                    {
+                        normalized = d.map( ( record, index ) => Object.assign( record, { index: index, key: pk } ) );
+ 
+                        return this.is.resolved();
+                    }
+                };
+
+                this.reset = () =>
+                { 
+                    columns.delete( "value" );
+                    data = d;
+                    normalized = [];
+                };
+            };
+
+            let rules = new Rules();
+
+            let checks =
+            {
+                // primitive
+                0: { desc: "data is not an array. data is a primitive. data to object. data to array.", rules: [ rules.not.array, rules.is.primitive, rules.to.object ] },
+                // array
+                1: { desc: "data is an array. elements are primitives.", rules: [ rules.is.array, rules.each.primitive ] },
+                2: { desc: "data is an array. elements are objects. check not from database. check primary key.", rules: [ rules.is.array, rules.each.object, rules.not.dataset, rules.check.primaryKey ] },
+                3: { desc: "data is an array. elements are objects. check if from database. check columns. check primary key, do not alter.", rules: [ rules.is.array, rules.check.dataset, rules.check.columns, rules.check.primaryKey, rules.to.unchanged ] }, // from database
+                // object
+                4: { desc: "data is an object. set to an array. elements are primitives. primary key is undefined.", rules: [ rules.is.object, rules.to.array, rules.each.primitive, rules.not.primaryKey ] },
+                5: { desc: "data is an object. set to an array. element is an object. primary key is defined.", rules: [ rules.is.object, rules.to.array, rules.each.object, rules.check.primaryKey ] },
+            };
+
+            debug = false /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+            if ( debug )
+                console.log( self.attributes.class, "input", d );
+
+            for ( let check in checks )
+            {
+                let obj = checks[ check ];
+                let outcome = [];
+                
+                // check each rule. break if failed.
+                for ( let rule of obj.rules )
+                {
+                    let pass = rule( data );
+                    outcome.push( pass );
+
+                    if ( !pass )
+                        break;
+                }
+
+                // every rule passed?
+                let resolved = outcome.every( outcome => outcome );
+
+                if ( resolved )
+                {
+                    // get, set and return the normalized data
+                    const output = rules.get.normalized();
+                    
+                    if ( debug )
+                    {
+                        console.warn( check, obj.desc, outcome, resolved );
+                        console.log( "output", ...output );
+                    }
+
+                    self.set.data( output );
+
+                    return output;
+                }
+
+                // or else next check routine
+                rules.reset();
+            }
         },
         total: ( key ) =>
         {
@@ -289,21 +473,7 @@ const Internals = function( params )
             if ( column.total )
                 column.total.value = calculate[ column.total.calculation ]( column.values );
         },
-        upgrade: () =>
-        {
-            // upgrade array elements to object
-            if ( typeof data.raw[ 0 ] !== "object" )
-            { 
-                if ( !this.config.primitive )
-                {
-                    data.array = data.raw.map( record => { return { [ this.config.primaryKey ]: record } } );
-                }
-            }
-            else
-            {
-                data.array = [ ...data.raw ];
-            }
-        }
+        value: () => this.element.innerHTML = this.value
     };
 
     this.sort =

@@ -18,41 +18,52 @@ const Carousel = function( params )
         for ( let column in schema )
         {
             let config = schema[ column ];
-                config.display = !!config.primaryKey;
 
-            if ( config.display )
+            if ( config.display && record[ config.key ] )
             {
-                let load = async () =>
+                let load = async ( index ) =>
                 {      
                     let widget = await this.add.widget( { id: record[ config.key ], path: params.path, widget: config.widget, config: config, record: record } );
-                        widget.set.source( () => t2.formats[ config.format ]( record[ config.key ] ) );
-                        widget.set.config( "record", record );
+                        widget.set.source( config.source ? async () => await config.source() : () => t2.formats[ config.format ]( record[ config.key ] ) );
                         widget.set.element( carousel );
                         widget.add.css( "center" );
                         widget.add.css( "side" );
+                        widget.add.css( "translucent" );
                         widget.add.css( "border" );
                         widget.add.css( "round" );
                         widget.element.style.transform = `${ orientations.rotate }( ${ calculations.angle * index }deg ) ${ orientations.translate }( ${ calculations.radius }px )`;
 
-                    config.classes.forEach( cls => widget.add.css( cls ) );
+                        widget.set.config( "index", index );
+                        widget.set.config( "record", record );
 
-                    index++;
+                    config.classes.forEach( cls => widget.add.css( cls ) );
 
                     return widget;
                 };
 
-                fulfill.add( load() );
+                fulfill.add( load( index ) );
+
+                index++;
             }
         }
     };
 
     this.handlers.rotate = ( e ) =>
     {  
-        let keys = Array.from( this.children.keys() );
+        let keys = Array.from( Object.keys( schema ) );
         let index = keys.indexOf( e.detail.value );
+        let widget = e.detail.widget;
+            widget.add.css( "noclick" );
+
+        previous?.remove.css( "noclick" );
+        previous = widget;
         
         carousel.style.transform = `${ orientations.translate }( ${ -calculations.radius }px ) ${ orientations.rotate }( ${ -calculations.angle * index }deg )`;
     };
+
+    this.handlers.click = ( args ) => this.event.send( { channel: args.channel || "select", widget: args.widget } );
+
+    this.set.active = ( widget ) => this.handlers.click( { channel: "activate", widget: widget } );
 
     // widget specific
     let array;
@@ -64,14 +75,11 @@ const Carousel = function( params )
     let calculations = {};
     let orientations = {};
 
-    this.set.config( "readonly", true );
-
     this.render = async () =>
     {
         schema = this.get.schema();
         
-        array = await this.refresh();
-        this.set.data( array );
+        array = await this.get.data();
 
         this.add.css( "fit" );
 
@@ -107,6 +115,10 @@ const Carousel = function( params )
         carousel.style.transform = `${ orientations.translate }( ${ -calculations.radius }px )`;
     
         await this.populate();
+
+        this.event.receive( { channel: [ "activate", "select" ], source: this, handler: this.handlers.rotate } );
+
+        return this;
     };
 
     this.populate = async () =>
@@ -122,8 +134,8 @@ const Carousel = function( params )
         let widgets = await fulfill.resolve();
             widgets.forEach( widget => completed.add( widget.render() ) );
 
-        //const rendered = await completed.resolve();
-        //    rendered.forEach( ( widget, index ) => completed.add( widget.add.handler( { event: "click", handler: this.handlers.click, record: array[ index ] } ) ) );
+        const rendered = await completed.resolve();
+            rendered.forEach( ( widget, index ) => completed.add( widget.add.handler( { event: "click", handler: this.handlers.click, record: array[ index ] } ) ) );
     };
 };
 

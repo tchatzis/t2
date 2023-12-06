@@ -206,7 +206,7 @@ const Panel = function( module, array, source )
             table.addColumn( { 
                 input: { name: "price", type: "number", step: 0.0001 }, 
                 cell: { css: { class: "value" }, display: 4, modes: [ "read", "edit" ] },
-                format: [ "dollar" ],
+                format: [ "precision" ],
                 formula: ( args ) => 
                 {
                     args.totals[ args.column ] = 0; 

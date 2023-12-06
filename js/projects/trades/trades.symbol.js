@@ -102,6 +102,21 @@ const Tabs = function( module )
                 format: [ "uppercase" ] 
             } );
             matrix.addRow( { 
+                input: { name: "low", type: "number" }, 
+                cell: { css: { class: "sell" }, display: 4, modes: [ "read", "edit" ] },
+                format: [ "number" ] 
+            } );
+            matrix.addRow( { 
+                input: { name: "high", type: "number" }, 
+                cell: { css: { class: "buy" }, display: 4, modes: [ "read", "edit" ] },
+                format: [ "number" ] 
+            } );
+
+            matrix.addRow( { 
+                input: { name: "BUY", type: "text" }, 
+                cell: { css: {}, display: 4, modes: [ "read" ] },
+                format: [ "none" ] } );
+            matrix.addRow( { 
                 input: { name: "buy qty", type: "number" }, 
                 cell: { css: {}, display: 4, modes: [ "read" ] },
                 format: [ "number" ] } );
@@ -113,6 +128,11 @@ const Tabs = function( module )
                 input: { name: "buy value", type: "number" }, 
                 cell: { css: {}, display: 4, modes: [ "read" ] },
                 format: [ "number" ] } );
+
+            matrix.addRow( { 
+                input: { name: "DIV", type: "text" }, 
+                cell: { css: {}, display: 4, modes: [ "read" ] },
+                format: [ "none" ] } );
             matrix.addRow( { 
                 input: { name: "div qty", type: "number" }, 
                 cell: { css: {}, display: 4, modes: [ "read" ] },
@@ -121,6 +141,11 @@ const Tabs = function( module )
                 input: { name: "dividend", type: "number" }, 
                 cell: { css: { class: "div" }, display: 4, modes: [ "read" ] },
                 format: [ "number" ] } ); 
+
+            matrix.addRow( { 
+                input: { name: "SELL", type: "text" }, 
+                cell: { css: {}, display: 4, modes: [ "read" ] },
+                format: [ "none" ] } );
             matrix.addRow( { 
                 input: { name: "sell qty", type: "number" }, 
                 cell: { css: {}, display: 4, modes: [ "read" ] },
@@ -133,6 +158,36 @@ const Tabs = function( module )
                 input: { name: "sell value", type: "number" }, 
                 cell: { css: {}, display: 4, modes: [ "read" ] },
                 format: [ "number" ] } );
+
+            matrix.addRow( { 
+                input: { name: "LAST TRANSACTION", type: "text" }, 
+                cell: { css: {}, display: 4, modes: [ "read" ] },
+                format: [ "none" ] } );
+            matrix.addRow( { 
+                input: { name: "last action", type: "text" }, 
+                cell: { css: { value: "last action" }, display: 4, modes: [ "read", "edit" ] },
+                format: [ "uppercase" ] 
+            } );
+            matrix.addRow( { 
+                input: { name: "last notes", type: "text" }, 
+                cell: { css: { value: "last action" }, display: 4, modes: [ "read", "edit" ] },
+                format: [ "uppercase" ] 
+            } );
+            matrix.addRow( { 
+                input: { name: "last qty", type: "number" }, 
+                cell: { css: {}, display: 4, modes: [ "read", "edit" ] },
+                format: [ "number" ] 
+            } );
+            matrix.addRow( { 
+                input: { name: "last price", type: "number" }, 
+                cell: { css: {}, display: 4, modes: [ "read", "edit" ] },
+                format: [ "number" ] 
+            } );
+
+            matrix.addRow( { 
+                input: { name: "POSITION", type: "text" }, 
+                cell: { css: {}, display: 4, modes: [ "read" ] },
+                format: [ "none" ] } );
             matrix.addRow( { 
                 input: { name: "qty", type: "number" }, 
                 cell: { css: {}, display: 4, modes: [ "read" ] },
@@ -148,31 +203,6 @@ const Tabs = function( module )
                 cell: { css: gain, display: 4, modes: [ "read" ] },
                 format: [ "number" ]
             } );   
-            matrix.addRow( { 
-                input: { name: "low", type: "number" }, 
-                cell: { css: { class: "sell" }, display: 4, modes: [ "read", "edit" ] },
-                format: [ "number" ] 
-            } );
-            matrix.addRow( { 
-                input: { name: "high", type: "number" }, 
-                cell: { css: { class: "buy" }, display: 4, modes: [ "read", "edit" ] },
-                format: [ "number" ] 
-            } );
-            /*matrix.addRow( { 
-                input: { name: "trade", type: "number" }, 
-                cell: { css: {}, display: 4, modes: [ "read", "edit" ] },
-                format: [ "number" ] 
-            } );*/
-            matrix.addRow( { 
-                input: { name: "spread", type: "number" }, 
-                cell: { css: {}, display: 4, modes: [ "read", "edit" ] },
-                format: [ "number" ] 
-            } );
-            matrix.addRow( { 
-                input: { name: "last price", type: "number" }, 
-                cell: { css: {}, display: 4, modes: [ "read", "edit" ] },
-                format: [ "number" ] 
-            } );
             matrix.addRow( { 
                 input: { name: "current value", type: "number" }, 
                 cell: { css: gain, display: 4, modes: [ "read" ] },

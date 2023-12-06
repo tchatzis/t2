@@ -9,13 +9,11 @@ const Text = function( params )
     Internals.call( this, params );
 
     // widget specific
-    let text;
-
     this.set.config( "primitive", true );
 
     this.render = async () =>
     {
-        text = await this.refresh();
+        this.value = await this.refresh();
 
         this.populate();
 
@@ -24,7 +22,7 @@ const Text = function( params )
 
     this.populate = () =>
     {
-        this.element.textContent = text;
+        this.element.textContent = this.value;
     };
 };
 

@@ -95,6 +95,7 @@ const Panel = function( module, array, symbols )
         let display = !t2.common.round( qty, 4 ) ? "show" : "hidden";
         let value = data.reduce( ( acc, record ) => acc + ( record.qty * record.price * record.sign ), 0 );
         let gain = last.price * qty + value;
+        let loser = gain < 0 ? "show" : "hidden"; 
         let gainCSS = gain > 0 ? "buy" : "sell";
         let output = 
         [
@@ -114,7 +115,8 @@ const Panel = function( module, array, symbols )
         ];
 
         this.classList.add( status );
-        this.classList.add( display )
+        this.classList.add( display );
+        this.classList.add( loser );
 
         for ( let obj of output )
         {        

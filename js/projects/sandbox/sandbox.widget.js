@@ -67,23 +67,54 @@ const Template = function( module )
             table.event.receive( { channel: [ "activate", "select" ], source: menu, handler: ( e ) => table.set.highlight( { key: "id", value: e.detail.record.id } ) } );*/
 
         /*let carousel = await root.add.widget( { id: "carousel", widget: "carousel" } );  
-            carousel.add.column( { key: "name", primaryKey: true } );    
+            carousel.add.column( { key: "zero", display: true, source: () => carousel.get.html( "http://127.0.0.1:8887/static/" ), widget: "html" } ); 
+            carousel.add.column( { key: "one", display: true } );   
+            carousel.add.column( { key: "two", display: true } );
+            carousel.add.column( { key: "three", display: true } );
             carousel.set.config( "orientation", "vertical" );
             // data
-            await carousel.set.source( menu.refresh );
+            carousel.set.from.columns();
+            //await carousel.set.source( menu.refresh );
             // draw
             await carousel.render();
             // events
-            carousel.event.receive( { channel: [ "activate", "select" ], source: menu, handler: carousel.handlers.rotate } );
+            //carousel.event.receive( { channel: [ "activate", "select" ], source: menu, handler: carousel.handlers.rotate } );
+            carousel.set.active( carousel.get.widget.by.id( "one" ) );
         
         menu.set.active( menu.get.widget.by.id( 3 ) );*/
 
-        let accordion = await root.add.widget( { id: "accordion", widget: "accordion" } );
-            accordion.add.column( { key: "one", display: true, classes: [ "side" ], widget: "box" } );
-            accordion.add.column( { key: "two", display: true, classes: [ "side" ], widget: "box" } );
-            accordion.add.column( { key: "three", display: true, classes: [ "side" ], widget: "box" } );
-            accordion.add.column( { key: "four", display: true, classes: [ "side" ], widget: "box" } );
+        let accordion = await root.add.widget( { id: "accordion", widget: "carousel" } );
+
+        let data =
+        {
+            // primitive
+            0: () => "test", 
+            // array
+            1: () => [ "one", "two", "three", "four" ], 
+            2: () => [ { id: 0, name: "zero" }, { id: 1, name: "one" }, { id: 2, name: "two" }, { id: 3, name: "three" }, { id: 4, name: "four" } ],
+            3: () => accordion.get.collection( "deposits" ),
+            // object
+            4: { one: 1, two: 2, three: 3, four: 4 },
+            5: { a: { key: 1, name: "hundred", value: 100 }, b: { key: 2, name: "twohunny", value: 200 } }
+        };
+
+            // schema    
+            //accordion.add.column( { key: "value", display: true, classes: [ "disabled" ], source: () => accordion.get.html( "http://127.0.0.1:8887/static/" ), widget: "html" } );
+            //accordion.add.column( { key: "name", display: true, classes: [ "link" ], widget: "box", primaryKey: true } );
+            //accordion.add.column( { key: "value", display: true, classes: [ "link" ], widget: "box" } );
+            accordion.add.column( { key: "id", display: false, classes: [ "side" ], widget: "box", primaryKey: true } );
+            //accordion.add.column( { key: "amount", display: true, classes: [ "link" ], widget: "box" } );
+            //accordion.add.column( { key: "datetime", display: true } );
+            accordion.set.config( "orientation", "horizontal" );
+            //accordion.set.config( "primaryKey", "name" );
+            //accordion.set.config( "dataset", true );
+            // data
+            await accordion.set.source( data[ 1 ] );
+            // draw
             await accordion.render();
+            // events
+            accordion.set.active( accordion.get.widget.by.id( 2 ) );
+            //console.log( accordion.get.widget.by.child( "id.2" ), accordion.get.widget.by.id( 2 ) )
     }; 
 
 };

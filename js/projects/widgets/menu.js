@@ -19,24 +19,37 @@ const Menu = function( params )
 
         for ( let column in schema )
         {
+            const group = document.createElement( "div" );
+            link.appendChild( group );
+            
             let config = schema[ column ];
-                config.display = !!config.primaryKey;
+            let value = record[ config.key ];// || record.key
+            console.log( config.key, record.key )
 
             if ( config.display )
             {
-                let load = async () =>
+                let load = async ( index ) =>
                 {      
-                    let widget = await this.add.widget( { id: record[ config.key ], path: params.path, widget: config.widget, config: config, record: record } );
-                        widget.set.source( () => t2.formats[ config.format ]( record[ config.key ] ) );
+                    let output = ~[ "icon", "image", "html", "text" ].indexOf( config.widget ) ? config.widget : "text";
+
+                    let widget = await this.add.widget( { id: `${ column }.${ index }`, path: params.path, widget: output, config: config, record: record } );
+                        widget.set.source( () => t2.formats[ config.format ]( value ) );
                         widget.set.config( "record", record );
-                        widget.set.element( link );
+                        widget.set.element( group );
+
+                        widget.set.config( "index", index );
+                        widget.set.config( "primitive", true );
+                        widget.add.css( "link" );
+                        widget.remove.css( "none" );
 
                     config.classes.forEach( cls => widget.add.css( cls ) );
 
                     return widget;
                 };
 
-                fulfill.add( load() );
+                fulfill.add( load( index ) );
+
+                index++;
             }
         }
     };
@@ -52,6 +65,7 @@ const Menu = function( params )
     // widget specific
     let array;
     let fulfill;
+    let index = 0;
     let previous = null;
     let schema;
     
@@ -59,11 +73,12 @@ const Menu = function( params )
     {
         schema = this.get.schema();
     
-        array = await this.refresh();
-        this.set.data( array );
+        array = await this.get.data();
 
         if ( this.config.orientation )
+        {
             this.add.css( this.config.orientation );
+        }
 
         await this.populate();
 

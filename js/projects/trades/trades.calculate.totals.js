@@ -42,8 +42,13 @@ async function totals( module )
             object.data[ action ].low   = Math.min.apply( null, prices );
             object.data[ action ].high   = Math.max.apply( null, prices );
 
-            if ( last )
+            if ( last && last.price && last.qty )
+            {
+                output.data[ "last action" ] = last.action;
+                output.data[ "last notes" ] = last.notes;
+                output.data[ "last qty" ] = round( last.qty );
                 output.data[ "last price" ] = round( last.price );
+            }
 
             if ( action !== "DIV" )
             {

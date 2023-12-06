@@ -9,18 +9,16 @@ const Edit = function( params )
     Internals.call( this, params );
 
     // widget specific
-    let text;
-
     this.set.config( "primitive", true );
 
     this.render = async () =>
     {
-        text = await this.refresh();
+        this.value = await this.refresh();
         
         // used to provide formatting in table
         let ghost = document.createElement( "div" );
             ghost.style.visibility = "hidden";
-            ghost.textContent = text;
+            ghost.textContent = this.value;
 
         this.element.parentNode.appendChild( ghost );
         this.element.setAttribute( "contenteditable", "" );
@@ -33,7 +31,7 @@ const Edit = function( params )
 
     this.populate = () =>
     {
-        this.element.textContent = text;
+        this.element.textContent = this.value;
     };
 
     this.handlers = () =>
@@ -51,10 +49,10 @@ const Edit = function( params )
                 {
                     e.preventDefault();
     
-                    this.element.textContent = text;
+                    this.element.textContent = this.value;
                 }
     
-                if ( this.element.textContent === text )
+                if ( this.element.textContent === this.value )
                     this.element.classList.remove( "dirty" );
                 else
                     this.element.classList.add( "dirty" );
@@ -72,7 +70,7 @@ const Edit = function( params )
             {
                 e.preventDefault();
     
-                this.element.textContent = text;
+                this.element.textContent = this.value;
                 this.element.blur();
                 this.element.classList.remove( "dirty" );
             }

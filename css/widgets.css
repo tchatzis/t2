@@ -123,6 +123,20 @@
     position: relative;
 }
 
+.side
+{
+    background-color: black;
+    height: calc( 100% - 3em );
+    left: 0;
+    opacity: 1;
+    padding: 10px;
+    position: absolute;
+    top: 0;
+    width: calc( 100% - 2em );
+
+    transition: opacity 1s ease;
+}
+
 .p0
 {
     padding: 0;
@@ -149,4 +163,9 @@
     transform: scale( 1 );
 
     transition: transform 1s ease;
+}
+
+.translucent
+{
+    background-color:rgba( 16, 16, 16, 0.1 );
 }

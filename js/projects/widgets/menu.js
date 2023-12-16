@@ -24,7 +24,7 @@ const Menu = function( params )
             
             let config = schema[ column ];
             let value = record[ config.key ];// || record.key
-            console.log( config.key, record.key )
+            //console.log( config.key, record.key )
 
             if ( config.display )
             {
@@ -57,11 +57,10 @@ const Menu = function( params )
     this.handlers.click = ( args ) => this.event.send( { channel: args.channel || "select", widget: args.widget } );
 
     this.set.active = ( widget ) => this.handlers.click( { channel: "activate", widget: widget } );
-    this.set.inactive = ( widget ) => this.deactivate( { detail: { widget: widget } } );
+    this.set.inactive = ( widget ) => this.handlers.click( { channel: "deactivate", widget: widget } );
 
-    this.set.enabled = ( widget ) => this.enable( { detail: { widget: widget } } );
-    this.set.disabled = ( widget ) => this.disable( { detail: { widget: widget } } );
-
+    this.set.enabled = ( widget ) => this.handlers.click( { channel: "enable", widget: widget } );
+    this.set.disabled = ( widget ) => this.handlers.click( { channel: "disable", widget: widget } );
     // widget specific
     let array;
     let fulfill;
@@ -82,7 +81,10 @@ const Menu = function( params )
 
         await this.populate();
 
-        this.event.receive( { channel: [ "activate", "select" ], source: this, handler: this.activate } );
+        this.event.receive( { channel: [ "activate", "select" ], source: this, handler: activate } );
+        this.event.receive( { channel: [ "deactivate" ], source: this, handler: deactivate } );
+        this.event.receive( { channel: [ "enable" ], source: this, handler: enable } );
+        this.event.receive( { channel: [ "disable" ], source: this, handler: disable } );
 
         return this;
     };
@@ -104,32 +106,36 @@ const Menu = function( params )
             rendered.forEach( ( widget, index ) => completed.add( widget.add.handler( { event: "click", handler: this.handlers.click, record: array[ index ] } ) ) );
     };
 
-    this.activate = ( e ) =>
+    const activate = ( e ) =>
     {
         let widget = e.detail.widget;
             widget.add.css( "active" );
 
-        this.set.inactive( previous );
+        e.detail.widget = previous;
+
+        deactivate( e );
+
+        e.detail.widget = widget;
 
         previous = widget;
     };
 
-    this.deactivate = ( e ) =>
+    const deactivate = ( e ) =>
     {
         let widget = e.detail.widget;
             widget?.remove.css( "active" );
     };
 
-    this.enable = ( e ) =>
+    const enable = ( e ) =>
     {
         let widget = e.detail.widget;
-            widget.remove.css( "disabled" );
+            widget?.remove.css( "disabled" );
     };
 
-    this.disable = ( e ) =>
+    const disable = ( e ) =>
     {
         let widget = e.detail.widget;
-            widget.add.css( "disabled" );
+            widget?.add.css( "disabled" );
     };
 };
 

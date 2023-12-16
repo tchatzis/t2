@@ -100,12 +100,12 @@ const Accordion = function( params )
 
         await this.populate();
 
-        this.event.receive( { channel: [ "activate", "select" ], source: this, handler: this.activate } );
+        this.event.receive( { channel: [ "activate", "select" ], source: this, handler: activate } );
 
         return this;
     };
 
-    this.populate = async function()
+    this.populate = async () =>
     {
         fulfill = new t2.common.Fulfill();
 
@@ -122,7 +122,7 @@ const Accordion = function( params )
             rendered.forEach( ( widget, index ) => completed.add( widget.add.handler( { event: "click", handler: this.handlers.click, record: array[ index ] } ) ) );
     };
 
-    this.activate = ( e ) =>
+    const activate = ( e ) =>
     {
         let widget = e.detail.widget;
         let index = widget.config.index;

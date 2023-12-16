@@ -37,6 +37,7 @@ const Tabs = function( module )
             await panels.add( "Module", { id: "split", label: "split", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.fix.split.js" } } );
             await panels.add( "Module", { id: "rename", label: "rename", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.fix.rename.js" } } );
             await panels.add( "Module", { id: "repair", label: "repair", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.fix.repair.js" } } );
+            await panels.add( "Module", { id: "normalize", label: "normalize", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.fix.normalize.js" } } );
             panels.setControls( 
             { 
                 breadcrumbs: { index: 2, component: t2.navigation.components.breadcrumbs },

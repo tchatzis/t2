@@ -39,7 +39,7 @@ const Template = function( module )
 
         
 
-        /*let menu = await root.add.widget( { id: "menu", widget: "menu" } ); 
+        let menu = await root.add.widget( { id: "menu", widget: "menu" } ); 
             menu.add.column( { key: "name", display: true, format: "capitalize", classes: [ "link" ], primaryKey: true } );
             menu.add.column( { key: "id", display: false, format: "none", classes: [ "tab" ] } );
             menu.set.config( "orientation", "horizontal" );
@@ -48,7 +48,7 @@ const Template = function( module )
             // draw
             await menu.render();
             // link stuff
-            menu.set.disabled( menu.get.widget.by.id( 4 ) );*/   
+            menu.set.disabled( menu.get.widget.by.index( 4 ) ); 
                  
 
         /*let table = await root.add.widget( { id: "table", widget: "table" } );
@@ -83,7 +83,28 @@ const Template = function( module )
         
         menu.set.active( menu.get.widget.by.id( 3 ) );*/
 
-        let accordion = await root.add.widget( { id: "accordion", widget: "carousel" } );
+        /*const knob = document.createElement( "div" );
+            knob.style.borderRadius = "50%";
+            knob.style.borderBottomLeftRadius = "2%";
+            knob.style.border = "1px solid silver";
+            knob.style.height = "10em";
+            knob.style.width = knob.style.height;
+
+        root.element.appendChild( knob );
+
+
+
+        const bubble = document.createElement( "div" );
+            bubble.style.backgroundColor = "#FFFFCC";
+            bubble.style.borderRadius = "2em";
+            bubble.style.borderBottomLeftRadius = "2%";
+            //bubble.style.border = "1em solid silver";
+            bubble.style.height = "10em";
+            bubble.style.width = "20em";
+
+        root.element.appendChild( bubble );*/
+
+        /*let accordion = await root.add.widget( { id: "accordion", widget: "accordion" } );
 
         let data =
         {
@@ -102,7 +123,7 @@ const Template = function( module )
             //accordion.add.column( { key: "value", display: true, classes: [ "disabled" ], source: () => accordion.get.html( "http://127.0.0.1:8887/static/" ), widget: "html" } );
             //accordion.add.column( { key: "name", display: true, classes: [ "link" ], widget: "box", primaryKey: true } );
             //accordion.add.column( { key: "value", display: true, classes: [ "link" ], widget: "box" } );
-            accordion.add.column( { key: "id", display: false, classes: [ "side" ], widget: "box", primaryKey: true } );
+            //accordion.add.column( { key: "id", display: false, classes: [ "side" ], widget: "box", primaryKey: true } );
             //accordion.add.column( { key: "amount", display: true, classes: [ "link" ], widget: "box" } );
             //accordion.add.column( { key: "datetime", display: true } );
             accordion.set.config( "orientation", "horizontal" );
@@ -113,9 +134,17 @@ const Template = function( module )
             // draw
             await accordion.render();
             // events
-            accordion.set.active( accordion.get.widget.by.id( 2 ) );
-            //console.log( accordion.get.widget.by.child( "id.2" ), accordion.get.widget.by.id( 2 ) )
+            accordion.set.active( accordion.get.widget.by.index( 2 ) );
+            //console.log( accordion.get.widget.by.child( "id.2" ), accordion.get.widget.by.id( 2 ) )*/
+
+
+        const receiver =  await root.add.widget( { id: "receiver", widget: "receiver" } );
+            receiver.event.receive( { channel: [ "activate", "select" ], source: menu, handler: receiver.add.log } );
+            //receiver.event.receive( { channel: [ "select" ], source: accordion, handler: receiver.add.log } );
+            await receiver.render();
     }; 
+
+    
 
 };
 

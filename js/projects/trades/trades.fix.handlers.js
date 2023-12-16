@@ -16,10 +16,18 @@ const handlers =
         } );
     },   
     
-    normalize: function( table, data )
+    normalize: async function( table, data )
     {
-        console.log( table, data )
-        //data.forEach( async ( record ) => await t2.db.tx.update( table, record.id, new Data( record ) ) );
+        let message = new Message();
+        let fulfill = new t2.common.Fulfill();
+
+        await message.init();
+        
+        data.forEach( async ( record ) => fulfill.add( t2.db.tx.update( table, Number( record.id ), new Data( record ) ) ) );
+
+        let resolved = await fulfill.resolve();   
+
+        message.set( `${ data.length } records normalized` )
     },
 
     rename: async function( table, data, params )

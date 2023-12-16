@@ -186,6 +186,7 @@ const Component = function( module )
         let chart = self.axes.chart;
         let config = self.axes.chart;
         let current;
+        let last;
 
         self.ctx.beginPath();
         self.ctx.fillStyle = chart[ x ].config.color;
@@ -238,7 +239,7 @@ const Component = function( module )
     {
         let chart = self.axes.chart;
 
-        data.forEach( record => 
+        data.forEach( ( record, r ) => 
         {
             let { offset, pixels, valid } = configuration( chart, record, r );
 
@@ -265,6 +266,33 @@ const Component = function( module )
 
         self.ctx.stroke();
     };   
+    plot.peak = function( data )
+    {
+        let chart = self.axes.chart;
+        let size = chart[ x ].config.axes[ x ].size || Math.floor( chart[ x ].pixels / 2 ) - 1;
+
+        self.ctx.fillStyle = chart[ x ].config.color;
+        self.ctx.strokeWidth = 1;
+
+        data.forEach( ( record, r ) => 
+        {
+            let { offset, pixels, valid } = configuration( chart, record, r );
+
+            let value = record[ chart[ x ].key ];
+
+            let coords = [];
+                coords.push( pixels[ x ] - size );
+                coords.push( pixels[ y ] );
+                coords.push( size * 2 );
+                coords.push( 2 );
+
+            self.ctx.beginPath();
+            self.ctx.rect( ...coords );
+            if ( chart[ x ].settings.colored?.data )
+                self.ctx.fillStyle = t2.formats.hsl( value );
+            self.ctx.fill();
+        } );
+    }; 
     plot.step = function( data )
     {
         let chart = self.axes.chart;

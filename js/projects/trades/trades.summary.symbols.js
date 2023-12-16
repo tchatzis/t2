@@ -49,8 +49,8 @@ const Panel = function( module )
 
             let data = {};
                 data.symbol = symbol;
-                data.qty = set.map( record => record.qty * -record.sign ).reduce( sum, 0 );
-                data.value = set.map( record => record.value * record.sign ).reduce( sum, 0 );
+                data.qty = set.map( record => record.qty ).reduce( sum, 0 );// * -record.sign
+                data.value = set.map( record => record.value ).reduce( sum, 0 );// * record.sign
 
             array.push( data );
         } );

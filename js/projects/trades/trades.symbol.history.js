@@ -29,7 +29,7 @@ const Panel = function( module )
     {
         await t2.navigation.update( 
         [ 
-            { id: "submenu", functions: [ { ignore: "clear" }, { clear: null } ] }, 
+            { id: "submenu", functions: [ { ignore: "clear" } ] }, 
             { id: "subcontent", functions: [ { ignore: "clear" } ] },
             { id: "submargin", functions: [ { ignore: "clear" } ] },
             { id: "menu", functions: [ { ignore: "clear" } ] },

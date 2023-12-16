@@ -155,12 +155,12 @@ const Tabs = function( module )
             let set = transactions.filter( record => record.symbol == symbol ).filter( record => record.action !== "DIV" );
 
             let div = dividends.filter( record => record.symbol == symbol );
-            let divs = round( div.map( record => record.qty * record.sign ).reduce( sum, 0 ) );
+            let divs = round( div.map( record => record.qty ).reduce( sum, 0 ) );// * record.sign
 
             let data = {};
                 data.symbol = symbol;
-                data.qty = round( set.map( record => record.qty * record.sign ).reduce( sum, 0 ) ) - divs;
-                data.value = set.map( record => record.value * record.sign ).reduce( sum, 0 );
+                data.qty = round( set.map( record => record.qty ).reduce( sum, 0 ) ) - divs;// * record.sign
+                data.value = set.map( record => record.value ).reduce( sum, 0 );// * record.sign
 
             if ( data.qty )
             {
@@ -240,8 +240,8 @@ const Tabs = function( module )
             let data = {};
                 data.transactions = set.length;
                 data.symbol = symbol;
-                data.qty = set.map( record => record.qty * -record.sign ).reduce( sum, 0 );
-                data.value = set.map( record => record.value * record.sign ).reduce( sum, 0 );
+                data.qty = set.map( record => record.qty ).reduce( sum, 0 );// * -record.sign
+                data.value = set.map( record => record.value ).reduce( sum, 0 );// * record.sign
 
             total += data.value;
             

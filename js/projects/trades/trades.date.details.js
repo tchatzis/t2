@@ -55,9 +55,9 @@ const Panel = function( module, array, symbols )
             let data = {};
                 data.transactions = _array.transactions;
                 data.change = _array.qty;
-                data.qty = records.map( record => record.qty * -record.sign ).reduce( sum, 0 );
+                data.qty = records.map( record => record.qty ).reduce( sum, 0 );// * -record.sign
                 data.value = _array.value;
-                data.gain = records.map( record => record.value * record.sign ).reduce( sum, 0 );
+                data.gain = records.map( record => record.value ).reduce( sum, 0 );// * record.sign
 
             return data;
         }
@@ -88,12 +88,12 @@ const Panel = function( module, array, symbols )
         let data = records.filter( data => data[ "action" ] !== "DIV" ).sort( sort );
         let [ last ] = data.slice( -1 );
         let divs = records.filter( data => data[ "action" ] == "DIV" );
-        let dividends = divs.reduce( ( acc, record ) => acc + ( record.qty * record.price * record.sign ), 0 );
-        let div = divs.reduce( ( acc, record ) => acc + ( record.qty * record.sign ), 0 );
-        let qty = data.reduce( ( acc, record ) => acc - ( record.qty * record.sign ), 0 ) + div;
+        let dividends = divs.reduce( ( acc, record ) => acc + ( record.qty * record.price ), 0 );// * record.sign
+        let div = divs.reduce( ( acc, record ) => acc + ( record.qty ), 0 );// * record.sign
+        let qty = data.reduce( ( acc, record ) => acc - ( record.qty ), 0 ) + div;// * record.sign
         let status = !!t2.common.round( qty, 4 ) ? "open" : "closed";
         let display = !!t2.common.round( qty, 4 ) ? "show" : "hidden";
-        let value = data.reduce( ( acc, record ) => acc + ( record.qty * record.price * record.sign ), 0 );
+        let value = data.reduce( ( acc, record ) => acc + ( record.qty * record.price ), 0 );// * record.sign
         let gain = last.price * qty + value;
         let gainCSS = gain > 0 ? "buy" : "sell";
         let output = 

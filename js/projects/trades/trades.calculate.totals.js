@@ -29,18 +29,17 @@ async function totals( module )
 
         module.data.actions.forEach( action => 
         {
-            let div = action == "DIV" ? 1 : -1;
             let _records = records.filter( record => ( record.action == action && record.brokerage == brokerage ) ).sort( sort );
             let prices = _records.map( record => record.price );
             
             object.data[ action ] = {};
             object.data[ action ].records = _records;
             object.data[ action ].transactions = _records.length;
-            object.data[ action ].qty   = round( _records.map( record => record.qty * record.sign * div ).reduce( sum, 0 ) );
-            object.data[ action ].value = round( _records.map( record => record.value * record.sign * div ).reduce( sum, 0 ) );
+            object.data[ action ].qty   = round( _records.map( record => record.qty ).reduce( sum, 0 ) );// * record.sign
+            object.data[ action ].value = round( _records.map( record => record.value ).reduce( sum, 0 ) );// * record.sign
             object.data[ action ].price = round( object.data[ action ].value / object.data[ action ].qty );
             object.data[ action ].low   = Math.min.apply( null, prices );
-            object.data[ action ].high   = Math.max.apply( null, prices );
+            object.data[ action ].high  = Math.max.apply( null, prices );
 
             if ( last && last.price && last.qty )
             {
@@ -60,13 +59,13 @@ async function totals( module )
         data.push( object );
 
         output.data[ "buy qty" ] = object.data.BUY.qty;
-        output.data[ "buy price" ] = round( object.data.BUY.value / object.data.BUY.qty );
+        output.data[ "buy price" ] = Math.abs( round( object.data.BUY.value / object.data.BUY.qty ) );
         output.data[ "buy value" ] = object.data.BUY.value;
         output.data[ "buy trades" ] = object.data.BUY.transactions; 
 
         output.data[ "sell qty" ] = object.data.SELL.qty;
-        output.data[ "sell price" ] = round( object.data.SELL.value / object.data.SELL.qty ) || 0;
-        output.data[ "sell value" ] = -object.data.SELL.value;
+        output.data[ "sell price" ] = Math.abs( round( object.data.SELL.value / object.data.SELL.qty ) ) || 0;
+        output.data[ "sell value" ] = object.data.SELL.value;
         output.data[ "sell trades" ] = object.data.SELL.transactions; 
 
         output.data[ "div qty" ] = object.data.DIV.qty;
@@ -83,24 +82,25 @@ async function totals( module )
         {
             output.data[ "trade" ] = round( object.data.TOTAL.value / object.data.TOTAL.qty );
             output.data[ "status" ] = "OPEN";
-            output.data[ "spread" ] = round( output.data[ "trade" ] - object.data.BUY.price );
-            output.data[ "trend" ] = round( ( output.data[ "last price" ] - output.data[ "trade" ] ) * object.data.TOTAL.qty );  
-            output.data[ "value" ] = round( object.data.TOTAL.value );
-            output.data[ "cost per share" ] = output.data[ "trade" ];
+            //output.data[ "spread" ] = round( output.data[ "trade" ] - object.data.BUY.price );
+            output.data[ "cost per share" ] = round( output.data[ "last price" ] + output.data[ "trade" ] );
+            output.data[ "trend" ] = round( output.data[ "cost per share" ] * object.data.TOTAL.qty );  
+            output.data[ "cost" ] = round( object.data.TOTAL.value );
+            
             output.data[ "current value" ] = object.data.TOTAL.qty * output.data[ "last price" ];
-            output.data[ "gain" ] = round( output.data[ "current value" ] - ( object.data.SELL.value + object.data.BUY.value ) );
-            output.data[ "percent" ] = round( ( output.data[ "gain" ] / object.data.BUY.value ) * 100 );
+            output.data[ "gain" ] = round( output.data[ "current value" ] + ( object.data.SELL.value + object.data.BUY.value ) );
+            output.data[ "percent" ] = round( ( output.data[ "gain" ] / Math.abs( object.data.BUY.value ) ) * 100 );
         }
         else
         {
-            output.data[ "trade" ] = object.data.BUY.price;
+            output.data[ "trade" ] = Math.abs( object.data.BUY.price );
             output.data[ "status" ] = "CLOSED";
-            output.data[ "spread" ] = round( object.data.SELL.price - object.data.BUY.price );
+            //output.data[ "spread" ] = round( object.data.SELL.price - object.data.BUY.price );
             output.data[ "trend" ] = 0;
             output.data[ "cost per share" ] = output.data[ "trade" ];
             output.data[ "current value" ] = object.data.TOTAL.qty * output.data[ "last price" ];
-            output.data[ "gain" ] = round( 0 - object.data.TOTAL.value );
-            output.data[ "percent" ] = round( ( output.data[ "gain" ] / object.data.BUY.value ) * 100 );
+            output.data[ "gain" ] = round( object.data.TOTAL.value );
+            output.data[ "percent" ] = round( ( output.data[ "gain" ] / Math.abs( object.data.BUY.value ) ) * 100 );
         }
 
         

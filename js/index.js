@@ -6,7 +6,7 @@ async function init( namespace )
     await t2.init( namespace );
 
     let scenes      = {};
-    let scene       = "sandbox";
+    let scene       = "trades";
 
     // story board
     //scenes.login       = t2.movie.addScene( { duration: 2000, name: "login", next: "database" } );

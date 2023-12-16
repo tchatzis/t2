@@ -27,7 +27,7 @@ const Tabs = function( module )
         if ( module.symbol )
             await t2.navigation.update( 
             [ 
-                { id: "submenu",    functions: [ { ignore: "clear" }, { clear: null }, { hide: null } ] }, 
+                { id: "submenu",    functions: [ { ignore: "clear" }, { clear: null }, { show: null }, { invoke: [ { f: limits, args: null } ] } ] }, 
                 { id: "subcontent", functions: [ { ignore: "clear" }, { clear: null }, { show: null }, { invoke: [ { f: module.transaction, args: self } ] } ] },
                 { id: "submargin",  functions: [ { ignore: "clear" }, { clear: null }, { invoke: [ { f: symbol, args: null } ] } ] },
                 { id: "menu",       functions: [ { ignore: "clear" }, { show: null }, { invoke: [ { f: symbols, args: null } ] } ] },
@@ -63,6 +63,42 @@ const Tabs = function( module )
             } } );  
     }
 
+    // submenu
+    function limits()
+    {
+        let div = document.createElement( "div" );
+            div.classList.add( "flex" );
+        
+        let buy = document.createElement( "div" );
+            buy.classList.add( "buy" );
+            buy.classList.add( "data" );
+        
+        let price = document.createElement( "input" );
+            price.type = "number";
+            price.step = 0.0001;
+            price.placeholder = 0.00;
+            price.oninput = () =>
+            {
+                let value = Number( price.value );
+                
+                if ( !isNaN( value ) )
+                {
+                    buy.textContent = ( value / 1.2 ).toFixed( 4 );
+                    sell.textContent = ( value * 1.2 ).toFixed( 4 );
+                }
+            };
+        
+        let sell = document.createElement( "div" );
+            sell.classList.add( "sell" );
+            sell.classList.add( "data" );
+        
+        div.appendChild( buy );
+        div.appendChild( price );
+        div.appendChild( sell );
+
+        submenu.appendChild( div );
+    };
+
     // content
     async function output()
     {
@@ -71,9 +107,9 @@ const Tabs = function( module )
             await panels.add( "Module", { id: "transactions", label: "transactions", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.transactions.js" } } );
             await panels.add( "Module", { id: "match", label: "match", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.match.js" } } );
             await panels.add( "Module", { id: "totals", label: "totals", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.totals.js" } } );
+            await panels.add( "Module", { id: "quantity", label: "quantity", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.quantity.js" } } );
             await panels.add( "Module", { id: "price", label: "price", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.price.js" } } );
-            await panels.add( "Module", { id: "timeline", label: "timeline", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.timeline.js" } } );
-            await panels.add( "Module", { id: "gain", label: "gain", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.gain.js" } } );
+            await panels.add( "Module", { id: "value", label: "value", format: "block", config: { arguments: [ module ], src: "../projects/trades/trades.symbol.value.js" } } );
             panels.tab = tab;
             panels.saveTab = ( t ) => tab = t;
         let tabs = await panels.setControls( 
@@ -176,12 +212,12 @@ const Tabs = function( module )
             matrix.addRow( { 
                 input: { name: "last qty", type: "number" }, 
                 cell: { css: {}, display: 4, modes: [ "read", "edit" ] },
-                format: [ "number" ] 
+                format: [ "precision" ] 
             } );
             matrix.addRow( { 
                 input: { name: "last price", type: "number" }, 
                 cell: { css: {}, display: 4, modes: [ "read", "edit" ] },
-                format: [ "number" ] 
+                format: [ "precision" ] 
             } );
 
             matrix.addRow( { 
@@ -194,7 +230,7 @@ const Tabs = function( module )
                 format: [ "number"  ] 
             } );      
             matrix.addRow( { 
-                input: { name: "value", type: "number" }, 
+                input: { name: "cost", type: "number" }, 
                 cell: { css: {}, display: 4, modes: [ "read" ] },
                 format: [ "number" ]
             } );

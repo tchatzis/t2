@@ -117,7 +117,7 @@ const Panel = function( module, array, source )
                 format: [ "auto" ],
                 formula: ( args ) =>
                 {
-                    let value = args.record[ args.column ] * -args.record.sign;
+                    let value = args.record[ args.column ];// * -args.record.sign
                     
                     args.totals[ args.column ] += value;
 
@@ -139,7 +139,7 @@ const Panel = function( module, array, source )
                 format: [ "dollar" ],
                 formula: ( args ) =>
                 {
-                    let value = args.record[ args.column ] * args.record.sign;
+                    let value = args.record[ args.column ];// * args.record.sign
                     
                     args.totals[ args.column ] += value;
 
@@ -197,7 +197,7 @@ const Panel = function( module, array, source )
                 format: [ "auto" ],
                 formula: ( args ) =>
                 {
-                    let value = args.record[ args.column ] * -args.record.sign;
+                    let value = args.record[ args.column ];// * -args.record.sign
                     
                     args.totals[ args.column ] += value;
 
@@ -219,7 +219,7 @@ const Panel = function( module, array, source )
                 format: [ "dollar" ],
                 formula: ( args ) =>
                 {
-                    let value = args.record[ args.column ] * args.record.sign;
+                    let value = args.record[ args.column ];// * args.record.sign
                     
                     args.totals[ args.column ] += value;
 
@@ -261,7 +261,7 @@ const Panel = function( module, array, source )
                 cell: { 
                     input: { name: "qty", type: "number" }, 
                     cell: { css: qty, display: 4, modes: [ "read" ] }, //, value: tooltip 
-                    format: [ "negate", "auto" ] 
+                    format: [ "auto" ] 
                 }
             } );
     }

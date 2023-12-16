@@ -329,6 +329,11 @@
     border-left: 10px solid #600 !important;
 }
 
+.map
+{
+    color: purple;
+}
+
 .margin
 {
     margin: 10px;

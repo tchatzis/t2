@@ -72,12 +72,7 @@ const Panel = function( module )
         let form = await panel.addComponent( { id: "form", type: "form", format: "flex" } );
             form.addListener( { type: "submit", handler: async function ()
             {
-                let message = new Message();
-                    message.init();                
-                
-                await handlers.normalize( module.table, records );
-
-                message.set( "Success" );
+                await handlers.normalize( module.q.table, records );
             } } );
         form.addField( { 
             input: { type: "submit", value: "EXECUTE" }, 

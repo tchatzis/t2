@@ -48,11 +48,11 @@ const Panel = function( module )
         module.data.symbol.forEach( symbol => 
         {
             let set = transactions.filter( record => record.symbol == symbol );
-            let qty = set.map( record => record.qty * record.sign ).reduce( sum, 0 );
+            let qty = set.map( record => record.qty ).reduce( sum, 0 );// * record.sign
 
             if ( !qty )
             {
-                self.closed.push( { name: symbol, value: set.map( record => record.value * record.sign ).reduce( sum, 0 ) } );
+                self.closed.push( { name: symbol, value: set.map( record => record.value ).reduce( sum, 0 ) } );// * record.sign
             }
         } );
 

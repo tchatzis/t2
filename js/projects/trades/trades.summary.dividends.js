@@ -81,7 +81,7 @@ const Panel = function( module )
                 formula: ( args ) => 
                 {
                     args.totals.price = 0;
-                    args.value *= -1;
+                    //args.value *= -1;
 
                     args.totals[ args.column ] += args.value;
 

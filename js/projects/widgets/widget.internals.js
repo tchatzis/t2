@@ -45,10 +45,10 @@ const Internals = function( params )
         this.source = params.source || self;
 
         if ( this.widget )
-        {
-            this.key = this.source.config.primaryKey || this.widget.attributes.id;
+        {           
+            this.id = this.widget.attributes.id;
             this.record = this.widget.config.record;
-            this.value = this.record[ this.key ];
+            this.value = this.record ? this.record[ this.record.key ] : null;
         }
     };
 
@@ -111,7 +111,8 @@ const Internals = function( params )
         send: ( params ) =>
         {
             let detail = new Detail( params );
-            let event = new CustomEvent( this.attributes.uuid, { detail: detail } );
+            let type = `${ this.attributes.uuid }.${ params.channel }`;
+            let event = new CustomEvent( type, { detail: detail } );
 
             if ( detail.widget )
             {
@@ -122,12 +123,16 @@ const Internals = function( params )
         receive: ( params ) =>
         {
             let source = params.source;
-                source.element.addEventListener( source.attributes.uuid, params.handler, true );
-                source.event.subscribers.set( this, [] );
+            let subscribers = source.event.subscribers.get( this ) ? source.event.subscribers.get( this ) : [];
 
-            params.channel.forEach( channel => source.event.subscribers.get( this ).push( { [ channel ]: params.handler } ) );
+            source.event.subscribers.set( this, subscribers );
 
-            //console.log( "subscribers", source.event.subscribers );
+            params.channel.forEach( channel => 
+            {
+                let type = `${ source.attributes.uuid }.${ channel }`;
+                subscribers.push( { [ channel ]: params.handler } );
+                source.element.addEventListener( type, params.handler, true );
+            } );
         },
         subscribers: new Map()
     };
@@ -175,6 +180,9 @@ const Internals = function( params )
                     for ( let [ uuid, widget ] of map )
                     {
                         let config = widget.config;
+
+                        if ( debug )
+                            console.log( "filter:", config.record, filter )
                         
                         if ( config.record?.[ filter.key ] == filter.value )
                         {
@@ -183,7 +191,7 @@ const Internals = function( params )
                     }
                 },
                 id: ( id, global ) => this.get.widget.by.filter( { key: "id", value: id }, global ),
-                index: () => {}, // TODO:
+                index: ( index, global ) => this.get.widget.by.filter( { key: "index", value: index }, global ),
                 path: ( path, global ) =>
                 {
                     let map = global ? t2.widget.children : this.children;

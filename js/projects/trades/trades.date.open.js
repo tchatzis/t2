@@ -54,9 +54,9 @@ const Panel = function( module, array, symbols )
             let data = {};
                 data.transactions = _array.transactions;
                 data.change = _array.qty;
-                data.qty = records.map( record => record.qty * -record.sign ).reduce( sum, 0 );
+                data.qty = records.map( record => record.qty ).reduce( sum, 0 );// * -record.sign
                 data.value = _array.value;
-                data.gain = records.map( record => record.value * record.sign ).reduce( sum, 0 );
+                data.gain = records.map( record => record.value ).reduce( sum, 0 );// * record.sign
 
             return data;
         }
@@ -132,7 +132,7 @@ const Panel = function( module, array, symbols )
                 format: [ "auto" ],
                 formula: ( args ) =>
                 {
-                    let value = args.record[ args.column ] * -args.record.sign;
+                    let value = args.record[ args.column ];// * -args.record.sign
                     
                     args.totals[ args.column ] += value;
 
@@ -154,7 +154,7 @@ const Panel = function( module, array, symbols )
                 format: [ "dollar" ],
                 formula: ( args ) =>
                 {
-                    let value = args.record[ args.column ] * args.record.sign;
+                    let value = args.record[ args.column ];// * args.record.sign
                     
                     args.totals[ args.column ] += value;
 

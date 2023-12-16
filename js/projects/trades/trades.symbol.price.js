@@ -27,7 +27,7 @@ const Panel = function( module )
     {
         await t2.navigation.update( 
         [ 
-            { id: "submenu", functions: [ { ignore: "clear" }, { clear: null } ] }, 
+            { id: "submenu", functions: [ { ignore: "clear" } ] }, 
             { id: "subcontent", functions: [ { ignore: "clear" } ] },
             { id: "submargin", functions: [ { ignore: "clear" } ] },
             { id: "menu", functions: [ { ignore: "clear" } ] },
@@ -55,11 +55,11 @@ const Panel = function( module )
         } );
 
         let timeline = await this.addComponent( { id: "timeline", type: "chart", format: "flex" } );
-            timeline.addLayer( { color: "rgba( 255, 255, 0, 1 )", font: "12px sans-serif", type: "line",
+            timeline.addLayer( { color: "rgba( 255, 255, 0, 1 )", font: "12px sans-serif", type: "peak",
                 data: array, 
                 axes:
                 { 
-                    "0": { axis: "date", settings: { format: "date", step: day, mod: mondays, axis: true } },
+                    "0": { axis: "date", settings: { format: "date", step: day * 7, mod: mondays, axis: true } },
                     "1": { axis: "price", settings: { mod: ( p ) => !( p % 10 ), axis: true } } 
                 } } );
 

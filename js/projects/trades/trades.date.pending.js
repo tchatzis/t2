@@ -83,7 +83,7 @@ const Panel = function( module )
             let data = {};
                 data.transactions = records.length;
                 data.qty = records.map( record => record.qty ).reduce( sum, 0 );
-                data.position = _array.map( record => record.qty * -record.sign ).reduce( sum, 0 );
+                data.position = _array.map( record => record.qty ).reduce( sum, 0 );// * -record.sign
                 data.remaining = data.position - data.qty;
                 data.value = records.map( record => record.qty * record.price ).reduce( sum, 0 );
 

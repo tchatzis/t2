@@ -28,7 +28,7 @@ const Panel = function( module )
     {
         await t2.navigation.update( 
         [ 
-            { id: "submenu", functions: [ { ignore: "clear" }, { clear: null } ] }, 
+            { id: "submenu", functions: [ { ignore: "clear" } ] }, 
             { id: "subcontent", functions: [ { ignore: "clear" } ] },
             { id: "submargin", functions: [ { ignore: "clear" } ] },
             { id: "menu", functions: [ { ignore: "clear" } ] },
@@ -161,7 +161,7 @@ const Panel = function( module )
 
             [ "qty", "value" ].forEach( prop =>
             {
-                let reduced = filtered.map( record => record[ prop ] * record.sign ).reduce( sum, 0 );
+                let reduced = filtered.map( record => record[ prop ] ).reduce( sum, 0 );// * record.sign
 
                 data.symbol = module.symbol;
                 data[ prop ] = round( reduced );

@@ -30,7 +30,7 @@ const Panel = function( module )
     {
         await t2.navigation.update( 
         [ 
-            { id: "submenu", functions: [ { ignore: "clear" }, { clear: null } ] }, 
+            { id: "submenu", functions: [ { ignore: "clear" } ] }, 
             { id: "subcontent", functions: [ { ignore: "clear" } ] },
             { id: "submargin", functions: [ { ignore: "clear" } ] },
             { id: "menu", functions: [ { ignore: "clear" } ] },
@@ -82,7 +82,7 @@ const Panel = function( module )
             format: [ "auto" ],
             formula: ( args ) =>
             {
-                let value = args.record[ args.column ] * -args.record.sign;
+                let value = args.record[ args.column ];// * -args.record.sign
 
                 args.totals[ args.column ] += value;
 
@@ -104,7 +104,7 @@ const Panel = function( module )
             format: [ "dollar" ],
             formula: ( args ) =>
             {
-                let value = args.record[ args.column ] * args.record.sign;
+                let value = args.record[ args.column ];// * args.record.sign
                 
                 args.totals[ args.column ] += value;
 

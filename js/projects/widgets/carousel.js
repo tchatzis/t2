@@ -31,6 +31,11 @@ const Carousel = function( params )
                         widget.add.css( "translucent" );
                         widget.add.css( "border" );
                         widget.add.css( "round" );
+                    if ( !index )
+                    {
+                        widget.add.css( "noclick" );
+                        previous = widget;
+                    }
                         widget.element.style.transform = `${ orientations.rotate }( ${ calculations.angle * index }deg ) ${ orientations.translate }( ${ calculations.radius }px )`;
 
                         widget.set.config( "index", index );
@@ -50,7 +55,7 @@ const Carousel = function( params )
 
     this.handlers.rotate = ( e ) =>
     {  
-        let keys = Array.from( Object.keys( schema ) );
+        let keys = this.get.data().map( record => record[ record.key ] );
         let index = keys.indexOf( e.detail.value );
         let widget = e.detail.widget;
             widget.add.css( "noclick" );

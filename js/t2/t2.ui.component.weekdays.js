@@ -188,7 +188,7 @@ const Component = function()
                 let td = t2.common.el( "td", row );
                 let data = _data.filter( item => t2.formats.isoDate( item[ this.column.name ] ) == column );
                 let predicate = !!data.length;
-                let value = data.map( record => record[ config.input.name ] * record.sign ).reduce( ( a, b ) => a + b, 0 );
+                let value = data.map( record => record[ config.input.name ] ).reduce( ( a, b ) => a + b, 0 );
  
                 if ( config.cell.value )
                 {

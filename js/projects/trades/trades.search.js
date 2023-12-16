@@ -118,7 +118,7 @@ const Template = function( module )
             format: [ "precision" ],
             formula: ( args ) =>
             {
-                let value = args.record[ args.column ] * -args.record.sign;
+                let value = args.record[ args.column ];// * -args.record.sign
                 
                 args.totals[ args.column ] += value;
 
@@ -140,7 +140,7 @@ const Template = function( module )
             format: [ "dollar" ],
             formula: ( args ) =>
             {
-                let value = args.record[ args.column ] * args.record.sign;
+                let value = args.record[ args.column ];// * args.record.sign
                 
                 args.totals[ args.column ] += value;
 

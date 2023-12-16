@@ -89,8 +89,8 @@ const Template = function( module )
 
             let data = {};
                 data.symbol = symbol;
-                data.qty = set.map( record => record.qty * -record.sign ).reduce( sum, 0 );
-                data.value = set.map( record => record.value * record.sign ).reduce( sum, 0 );
+                data.qty = set.map( record => record.qty ).reduce( sum, 0 );// * -record.sign
+                data.value = set.map( record => record.value ).reduce( sum, 0 );// * record.sign
 
             total += data.value;
             
@@ -132,8 +132,8 @@ const Template = function( module )
 
             let data = {};
                 data.symbol = symbol;
-                data.qty = round( set.map( record => record.qty * record.sign ).reduce( sum, 0 ) );
-                data.value = set.map( record => record.value * record.sign ).reduce( sum, 0 );
+                data.qty = round( set.map( record => record.qty ).reduce( sum, 0 ) );// * record.sign
+                data.value = set.map( record => record.value ).reduce( sum, 0 );// * record.sign
 
             if ( data.qty )
             {
@@ -289,7 +289,7 @@ const Template = function( module )
                 format: [ "auto" ],
                 formula: ( args ) =>
                 {
-                    let value = args.record[ args.column ] * -args.record.sign;
+                    let value = args.record[ args.column ];// * -args.record.sign
                     
                     args.totals[ args.column ] += value;
 
@@ -311,7 +311,7 @@ const Template = function( module )
                 format: [ "dollar" ],
                 formula: ( args ) =>
                 {
-                    let value = args.record[ args.column ] * args.record.sign;
+                    let value = args.record[ args.column ];// * args.record.sign
                     
                     args.totals[ args.column ] += value;
 
@@ -578,7 +578,7 @@ const Template = function( module )
                 format: [ "auto" ],
                 formula: ( args ) =>
                 {
-                    let value = args.record[ args.column ] * -args.record.sign;
+                    let value = args.record[ args.column ];// * -args.record.sign
                     
                     args.totals[ args.column ] += value;
 
@@ -600,7 +600,7 @@ const Template = function( module )
                 format: [ "dollar" ],
                 formula: ( args ) =>
                 {
-                    let value = args.record[ args.column ] * args.record.sign;
+                    let value = args.record[ args.column ];// * args.record.sign
                     
                     args.totals[ args.column ] += value;
 

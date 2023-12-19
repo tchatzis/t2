@@ -9,11 +9,13 @@ const Carousel = function( params )
     Internals.call( this, params );
 
     // extend externals
-    this.add.panel = ( record ) =>
+    this.add.item = ( args ) =>
     {
         const uuid = t2.common.uuid();
-
-        record.uuid = uuid;
+        const schema = args.schema;
+        const fulfill = args.fulfill;
+        const record = args.record;
+            record.uuid = uuid;
 
         for ( let column in schema )
         {
@@ -24,7 +26,7 @@ const Carousel = function( params )
                 let load = async ( index ) =>
                 {      
                     let widget = await this.add.widget( { id: record[ config.key ], path: params.path, widget: config.widget, config: config, record: record } );
-                        widget.set.source( config.source ? async () => await config.source() : () => t2.formats[ config.format ]( record[ config.key ] ) );
+                        widget.set.datasource( config.source ? async () => await config.source() : () => t2.formats[ config.format ]( record[ config.key ] ) );
                         widget.set.element( carousel );
                         widget.add.css( "center" );
                         widget.add.css( "side" );
@@ -53,40 +55,21 @@ const Carousel = function( params )
         }
     };
 
-    this.handlers.rotate = ( e ) =>
-    {  
-        let keys = this.get.data().map( record => record[ record.key ] );
-        let index = keys.indexOf( e.detail.value );
-        let widget = e.detail.widget;
-            widget.add.css( "noclick" );
-
-        previous?.remove.css( "noclick" );
-        previous = widget;
-        
-        carousel.style.transform = `${ orientations.translate }( ${ -calculations.radius }px ) ${ orientations.rotate }( ${ -calculations.angle * index }deg )`;
-    };
-
     this.handlers.click = ( args ) => this.event.send( { channel: args.channel || "select", widget: args.widget } );
 
-    this.set.active = ( widget ) => this.handlers.click( { channel: "activate", widget: widget } );
+    this.set.active = ( e ) => this.handlers.click( { channel: "activate", widget: e.detail.widget } );
 
     // widget specific
-    let array;
-    let fulfill;
     let index = 0;
     let previous = null;
-    let schema;
-    let carousel; 
     let calculations = {};
     let orientations = {};
+    let carousel;
 
     this.render = async () =>
     {
-        schema = this.get.schema();
-        
-        array = await this.get.data();
-
         this.add.css( "fit" );
+        this.element.style.position = "relative";
 
         carousel = document.createElement( "div" );
         carousel.classList.add( "carousel" );
@@ -121,26 +104,24 @@ const Carousel = function( params )
     
         await this.populate();
 
-        this.event.receive( { channel: [ "activate", "select" ], source: this, handler: this.handlers.rotate } );
+        this.event.receive( { channel: [ "activate", "select" ], source: this, handler: activate } );
 
         return this;
     };
 
-    this.populate = async () =>
+    const activate = ( e ) =>
     {
-        fulfill = new t2.common.Fulfill();
+        let keys = this.get.data().map( record => record[ record.key ] );
+        let index = keys.indexOf( e.detail.value );
+        let widget = e.detail.widget;
+            widget.add.css( "noclick" );
 
-        if ( this.config.sort )
-            array = this.get.copy().sort( this.sort[ this.config.sort.direction ] );
-            array.forEach( record => this.add.panel( record ) );
+        this.set.config( "value", widget.config.value );
 
-        const completed = new t2.common.Fulfill();
-
-        let widgets = await fulfill.resolve();
-            widgets.forEach( widget => completed.add( widget.render() ) );
-
-        const rendered = await completed.resolve();
-            rendered.forEach( ( widget, index ) => completed.add( widget.add.handler( { event: "click", handler: this.handlers.click, record: array[ index ] } ) ) );
+        previous?.remove.css( "noclick" );
+        previous = widget;
+        
+        carousel.style.transform = `${ orientations.translate }( ${ -calculations.radius }px ) ${ orientations.rotate }( ${ -calculations.angle * index }deg )`;
     };
 };
 

@@ -64,7 +64,7 @@ const Panel = function( module )
                 data: array,
                 axes:
                 { 
-                    "0": { axis: "date", settings: { format: "date", step: day * 7, mod: mondays, axis: true } },
+                    "0": { axis: "date", settings: { format: "date", step: day, mod: monthly, axis: true } },
                     "1": { axis: "quantity", settings: { mod: ( p ) => !( p % 10 ), axis: true } } 
                 } } );
 

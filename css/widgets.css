@@ -99,6 +99,18 @@
     transition: transform 1s ease;
 }
 
+.expand
+{
+    grid-template-rows: 1fr;
+    
+    transition: all 1s ease;
+}
+
+.grid
+{
+    display: grid;
+};
+
 .handle
 {
     background-color: #666;
@@ -125,15 +137,15 @@
 
 .receiver
 {
+    background-color: rgba( 0, 0, 0, 0.7 );
     border-left: 1px solid #222;
     border-top: 1px solid #222;
     bottom: 1em;
-    display: grid;
-    grid-template-rows: 1fr;
-    position: absolute;
     right: 0;
+    position: absolute;
+    z-index: 100;
 
-    transition: grid-template-rows 1s ease-in;
+    transition: all 1s ease-in;
 }
 
 .receiver > div
@@ -143,11 +155,18 @@
     padding: 1em;
 }
 
-.receiver.collapsed
+.receiver.collapsed, .expand.collapsed
 {
-    grid-template-rows: 0fr; 
+    grid-template-rows: 0fr;
 
-    transition: grid-template-rows 1s ease-in;
+    transition: all 1s ease;
+}
+
+.wide.collapsed
+{
+    grid-template-columns: 0fr;
+
+    transition: all 1s ease;
 }
 
 .side
@@ -156,10 +175,10 @@
     height: calc( 100% - 3em );
     left: 0;
     opacity: 1;
-    padding: 10px;
+    padding: 1em;
     position: absolute;
     top: 0;
-    width: calc( 100% - 2em );
+    width: calc( 100% - 3em );
 
     transition: opacity 1s ease;
 }
@@ -195,4 +214,11 @@
 .translucent
 {
     background-color:rgba( 16, 16, 16, 0.1 );
+}
+
+.wide
+{
+    grid-template-columns: 1fr;
+    
+    transition: all 1s ease;
 }

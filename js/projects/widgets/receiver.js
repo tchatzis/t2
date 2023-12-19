@@ -9,7 +9,7 @@ const Receiver = function( params )
     Internals.call( this, params );
 
     // extend externals
-    this.add.log = ( params ) => 
+    this.add.item = ( params ) => 
     {
         const detail = params.detail;
         const timestamp = document.createElement( "ul" );
@@ -36,7 +36,7 @@ const Receiver = function( params )
         index++;
     };
 
-    this.remove.log = ( index ) =>
+    this.remove.item = ( index ) =>
     {
         let div = this.element.querySelector( `[ data-index = '${ index } ]` );
             div?.remove();
@@ -56,8 +56,9 @@ const Receiver = function( params )
     this.render = async () =>
     {
         this.add.css( "receiver" );
+        this.add.css( "expanding" );
 
-        this.element.appendChild( div );
+        this.set.element( div );
 
         this.event.receive( { channel: [ "clear" ], source: this, handler: clear } );
         this.event.receive( { channel: [ "toggle" ], source: this, handler: toggle } );

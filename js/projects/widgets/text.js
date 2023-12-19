@@ -13,16 +13,13 @@ const Text = function( params )
 
     this.render = async () =>
     {
-        this.value = await this.refresh();
+        let value = await this.refresh();
+        
+        this.set.config( "value", value ); 
 
-        this.populate();
+        this.set.value();
 
         return this;
-    };
-
-    this.populate = () =>
-    {
-        this.element.textContent = this.value;
     };
 };
 

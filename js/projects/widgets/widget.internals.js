@@ -211,6 +211,25 @@ const Internals = function( params )
         }
     };
 
+    this.populate = async function()
+    {
+        const schema = this.get.schema();
+        const fulfill = new t2.common.Fulfill();
+        let array = await this.get.data(); 
+
+        if ( this.config.sort )
+            array = this.get.copy().sort( this.sort[ this.config.sort.direction ] );
+            array.forEach( record => this.add.item( { schema: schema, fulfill: fulfill, record: record } ) );
+
+        const completed = new t2.common.Fulfill();
+
+        let widgets = await fulfill.resolve();
+            widgets.forEach( widget => completed.add( widget.render() ) );
+
+        const rendered = await completed.resolve();
+            rendered.forEach( ( widget, index ) => completed.add( widget.add.handler( { event: "click", handler: this.handlers.click } ) ) );
+    };
+
     this.remove =
     {
         css: ( cls ) => this.element.classList.remove( cls )
@@ -264,7 +283,7 @@ const Internals = function( params )
 
             this.attributes.path = this.parent.attributes.path.concat( id );
         },
-        source: async ( f ) => 
+        datasource: async ( f ) => 
         {
             let pk = this.config.primaryKey || "value";
             
@@ -293,7 +312,7 @@ const Internals = function( params )
                             throw( "columns must be added" );
 
                         if ( d.every( record => !Object.keys( record ).find( key => keys.find( k => k == key ) ) ) )
-                            throw( `'${ keys }' cannot be found in record` );
+                            throw( `'${ keys }' cannot be found in the record` );
                         
                         return pass;
                     },
@@ -304,7 +323,7 @@ const Internals = function( params )
                             throw( "primary key must be configured" );
 
                         if ( d.every( record => !Object.keys( record ).find( key => key == self.config.primaryKey ) ) )
-                            throw( `'${ self.config.primaryKey }' cannot be found in record` );
+                            throw( `'the primary key, ${ self.config.primaryKey }', cannot be found in the record` );
                         
                         return !!self.config.primaryKey;
                     }
@@ -481,7 +500,7 @@ const Internals = function( params )
             if ( column.total )
                 column.total.value = calculate[ column.total.calculation ]( column.values );
         },
-        value: () => this.element.innerHTML = this.value
+        value: () => this.element.innerHTML = this.config.value
     };
 
     this.sort =

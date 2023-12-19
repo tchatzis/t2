@@ -9,13 +9,16 @@ const Menu = function( params )
     Internals.call( this, params );
 
     // extend externals
-    this.add.link = async ( record ) =>
+    this.add.item = async ( args ) =>
     {
         const uuid = t2.common.uuid();
+        const schema = args.schema;
+        const fulfill = args.fulfill;
+        const record = args.record;
+            record.uuid = uuid;
+
         const link = document.createElement( "div" );
         this.element.appendChild( link );
-
-        record.uuid = uuid;
 
         for ( let column in schema )
         {
@@ -23,8 +26,7 @@ const Menu = function( params )
             link.appendChild( group );
             
             let config = schema[ column ];
-            let value = record[ config.key ];// || record.key
-            //console.log( config.key, record.key )
+            let value = record[ config.key ];
 
             if ( config.display )
             {
@@ -33,7 +35,7 @@ const Menu = function( params )
                     let output = ~[ "icon", "image", "html", "text" ].indexOf( config.widget ) ? config.widget : "text";
 
                     let widget = await this.add.widget( { id: `${ column }.${ index }`, path: params.path, widget: output, config: config, record: record } );
-                        widget.set.source( () => t2.formats[ config.format ]( value ) );
+                        widget.set.datasource( () => t2.formats[ config.format ]( value ) );
                         widget.set.config( "record", record );
                         widget.set.element( group );
 
@@ -61,19 +63,13 @@ const Menu = function( params )
 
     this.set.enabled = ( widget ) => this.handlers.click( { channel: "enable", widget: widget } );
     this.set.disabled = ( widget ) => this.handlers.click( { channel: "disable", widget: widget } );
+
     // widget specific
-    let array;
-    let fulfill;
     let index = 0;
     let previous = null;
-    let schema;
     
     this.render = async () =>
     {
-        schema = this.get.schema();
-    
-        array = await this.get.data();
-
         if ( this.config.orientation )
         {
             this.add.css( this.config.orientation );
@@ -87,23 +83,6 @@ const Menu = function( params )
         this.event.receive( { channel: [ "disable" ], source: this, handler: disable } );
 
         return this;
-    };
-
-    this.populate = async function()
-    {
-        fulfill = new t2.common.Fulfill();
-
-        if ( this.config.sort )
-            array = this.get.copy().sort( this.sort[ this.config.sort.direction ] );
-            array.forEach( record => this.add.link( record ) );
-
-        const completed = new t2.common.Fulfill();
-
-        let widgets = await fulfill.resolve();
-            widgets.forEach( widget => completed.add( widget.render() ) );
-
-        const rendered = await completed.resolve();
-            rendered.forEach( ( widget, index ) => completed.add( widget.add.handler( { event: "click", handler: this.handlers.click, record: array[ index ] } ) ) );
     };
 
     const activate = ( e ) =>

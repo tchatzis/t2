@@ -1,6 +1,6 @@
 import Internals from "../widgets/widget.internals.js";
 
-const Accordion = function( params )
+const Panels = function( params )
 { 
     // required
     this.element = document.createElement( "div" );
@@ -17,13 +17,6 @@ const Accordion = function( params )
         const record = args.record;
             record.uuid = uuid;
         const count = this.get.count();
-        const shrink = count * 5 / orientations.aspect;
-        const size = `${ ( orientations.size - shrink ) }%`;
-
-        const div = document.createElement( "div" );
-            div.style.position = "absolute";  
-            div.classList.add( "fit" ); 
-        this.element.appendChild( div );
 
         for ( let column in schema )
         {
@@ -32,10 +25,6 @@ const Accordion = function( params )
             if ( config.display && record[ config.key ] )
             { 
                 const opp = count - index;
-                const min = `calc( ${ orientations.aspect }% + ${ ( 1 - orientations.aspect ) * 4 }px )`;
-                const start = `${ index * 2 }em`;
-
-                div.style[ orientations.start ] = start;
 
                 let load = async ( index ) =>
                 {      
@@ -44,16 +33,14 @@ const Accordion = function( params )
                         widget.add.css( "side" );
                         widget.add.css( "border" );
                         widget.add.css( "round" );
-                        widget.set.element( div );
+                        widget.add.css( "noclick" );
 
-                        widget.element.style[ orientations.dimension ] = size;
+                        widget.element.style[ orientations.dimension ] = orientations.size;
+                        widget.element.style[ orientations.start ] = 0;
                         widget.element.style.zIndex = opp;
 
                         widget.set.config( "index", index );
-                        widget.set.config( "min", min );
                         widget.set.config( "record", record );
-                        widget.set.config( "shrink", shrink );
-                        widget.set.config( "size", size );
 
                     config.classes.forEach( cls => widget.add.css( cls ) );
 
@@ -86,14 +73,12 @@ const Accordion = function( params )
             switch( this.config.orientation )
             {
                 case "horizontal":
-                    orientations.aspect = 1;
                     orientations.dimension = "width";
                     orientations.size = 98;
                     orientations.start = "left";
                 break;
 
                 case "vertical":
-                    orientations.aspect = 2;
                     orientations.dimension = "height"; 
                     orientations.size = 90;
                     orientations.start = "top";   
@@ -110,41 +95,16 @@ const Accordion = function( params )
 
     const activate = ( e ) =>
     {
-        let widget = e.detail.widget;
-        let index = widget.config.index;
-        let transition = `${ orientations.dimension } 1s ease-in-out`;
+        let widget = this.children.get( e.detail.widget.value );
 
-        this.children.forEach( child =>
-        {
-            let clicked = child == widget;
-            let size = child == widget ? child.config.size : child.config.min;
-            let z = index > child.config.index;
+        if ( widget )
+            widget.element.style.zIndex = this.get.count();
 
-            child.set.value();
+        if ( previous )
+            previous.element.style.zIndex = 0;
 
-            child.element.style[ `padding${ t2.formats.capitalize( orientations.start ) }` ] = "1em";
-
-            if ( clicked )
-            {
-                child.element.style[ orientations.dimension ] = size;
-                previous = child;
-                this.set.config( "value", child.config.value );
-            }
-            else if ( z )
-            {
-                child.element.innerHTML = null;
-                child.element.style[ orientations.dimension ] = size;
-                child.element.style.transition = transition;
-            }
-            else
-            {
-                child.element.style[ orientations.dimension ] = child.config.size;
-                child.element.style.transition = transition; 
-            }
-
-            child.set.config( "clicked", clicked );
-        } ); 
+        previous = widget;
     };
 };
 
-export default Accordion;
+export default Panels;

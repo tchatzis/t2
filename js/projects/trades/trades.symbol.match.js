@@ -7,6 +7,17 @@ const Panel = function( module )
     let arrays = {};
     let limit = 1.2001;
     let delay = 100;
+    let round = ( action, value ) => 
+    {
+        switch ( action )
+        { 
+            case "BUY":
+                return Math.floor( ( value * limit ) * 1000 ) / 1000;
+
+            case "SELL":
+                return Math.ceil( ( value / limit ) * 1000 ) / 1000;  
+        }
+    };
     let comparator = ( a, b ) => { return { 
         BUY:  Math.abs( a.qty ) == Math.abs( b.qty ) && a.price <= b.price && a.price * limit > b.price,/* && a.brokerage == b.brokerage,*/ 
         SELL: Math.abs( a.qty ) == Math.abs( b.qty ) && a.price >= b.price && a.price < b.price * limit,/* && a.brokerage == b.brokerage */
@@ -109,8 +120,7 @@ const Panel = function( module )
     {
         let outline = await panel.addContainer( { id: action, type: "box", format: "block" } );
         let opp = actions[ 1 - actions.indexOf( action ) ];
-        
-        
+
         let transactions = await outline.addComponent( { id: action, type: "table" } );
             transactions.addRowListener( { type: "click", handler: select } );
             transactions.addColumn( { 
@@ -129,12 +139,7 @@ const Panel = function( module )
                 input: { name: "target", type: "number", step: 0.001 }, 
                 cell: { css: { class: opp.toLowerCase() }, display: 4, modes: [ "read" ] },
                 format: [ "precision" ],
-                formula: ( args ) => 
-                {
-                    let value = action == "BUY" ? args.record.price * limit : args.record.price / limit;
-  
-                    return value;
-                }  } );
+                formula: ( args ) => round( action, args.record.price ) } );
             transactions.addColumn( { 
                 input: { name: "value", type: "number", step: 0.001 }, 
                 cell: { css: { class: "number" }, display: 5, modes: [ "read" ] },

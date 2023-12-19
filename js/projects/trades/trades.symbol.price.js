@@ -59,7 +59,7 @@ const Panel = function( module )
                 data: array, 
                 axes:
                 { 
-                    "0": { axis: "date", settings: { format: "date", step: day * 7, mod: mondays, axis: true } },
+                    "0": { axis: "date", settings: { format: "date", step: day, mod: monthly, axis: true } },
                     "1": { axis: "price", settings: { mod: ( p ) => !( p % 10 ), axis: true } } 
                 } } );
 
@@ -69,6 +69,14 @@ const Panel = function( module )
                 date.setDate( date.getDate() + p );
 
             return !date.getDay() || !p || p == chart.divisions; 
+        }
+
+        function monthly( p, chart )
+        {
+            let date = new Date( chart.min );
+                date.setDate( date.getDate() + p );
+
+            return !( date.getDate() - 1 );
         }
     };
 };

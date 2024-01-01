@@ -21,7 +21,7 @@ const Expand = function( params )
             container.classList.add( orientations.class );
             container.classList.add( "collapsed" );
             container.classList.add( "grid" );
-            container.style[ orientations.dimension ] = orientations.size;
+            container.style[ orientations.dimension ] = "100%";
 
         this.element.appendChild( container );
 
@@ -74,14 +74,12 @@ const Expand = function( params )
                 case "horizontal":
                     orientations.class = "wide";
                     orientations.dimension = "height"; 
-                    orientations.size = "100%";
                     orientations.property = "gridTemplateRows";
                 break;                
                 
                 case "vertical":
                     orientations.class = "expand";
                     orientations.dimension = "width";   
-                    orientations.size = "100%"; 
                     orientations.property = "gridTemplateColumns";    
                 break;
             }

@@ -1,6 +1,6 @@
 import Internals from "../widgets/widget.internals.js";
 
-const Carousel = function( params )
+const Rolodex = function( params )
 { 
     // required
     this.element = document.createElement( "div" );
@@ -27,7 +27,7 @@ const Carousel = function( params )
                 {      
                     let widget = await this.add.widget( { id: record[ config.key ], path: params.path, widget: config.widget, config: config, record: record } );
                         widget.set.datasource( config.source ? async () => await config.source() : () => t2.formats[ config.format ]( record[ config.key ] ) );
-                        widget.set.element( carousel );
+                        widget.set.element( rolodex );
                         widget.add.css( "center" );
                         widget.add.css( "side" );
                         widget.add.css( "translucent" );
@@ -36,9 +36,10 @@ const Carousel = function( params )
                     if ( !index )
                     {
                         widget.add.css( "noclick" );
+                        widget.remove.css( "translucent" );
                         previous = widget;
                     }
-                        widget.element.style.transform = `${ orientations.rotate }( ${ calculations.angle * index }deg ) ${ orientations.translate }( ${ calculations.radius }px )`;
+                        widget.element.style.transform = `${ orientations.rotate }( ${ orientations.direction * calculations.angle * index }deg ) ${ orientations.translate }( ${ calculations.radius / 2 }px )`;
 
                         widget.set.config( "index", index );
                         widget.set.config( "record", record );
@@ -64,16 +65,16 @@ const Carousel = function( params )
     let previous = null;
     let calculations = {};
     let orientations = {};
-    let carousel;
+    let rolodex;
 
     this.render = async () =>
     {
         this.add.css( "fit" );
         this.element.style.position = "relative";
 
-        carousel = document.createElement( "div" );
-        carousel.classList.add( "carousel" );
-        this.element.appendChild( carousel );
+        rolodex = document.createElement( "div" );
+        rolodex.classList.add( "carousel" );
+        this.element.appendChild( rolodex );
 
         if ( this.config.orientation )
         {
@@ -81,14 +82,16 @@ const Carousel = function( params )
             {
                 case "horizontal":
                     orientations.dimension = "width";
+                    orientations.direction = -1;  
                     orientations.rotate = "rotateY";
-                    orientations.translate = "translateZ";
+                    orientations.translate = "translateX";
                 break;
 
                 case "vertical":
-                    orientations.dimension = "height";    
+                    orientations.dimension = "height";  
+                    orientations.direction = 1;  
                     orientations.rotate = "rotateX";
-                    orientations.translate = "translateZ";
+                    orientations.translate = "translateY";
                 break;
             }
         }       
@@ -98,10 +101,13 @@ const Carousel = function( params )
         calculations.bbox = this.get.bbox();
         calculations.radius = Math.round( ( calculations.bbox[ orientations.dimension ] / 2 ) / Math.tan( Math.PI / calculations.count ) );
         calculations.perspective = calculations.bbox[ orientations.dimension ] + "px";
-        calculations.transform = `${ orientations.translate }( ${ -calculations.radius }px )`;
+        calculations.transform = `${ orientations.translate }( ${ -calculations.radius / 2 }px )`;
+
 
         this.element.style.perspective = calculations.perspective;
-        carousel.style.transform = `${ orientations.translate }( ${ -calculations.radius }px )`;
+        this.element.style.overflow = "hidden";
+
+        rolodex.style.transform = calculations.transform;
     
         await this.populate();
 
@@ -124,7 +130,7 @@ const Carousel = function( params )
 
         if ( previous?.config.value !== widget.config.value )
         {
-            carousel.style.transform = `${ calculations.transform } ${ orientations.rotate }( ${ -calculations.angle * widget.config.index }deg )`;
+            rolodex.style.transform = `${ calculations.transform } ${ orientations.rotate }( ${ orientations.direction * -calculations.angle * widget.config.index }deg )`;
             
             if ( previous )
             {
@@ -135,21 +141,6 @@ const Carousel = function( params )
 
         previous = widget;
     };
-
-    /*const activate = ( e ) =>
-    {
-        let keys = this.get.data().map( record => record[ record.key ] );
-        let index = keys.indexOf( e.detail.value );
-        let widget = e.detail.widget;
-            widget.add.css( "noclick" );
-
-        this.set.config( "value", widget.config.value );
-
-        previous?.remove.css( "noclick" );
-        previous = widget;
-        
-        carousel.style.transform = `${ orientations.translate }( ${ -calculations.radius }px ) ${ orientations.rotate }( ${ -calculations.angle * index }deg )`;
-    };*/
 };
 
-export default Carousel;
+export default Rolodex;

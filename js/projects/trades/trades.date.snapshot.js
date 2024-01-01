@@ -95,13 +95,17 @@ const Panel = function( module )
                 cell: { css: qty, display: 6, modes: [ "read" ] },
                 format: [ "auto" ] } );           
             table.addColumn( { 
-                input: { name: "share_price", type: "number", step: 0.001 }, 
-                cell: { css: {}, display: 6, modes: [ "read" ] },
-                format: [ "dollar" ] } );
+                input: { name: "share_price", type: "number", step: 0.0001 }, 
+                cell: { css: {}, display: 0, modes: [ "read" ] },
+                format: [ "precision" ] } );
             table.addColumn( { 
-                input: { name: "last_price", type: "number", step: 0.001 }, 
+                input: { name: "last_price", type: "number", step: 0.0001 }, 
                 cell: { css: {}, display: 6, modes: [ "read" ] },
-                format: [ "dollar" ] } );
+                format: [ "precision" ] } );
+            table.addColumn( { 
+                input: { name: "buy_price", type: "number", step: 0.0001 }, 
+                cell: { css: {}, display: 6, modes: [ "read" ] },
+                format: [ "precision" ] } );
             table.addColumn( { 
                 input: { name: "open_gain", type: "number", step: 0.001 }, 
                 cell: { css: open, display: 6, modes: [ "read" ] },

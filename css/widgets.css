@@ -39,6 +39,15 @@
     border: 1px solid #666;
 }
 
+.carousel
+{
+    height: calc( 100% - 10px );
+    position: absolute;
+    transform-style: preserve-3d;
+    transition: transform 1s;
+    width: 100%;
+}
+
 .cell
 {
     border-right: 1px solid #222;
@@ -183,6 +192,11 @@
     transition: opacity 1s ease;
 }
 
+.side:hover
+{
+    background-color:rgba( 16, 16, 32, 0.3 );
+}
+
 .p0
 {
     padding: 0;
@@ -213,7 +227,9 @@
 
 .translucent
 {
-    background-color:rgba( 16, 16, 16, 0.1 );
+    opacity: 0.25;
+    
+    transition: opacity 1s ease;
 }
 
 .wide

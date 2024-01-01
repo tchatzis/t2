@@ -42,7 +42,7 @@ const Panel = function( module )
     async function history()
     {  
         let records = module.data.filtered.sort( ( a, b ) => new Date( a.datetime ) - new Date( b.datetime ) );
-        let links = records.slice( -6 ).map( record => record.datetime ).reverse();
+        let links = records.slice( -6 ).map( record => record.id ).reverse();
 
         let tiles = await this.addComponent( { id: "tiles", type: "tiles", format: "flex", output: template } );  
             tiles.update( links );
@@ -50,7 +50,7 @@ const Panel = function( module )
 
     function template( link )
     {
-        let record = module.data.filtered.find( record => record.datetime == link );
+        let record = module.data.filtered.find( record => record.id == link );
         let status = record.action == "BUY" ? "open" : "closed";
 
         let output = 
@@ -101,7 +101,7 @@ const Panel = function( module )
                 cell: { 
                     input: { name: "qty", type: "number" }, 
                     cell: { css: qty, display: 4, modes: [ "read" ], value: tooltip },
-                    format: [ "negate", "number" ] 
+                    format: [ "number" ] 
                 }
             } );
     }

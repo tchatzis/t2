@@ -46,7 +46,7 @@ const aggregate = function( symbol, records )
         // TOTAL
         aggregate.total_cost    = aggregate.buy_value + aggregate.sell_value;
         aggregate.share_price   = aggregate.open_qty ? Math.round( aggregate.last_price - ( aggregate.total_cost / aggregate.open_qty ) * 10000 ) / 10000 : aggregate.sell_price;
-        aggregate.open_gain     = ( aggregate.last_price - aggregate.share_price ) * aggregate.open_qty;
+        aggregate.open_gain     = ( aggregate.last_price - aggregate.buy_price ) * aggregate.open_qty;
         aggregate.total_gain    = aggregate.open_gain + aggregate.closed_gain;  
         aggregate.total_net     = aggregate.total_gain + aggregate.div_value;
         // BROKERAGE

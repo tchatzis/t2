@@ -78,15 +78,6 @@
     color: lightgreen !important;
 }
 
-.carousel
-{
-    height: calc( 100% - 10px );
-    position: absolute;
-    transform-style: preserve-3d;
-    transition: transform 1s;
-    width: 100%;
-}
-
 .checked
 {
     background-color: #243;
@@ -432,6 +423,15 @@
 .over > td
 {
     border-top-color: green;
+}
+
+.oversize
+{
+    font-family: monospace;
+    font-size: 4em !important;
+    vertical-align: bottom;
+    -webkit-text-stroke: 1px rgba( 128, 0, 128, 0.6 );
+    -webkit-text-fill-color: rgba( 128, 128, 128, 0.3 );
 }
 
 .pair

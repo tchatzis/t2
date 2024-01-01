@@ -95,7 +95,7 @@ const Panels = function( params )
 
     const activate = ( e ) =>
     {
-        let widget = this.children.get( e.detail.widget.value );
+        let widget = this.children.get( e.detail.value );
 
         if ( widget )
             widget.element.style.zIndex = this.get.count();

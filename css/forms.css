@@ -69,3 +69,9 @@ select
     height: 21px;
     padding: 0 !important;
 }
+
+.shrimp
+{
+    height: 1em;
+    width: 1em;
+}

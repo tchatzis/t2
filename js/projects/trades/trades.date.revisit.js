@@ -82,24 +82,24 @@ const Panel = function( module, array, symbols )
             } } );  
     }
 
-    const template = function( link )
+    const template = function( symbol )
     {
-        let records = module.q.data.all.filter( data => ( data[ "symbol" ] == link ) );
+        let records = module.q.data.all.filter( data => ( data[ "symbol" ] == symbol ) );
         let data = records.filter( data => data[ "action" ] !== "DIV" ).sort( sort );
         let [ last ] = data.slice( -1 );
         let divs = records.filter( data => data[ "action" ] == "DIV" );
         let dividends = divs.reduce( ( acc, record ) => acc + ( record.qty * record.price ), 0 );// * record.sign
         let div = divs.reduce( ( acc, record ) => acc + ( record.qty ), 0 );// * record.sign
-        let qty = data.reduce( ( acc, record ) => acc - ( record.qty ), 0 ) + div;// * record.sign
+        let qty = data.reduce( ( acc, record ) => acc - ( record.qty ), 0 ) - div;// * record.sign
         let status = !!t2.common.round( qty, 4 ) ? "open" : "closed";
         let display = !t2.common.round( qty, 4 ) ? "show" : "hidden";
         let value = data.reduce( ( acc, record ) => acc + ( record.qty * record.price ), 0 );// * record.sign
-        let gain = last.price * qty + value;
+        let gain = last.price * qty - value;
         let loser = gain < 0 ? "show" : "hidden"; 
         let gainCSS = gain > 0 ? "buy" : "sell";
         let output = 
         [
-            { label: "symbol", text: link, css: "string" },
+            { label: "symbol", text: symbol, css: "string" },
             //{ label: "quantity", text: t2.formats.auto( qty ), css: "number" },
             { label: "last date", text: t2.formats[ "date&time" ]( last.datetime ), css: "date" },
             { label: "last action", text: last.action, css: last.action.toLowerCase() },

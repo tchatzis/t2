@@ -16,8 +16,12 @@ const Panel = function( module )
 
             case "SELL":
                 return Math.ceil( ( value / limit ) * 1000 ) / 1000;  
+
+            default:
+                return Math.round( value * 10000 ) / 10000;
         }
     };
+    const sum = ( a, b ) => ( a + b );
     let comparator = ( a, b ) => { return { 
         BUY:  Math.abs( a.qty ) == Math.abs( b.qty ) && a.price <= b.price && a.price * limit > b.price,/* && a.brokerage == b.brokerage,*/ 
         SELL: Math.abs( a.qty ) == Math.abs( b.qty ) && a.price >= b.price && a.price < b.price * limit,/* && a.brokerage == b.brokerage */
@@ -75,7 +79,7 @@ const Panel = function( module )
                 tables[ result.action ].setTotals();
             } ); 
 
-        let { accepted, rejected } = await scan( "BUY", "highlight", delay );
+        let { accepted, rejected } = await scan( "BUY", "highlighted", delay );
         
         await execute( accepted );
 
@@ -88,7 +92,7 @@ const Panel = function( module )
             {
                 let actions =
                 {
-                    BUY: [ "BUY" ], //, "DIV"
+                    BUY: [ "BUY" ],
                     SELL: [ "SELL" ]
                 };
 
@@ -204,7 +208,7 @@ const Panel = function( module )
 
                 active = tr;
 
-                [ "highlight", "pairing" ].forEach( css => active?.classList.remove( css ) );
+                [ "highlighted", "pairing" ].forEach( css => active?.classList.remove( css ) );
                 
                 await t2.common.delay( iterator, 0, i, tr );                    
             };    
@@ -236,15 +240,9 @@ const Panel = function( module )
                 switch ( data.action )
                 {
                     case "BUY":   
-                        previous = { action: data.action, value: value };           
+                        previous = { action: data.action, value: value }; 
+                        data.price *= -1;          
                     break;
-
-                    /*case "DIV":   
-                        data.qty *= -1;
-                        data.price *= -1;
-                        previous = { action: data.action, value: -value };   
-                        value = 0;        
-                    break;*/
 
                     case "SELL":
                         percent = -Math.round( ( ( previous.value + value ) / previous.value ) * 10000 ) / 100;
@@ -253,13 +251,13 @@ const Panel = function( module )
                 }
 
 
-                totals.price += data.price;// * data.sign
-                totals.qty += -data.qty;// * data.sign
+                totals.price += data.price;
+                totals.qty += -data.qty;
                 totals.value += value;
             } );
 
             let id = t2.common.uuid();
-            let total = { id: id, action: "GAIN", notes: percent, qty: totals.qty, price: totals.price, value: totals.value, brokerage: "none" };//, sign: 1
+            let total = { id: id, action: "GAIN", notes: percent, qty: totals.qty, price: totals.price, value: totals.value, brokerage: "none" };
             grouped.push( total );
         } );
 
@@ -291,7 +289,7 @@ const Panel = function( module )
                         args.totals[ args.column ] += args.value; 
                     }
                      
-                    return args.record[ args.column ];// * args.record.sign
+                    return args.record[ args.column ];
                 } } );
             transactions.addColumn( { 
                 input: { name: "price", type: "number", step: 0.001 }, 
@@ -339,10 +337,7 @@ const Panel = function( module )
 
     // tr selector
     function row( action, data, css )
-    {
-        if ( action == "DIV" )
-            action = "BUY";
-        
+    {   
         let table = tables[ action ].element;
         
         let tr = table.querySelector( `[ data-id = "${ data.id }" ]` );
@@ -356,9 +351,6 @@ const Panel = function( module )
     // find a match
     function find( action, data, excluded )
     {
-        //if ( action == "DIV" )
-        //    action = "BUY";
-        
         let array = arrays[ other( action ) ];
 
         return array.find( record => !excluded.find( item => record.id == item[ other( action ) ].id ) && comparator( data, record )[ action ] );
@@ -367,9 +359,6 @@ const Panel = function( module )
     // get other action
     function other( action )
     {
-        //if ( action == "DIV" )
-        //    action = "BUY";
-        
         return actions[ 1 - actions.indexOf( action ) ];
     }
     
@@ -380,9 +369,6 @@ const Panel = function( module )
         
         let record = args.data;
         let action = record.action;
-
-        if ( action == "DIV" )
-            action = "BUY";
 
         let tr = row( action, record, null );
 
@@ -421,8 +407,8 @@ const Panel = function( module )
             
             let matched = match.get( "active" ).set( record.id, { tr: tr, record: record } );
             let m = Array.from( matched.values() );
-            let qty = Math.round( m.map( o => o.record.qty * o.record.sign * ( ( o.record.action == "DIV" ) ? -1 : 1 ) ).reduce( ( a, b ) => ( a + b ), 0 ) * 10000 ) / 10000;
-            let value = Math.round( m.map( o => o.record.value * o.record.sign ).reduce( ( a, b ) => ( a + b ), 0 ) * 10000 ) / 10000;
+            let qty = round( "", m.map( o => o.record.qty ).reduce( sum, 0 ) );
+            let value = round( "", m.map( o => o.record.value ).reduce( sum, 0 ) );
 
             if ( debug )
                 console.log( record.action, qty, value, record.sign );
@@ -464,17 +450,14 @@ const Panel = function( module )
 
                 let r = Array.from( match.get( "active" ).values() ).map( data => data.record );
                     r.forEach( record => record.matched = true );
-                let qty = Math.round( r.map( o => o.qty ).reduce( ( a, b ) => ( a + b ), 0 ) * 10000 ) / 10000;// * o.sign * ( ( o.action == "DIV" ) ? -1 : 1 )
-                let sell = Math.round( r.map( o => o.qty * ( ( o.action == "SELL" ) ? 1 : 0 ) ).reduce( ( a, b ) => ( a + b ), 0 ) * 10000 ) / 10000;// * o.sign
-                let v = Math.round( r.map( o => o.value ).reduce( ( a, b ) => ( a + b ), 0 ) * 10000 ) / 10000;// * o.sign
-                let total = { id: "", action: "GAIN", notes: "", qty: qty, price: Math.round( v / sell * 10000 ) / 10000, value: v, brokerage: "none" };//, sign: 1
+                let qty = round( "", r.map( o => o.qty ).reduce( sum, 0 ) );
+                let sell = round( "", r.map( o => o.qty * ( ( o.action == "SELL" ) ? 1 : 0 ) ).reduce( sum, 0 ) );
+                let v = round( "", r.map( o => o.value ).reduce( sum, 0 ) );
+                let total = { id: "", action: "GAIN", notes: "", qty: qty, price: round( "", v / sell ), value: v, brokerage: "none" };
 
                 r.forEach( record => 
                 {
                     let action = record.action;
-
-                    if ( record.action == "DIV" )
-                        action = "BUY";
                     
                     tables[ action ].removeRow( record );
                 } );

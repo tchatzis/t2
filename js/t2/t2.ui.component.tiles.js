@@ -89,7 +89,7 @@ const Component = function()
         {
             let element = t2.common.el( "div", self.element );
                 element.classList.add( "tile" );
-                element.dataset.link = link.toLowerCase();
+                element.dataset.link = link;
                 element.addEventListener( "click", ( e ) => 
                 {
                     e.preventDefault();

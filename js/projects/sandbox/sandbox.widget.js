@@ -109,8 +109,20 @@ const Template = function( module )
             // link stuff
             //menu.set.disabled( menu.get.widget.by.index( 4 ) ); 
 
+        let rolodex = await root.add.widget( { id: "rolodex", widget: "rolodex" } );  
+            rolodex.set.config( "orientation", "horizontal" );
+            rolodex.set.config( "primaryKey", "name" );
+            // data
+            await rolodex.set.datasource( menu.refresh );
+            // draw
+            await rolodex.render();
+            // events
+            rolodex.event.receive( { channel: [ "activate", "select" ], source: menu, handler: rolodex.set.active } );
+
+        return;
+
         let expand = await root.add.widget( { id: "expand", widget: "expand" } );
-            expand.set.config( "orientation", "horizontal" );
+            expand.set.config( "orientation", "vertical" );
             expand.set.config( "primaryKey", "name" );
             // data
             await expand.set.datasource( menu.refresh );
@@ -130,7 +142,7 @@ const Template = function( module )
             accordion.event.receive( { channel: [ "activate", "select" ], source: menu, handler: accordion.set.active } );
 
 
-        return;
+        
 
         let panels = await root.add.widget( { id: "panels", widget: "panels" } );
             panels.set.config( "orientation", "horizontal" );
